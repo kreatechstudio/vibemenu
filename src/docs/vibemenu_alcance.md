@@ -30,14 +30,40 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 
 ## Modelo de negocio — Planes
 
-| Plan | Precio USD/mes | Precio MXN/mes | Sucursales | Menú por sucursal | Formatos | Multi-usuario | Fotos/producto | Extras |
-|------|----------------|----------------|------------|--------------------|----------|----------------|-----------------|--------|
-| Free perpetuo | $0 | $0 | 1 | N/A | Solo Clásico | No | 1 | 20 productos máx, marca de agua "Hecho con Vibemenu", sin video |
-| Basic | $9 | $169 | 1 | Compartido (no aplica) | Clásico + 1 a elegir | No | 1 | Sin marca de agua, productos ilimitados |
-| Pro | $19 | $349 | hasta 3 | Independiente por sucursal | Los 4 | Sí (owner + encargado) | 1 | Modificadores ilimitados, dominio propio (CNAME) |
-| Enterprise | $39 | $699 | Ilimitado | Independiente por sucursal | Los 4 | Sí (ilimitado) | 1 | Soporte prioritario |
+| Plan | USD/mes | MXN/mes | Sucursales | Productos | Usuarios | Grupos modif. | Formatos | Menú por sucursal | Extras |
+|------|---------|---------|------------|-----------|----------|---------------|----------|--------------------|--------|
+| Free perpetuo | $0 | $0 | 1 | 20 | 1 | 2 | Solo Clásico | N/A | Marca de agua "Hecho con Vibemenu" |
+| Basic | $9 | $169 | 1 | Ilimitados | 1 | 5 | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido | Sin marca de agua |
+| Pro | $19 | $349 | hasta 3 | Ilimitados | 2 (owner + encargado) | Ilimitados | Los 4 | Independiente | Dominio propio (CNAME) |
+| Enterprise | $39 | $699 | Ilimitado | Ilimitados | Ilimitados | Ilimitados | Los 4 | Independiente | Soporte prioritario |
 
-**Regla de precio congelado:** el precio se fija al momento en que el tenant se suscribe a un plan (`suscripciones.precio_congelado_usd/mxn`). Si en el futuro se sube el precio de lista en la tabla `planes`, los tenants ya suscritos NO se ven afectados — solo aplica a nuevas altas o upgrades.
+Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
+
+**Cómo se modelan los formatos.** `planes.formatos_permitidos` es el *pool* elegible y `planes.limite_formatos` cuántos puede tener desbloqueados a la vez. Basic tiene pool de los 4 y límite 2, lo que da "Clásico + 1 a elegir". El tenant guarda su elección en `tenants.formatos_desbloqueados`, y `tenants.formato_activo` es el que se muestra. `'clasico'` siempre está desbloqueado.
+
+## Personalización del menú por plan
+
+La segunda palanca de venta, además de los formatos. Todo vive en `tenants.tema` (jsonb) y lo valida el trigger `validar_tema_tenant` contra las columnas de `planes`.
+
+| Capacidad | Free | Basic | Pro | Enterprise | Columna en `planes` |
+|---|---|---|---|---|---|
+| Tipografías del catálogo | 2 | 6 | 12 | 12 | `fuentes_permitidas` |
+| Color de acento, fondo y texto | ✅ | ✅ | ✅ | ✅ | — |
+| Color de los modificadores | ❌ | ✅ | ✅ | ✅ | `permite_color_modificadores` |
+| Imagen de fondo | ❌ | modo marco | marco + completo | marco + completo | `modos_imagen_permitidos` |
+| Desenfoque detrás del texto | ❌ | ❌ | ✅ | ✅ | `permite_desenfoque` |
+
+**Modos de imagen.** `marco` = la foto enmarca y la carta va en una tarjeta al centro, siempre legible. `completo` = la foto ocupa la pantalla a sangre, con velo oscuro; en ese modo los colores de texto del tenant se sobreescriben por blancos, o el menú se vuelve ilegible.
+
+**Al bajar de plan, el trigger limpia el tema en silencio**: quita la fuente si ya no está en el pool, apaga el modo de imagen si no lo permite, y borra el color de modificadores y el desenfoque. Igual que hace `trg_tenants_20_formatos` con los formatos. Nadie queda con un menú que su plan no soporta.
+
+El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción `fuentes_permitidas_validas` de la tabla. Agregar una exige tocar los dos lados y el `<link>` de Google Fonts en `__root.tsx`.
+
+**Regla de precio congelado:** el precio se fija al momento en que el tenant se suscribe a un plan (`suscripciones.precio_congelado_usd/mxn`, ambas monedas). Si en el futuro se sube el precio de lista en la tabla `planes`, los tenants ya suscritos NO se ven afectados — solo aplica a nuevas altas o upgrades.
+
+**Historial de suscripciones:** `suscripciones` guarda una fila por periodo de plan, no una sola fila mutable. Un índice único parcial garantiza una sola fila `'activa'` por tenant; el resto queda como historial visible para el owner. Los recibos fiscales son fase 2 (tabla `pagos` alimentada por `invoice.paid`).
+
+**Enforcement de límites:** todo límite vive en la tabla `planes` y se aplica con triggers en Postgres, no solo en la UI. Un `null` en cualquier columna `limite_*` significa ilimitado. El frontend lee `planes` para mostrar u ocultar controles; la base de datos es la que realmente bloquea.
 
 ## Alcance incluido
 
@@ -57,8 +83,9 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 - [ ] Si el plan es compartido (Free/Basic): un solo menú visible en la única sucursal
 
 ### Sucursales y horarios
-- [ ] CRUD de sucursales: nombre, dirección, teléfono, WhatsApp (con selector de código de país)
-- [ ] Horarios por día de la semana por sucursal → cálculo en vivo de abierto/cerrado en el menú público
+- [ ] CRUD de sucursales: nombre, dirección, teléfono, WhatsApp (con selector de código de país), zona horaria IANA
+- [ ] Horarios por día de la semana por sucursal → cálculo de abierto/cerrado **en el servidor**, con la zona horaria de la sucursal (función `sucursal_esta_abierta`), nunca con la hora del navegador del visitante
+- [ ] Soporte de turnos que cruzan medianoche (ej. 20:00 → 02:00)
 - [ ] Límite de sucursales según plan
 
 ### Formatos de visualización (público, `/:slug`)
@@ -122,3 +149,4 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 - El riesgo de costo más alto es Supabase Storage en el plan Free perpetuo — por eso 1 foto por producto y sin subida de video (solo URL embebida) en TODOS los planes.
 - La lógica de "menú compartido vs independiente por sucursal" se resuelve con `sucursal_id` nullable en `categorias` y `productos` — no se requiere una tabla `menus` separada.
 - Slugs reservados (admin, api, app, login, registro, precios, demo, docs, blog, soporte, etc.) deben bloquearse en el registro.
+- Al bajar de plan, los formatos desbloqueados se recortan solos vía trigger. Los productos y sucursales que excedan el nuevo límite NO se borran: los triggers solo bloquean `INSERT`. Definir en fase 2 si se ocultan o se le pide al tenant cuáles conservar.

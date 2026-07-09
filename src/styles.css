@@ -1,3 +1,5 @@
+/* Las fuentes se cargan con <link> en src/routes/__root.tsx.
+   Un @import remoto aqui rompe el build: lightningcss lo resuelve como archivo local. */
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -59,29 +61,70 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Vibemenu — ver src/docs/DESIGN.md. Space Grotesk solo para headlines. */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-vm-primary: var(--vm-primary);
+  --color-vm-primary-hover: var(--vm-primary-hover);
+  --color-vm-ink: var(--vm-ink);
+  --color-vm-body: var(--vm-body);
+  --color-vm-bg-soft: var(--vm-bg-soft);
+  --color-vm-border: var(--vm-border);
+  --color-vm-success: var(--vm-success);
+  --color-vm-warning: var(--vm-warning);
+  --color-vm-danger: var(--vm-danger);
+  --color-vm-success-soft: var(--vm-success-soft);
+  --color-vm-warning-soft: var(--vm-warning-soft);
+  --color-vm-danger-soft: var(--vm-danger-soft);
+
+  /* Sombras sutiles y planas. Nada de glassmorphism. */
+  --shadow-vm-1: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-vm-2: 0 4px 12px rgb(11 11 15 / 0.05);
+  --shadow-vm-3: 0 12px 32px rgb(11 11 15 / 0.1);
 }
 
 :root {
-  --radius: 0.625rem;
+  /* 12px. Botones e inputs usan rounded-lg; cards y modales, rounded-xl (16px). */
+  --radius: 0.75rem;
+
+  /* Tokens de marca, convertidos a oklch desde los hex de DESIGN.md */
+  --vm-primary: oklch(0.5296 0.2613 266.86); /* #2B4EFF */
+  --vm-primary-hover: oklch(0.4641 0.2474 266.55); /* #1E3AE0 */
+  --vm-ink: oklch(0.1515 0.0085 285.34); /* #0B0B0F */
+  --vm-body: oklch(0.4257 0.0202 274.4); /* #4B4E5A */
+  --vm-bg-soft: oklch(0.9732 0.0041 271.37); /* #F5F6F9 */
+  --vm-border: oklch(0.9254 0.0097 273.35); /* #E4E6ED */
+  --vm-success: oklch(0.6271 0.1699 149.21); /* #16A34A */
+  --vm-warning: oklch(0.6658 0.1574 58.32); /* #D97706 */
+  --vm-danger: oklch(0.5771 0.2152 27.33); /* #DC2626 */
+  --vm-success-soft: oklch(0.9624 0.0434 156.74); /* #DCFCE7 */
+  --vm-warning-soft: oklch(0.9619 0.058 95.62); /* #FEF3C7 */
+  --vm-danger-soft: oklch(0.9356 0.0309 17.72); /* #FEE2E2 */
+
+  /* Semanticos de shadcn, mapeados a los tokens de marca para que los
+     componentes de components/ui hereden la identidad sin parchearlos uno a uno. */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --foreground: var(--vm-ink);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: var(--vm-ink);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --popover-foreground: var(--vm-ink);
+  --primary: var(--vm-primary);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--vm-bg-soft);
+  --secondary-foreground: var(--vm-ink);
+  --muted: var(--vm-bg-soft);
+  --muted-foreground: var(--vm-body);
+  --accent: var(--vm-bg-soft);
+  --accent-foreground: var(--vm-ink);
+  --destructive: var(--vm-danger);
+  --destructive-foreground: oklch(1 0 0);
+  --border: var(--vm-border);
+  --input: var(--vm-border);
+  --ring: var(--vm-primary);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,5 +183,73 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
   }
+
+  /* Space Grotesk nunca se usa para cuerpo, e Inter nunca para headlines. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--vm-ink);
+    font-weight: 700;
+  }
+
+  h1 {
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    font-weight: 800;
+  }
+
+  h2 {
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h3 {
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+}
+
+/*
+ * Entrada del hero en CSS puro, no en Framer Motion.
+ * Framer renderiza opacity:0 en el SSR y solo lo revela al hidratar: si el bundle
+ * falla, el hero queda invisible. Con @keyframes el texto es visible aunque el JS
+ * nunca corra, porque el estado final es el que manda si no hay animacion.
+ * El resto de la pagina si usa Framer Motion.
+ */
+@keyframes vm-subir {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility vm-entra {
+  animation: vm-subir 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vm-entra {
+    animation: none;
+  }
+}
+
+@utility vm-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+/* Precios y metricas. Alineado a la derecha en tablas y listas de menu. */
+@utility vm-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
