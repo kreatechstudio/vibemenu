@@ -9,38 +9,253 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as PreciosRouteImport } from './routes/precios'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as SlugIndexRouteImport } from './routes/$slug.index'
+import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
+import { Route as AdminSucursalesRouteImport } from './routes/admin.sucursales'
+import { Route as AdminQrRouteImport } from './routes/admin.qr'
+import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
+import { Route as AdminMenuRouteImport } from './routes/admin.menu'
+import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
+import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
+import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
 
+const RegistroRoute = RegistroRouteImport.update({
+  id: '/registro',
+  path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreciosRoute = PreciosRouteImport.update({
+  id: '/precios',
+  path: '/precios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugIndexRoute = SlugIndexRouteImport.update({
+  id: '/$slug/',
+  path: '/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSuscripcionRoute = AdminSuscripcionRouteImport.update({
+  id: '/admin/suscripcion',
+  path: '/admin/suscripcion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSucursalesRoute = AdminSucursalesRouteImport.update({
+  id: '/admin/sucursales',
+  path: '/admin/sucursales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminQrRoute = AdminQrRouteImport.update({
+  id: '/admin/qr',
+  path: '/admin/qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminModificadoresRoute = AdminModificadoresRouteImport.update({
+  id: '/admin/modificadores',
+  path: '/admin/modificadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMenuRoute = AdminMenuRouteImport.update({
+  id: '/admin/menu',
+  path: '/admin/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEquipoRoute = AdminEquipoRouteImport.update({
+  id: '/admin/equipo',
+  path: '/admin/equipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDisenoRoute = AdminDisenoRouteImport.update({
+  id: '/admin/diseno',
+  path: '/admin/diseno',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugSucursalSucursalSlugRoute =
+  SlugSucursalSucursalSlugRouteImport.update({
+    id: '/$slug/sucursal/$sucursalSlug',
+    path: '/$slug/sucursal/$sucursalSlug',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/demo': typeof DemoRoute
+  '/login': typeof LoginRoute
+  '/precios': typeof PreciosRoute
+  '/registro': typeof RegistroRoute
+  '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/equipo': typeof AdminEquipoRoute
+  '/admin/menu': typeof AdminMenuRoute
+  '/admin/modificadores': typeof AdminModificadoresRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/sucursales': typeof AdminSucursalesRoute
+  '/admin/suscripcion': typeof AdminSuscripcionRoute
+  '/$slug/': typeof SlugIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/demo': typeof DemoRoute
+  '/login': typeof LoginRoute
+  '/precios': typeof PreciosRoute
+  '/registro': typeof RegistroRoute
+  '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/equipo': typeof AdminEquipoRoute
+  '/admin/menu': typeof AdminMenuRoute
+  '/admin/modificadores': typeof AdminModificadoresRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/sucursales': typeof AdminSucursalesRoute
+  '/admin/suscripcion': typeof AdminSuscripcionRoute
+  '/$slug': typeof SlugIndexRoute
+  '/admin': typeof AdminIndexRoute
+  '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/demo': typeof DemoRoute
+  '/login': typeof LoginRoute
+  '/precios': typeof PreciosRoute
+  '/registro': typeof RegistroRoute
+  '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/equipo': typeof AdminEquipoRoute
+  '/admin/menu': typeof AdminMenuRoute
+  '/admin/modificadores': typeof AdminModificadoresRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/sucursales': typeof AdminSucursalesRoute
+  '/admin/suscripcion': typeof AdminSuscripcionRoute
+  '/$slug/': typeof SlugIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/demo'
+    | '/login'
+    | '/precios'
+    | '/registro'
+    | '/admin/diseno'
+    | '/admin/equipo'
+    | '/admin/menu'
+    | '/admin/modificadores'
+    | '/admin/qr'
+    | '/admin/sucursales'
+    | '/admin/suscripcion'
+    | '/$slug/'
+    | '/admin/'
+    | '/$slug/sucursal/$sucursalSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/demo'
+    | '/login'
+    | '/precios'
+    | '/registro'
+    | '/admin/diseno'
+    | '/admin/equipo'
+    | '/admin/menu'
+    | '/admin/modificadores'
+    | '/admin/qr'
+    | '/admin/sucursales'
+    | '/admin/suscripcion'
+    | '/$slug'
+    | '/admin'
+    | '/$slug/sucursal/$sucursalSlug'
+  id:
+    | '__root__'
+    | '/'
+    | '/demo'
+    | '/login'
+    | '/precios'
+    | '/registro'
+    | '/admin/diseno'
+    | '/admin/equipo'
+    | '/admin/menu'
+    | '/admin/modificadores'
+    | '/admin/qr'
+    | '/admin/sucursales'
+    | '/admin/suscripcion'
+    | '/$slug/'
+    | '/admin/'
+    | '/$slug/sucursal/$sucursalSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DemoRoute: typeof DemoRoute
+  LoginRoute: typeof LoginRoute
+  PreciosRoute: typeof PreciosRoute
+  RegistroRoute: typeof RegistroRoute
+  AdminDisenoRoute: typeof AdminDisenoRoute
+  AdminEquipoRoute: typeof AdminEquipoRoute
+  AdminMenuRoute: typeof AdminMenuRoute
+  AdminModificadoresRoute: typeof AdminModificadoresRoute
+  AdminQrRoute: typeof AdminQrRoute
+  AdminSucursalesRoute: typeof AdminSucursalesRoute
+  AdminSuscripcionRoute: typeof AdminSuscripcionRoute
+  SlugIndexRoute: typeof SlugIndexRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  SlugSucursalSucursalSlugRoute: typeof SlugSucursalSucursalSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/registro': {
+      id: '/registro'
+      path: '/registro'
+      fullPath: '/registro'
+      preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/precios': {
+      id: '/precios'
+      path: '/precios'
+      fullPath: '/precios'
+      preLoaderRoute: typeof PreciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +263,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug/': {
+      id: '/$slug/'
+      path: '/$slug'
+      fullPath: '/$slug/'
+      preLoaderRoute: typeof SlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/suscripcion': {
+      id: '/admin/suscripcion'
+      path: '/admin/suscripcion'
+      fullPath: '/admin/suscripcion'
+      preLoaderRoute: typeof AdminSuscripcionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/sucursales': {
+      id: '/admin/sucursales'
+      path: '/admin/sucursales'
+      fullPath: '/admin/sucursales'
+      preLoaderRoute: typeof AdminSucursalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/qr': {
+      id: '/admin/qr'
+      path: '/admin/qr'
+      fullPath: '/admin/qr'
+      preLoaderRoute: typeof AdminQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/modificadores': {
+      id: '/admin/modificadores'
+      path: '/admin/modificadores'
+      fullPath: '/admin/modificadores'
+      preLoaderRoute: typeof AdminModificadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/menu': {
+      id: '/admin/menu'
+      path: '/admin/menu'
+      fullPath: '/admin/menu'
+      preLoaderRoute: typeof AdminMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/equipo': {
+      id: '/admin/equipo'
+      path: '/admin/equipo'
+      fullPath: '/admin/equipo'
+      preLoaderRoute: typeof AdminEquipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/diseno': {
+      id: '/admin/diseno'
+      path: '/admin/diseno'
+      fullPath: '/admin/diseno'
+      preLoaderRoute: typeof AdminDisenoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug/sucursal/$sucursalSlug': {
+      id: '/$slug/sucursal/$sucursalSlug'
+      path: '/$slug/sucursal/$sucursalSlug'
+      fullPath: '/$slug/sucursal/$sucursalSlug'
+      preLoaderRoute: typeof SlugSucursalSucursalSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DemoRoute: DemoRoute,
+  LoginRoute: LoginRoute,
+  PreciosRoute: PreciosRoute,
+  RegistroRoute: RegistroRoute,
+  AdminDisenoRoute: AdminDisenoRoute,
+  AdminEquipoRoute: AdminEquipoRoute,
+  AdminMenuRoute: AdminMenuRoute,
+  AdminModificadoresRoute: AdminModificadoresRoute,
+  AdminQrRoute: AdminQrRoute,
+  AdminSucursalesRoute: AdminSucursalesRoute,
+  AdminSuscripcionRoute: AdminSuscripcionRoute,
+  SlugIndexRoute: SlugIndexRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  SlugSucursalSucursalSlugRoute: SlugSucursalSucursalSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
