@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronUp, ListPlus, X } from "lucide-react";
+import TiraCategorias from "@/components/menu/TiraCategorias";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -48,7 +49,8 @@ function Sheet({
 }) {
   return (
     <motion.div
-      className="absolute inset-0 z-30 flex items-end bg-black/50"
+      // z-40: por encima de las pastillas de categoría, que van en z-30.
+      className="absolute inset-0 z-40 flex items-end bg-black/50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -152,16 +154,46 @@ function Slide({ producto }: { producto: ProductoConModificadores }) {
 }
 
 export default function TikTok({ categorias }: { categorias: CategoriaConProductos[] }) {
-  const productos = categorias.flatMap((c) => c.productos);
+  const [categoria, setCategoria] = useState<string | null>(null);
+  const contenedor = useRef<HTMLDivElement>(null);
+
+  const visibles = categoria ? categorias.filter((c) => c.id === categoria) : categorias;
+  const productos = visibles.flatMap((c) => c.productos);
+
+  // Al cambiar de categoría hay que volver arriba, o el scroll queda en un slide
+  // que ya no existe y el usuario ve una pantalla en blanco.
+  function elegir(id: string | null) {
+    setCategoria(id);
+    contenedor.current?.scrollTo({ top: 0 });
+  }
 
   return (
-    <div className="h-dvh snap-y snap-mandatory overflow-y-scroll overscroll-none">
-      {productos.map((producto) => (
-        <Slide key={producto.id} producto={producto} />
-      ))}
+    <div className="relative h-dvh">
+      {/* Pestañas flotando sobre el video, como las de TikTok. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 pt-3">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent" />
+        <div className="pointer-events-auto relative">
+          <TiraCategorias
+            categorias={categorias}
+            activa={categoria}
+            alElegir={elegir}
+            variante="pastillas"
+            sobreOscuro
+          />
+        </div>
+      </div>
+
+      <div
+        ref={contenedor}
+        className="h-dvh snap-y snap-mandatory overflow-y-scroll overscroll-none"
+      >
+        {productos.map((producto) => (
+          <Slide key={producto.id} producto={producto} />
+        ))}
+      </div>
 
       {productos.length > 1 && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-9 z-20 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-9 z-20 flex justify-center">
           <motion.span
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 1.6, repeat: Infinity }}

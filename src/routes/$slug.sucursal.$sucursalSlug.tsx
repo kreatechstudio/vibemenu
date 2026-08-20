@@ -1,12 +1,14 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import MenuPublicoSucursal from "@/pages/MenuPublicoSucursal";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
-import { menuExiste } from "@/lib/menuExiste";
+import { obtenerMenuPublico } from "@/hooks/useMenuPublico";
 
 export const Route = createFileRoute("/$slug/sucursal/$sucursalSlug")({
   // Una sucursal inexistente, o de otro negocio, tambien es un 404.
   loader: async ({ params }) => {
-    if (!(await menuExiste(params.slug, params.sucursalSlug))) throw notFound();
+    const menu = await obtenerMenuPublico(params.slug, params.sucursalSlug);
+    if (!menu) throw notFound();
+    return menu;
   },
   component: RouteComponent,
   notFoundComponent: MenuNoEncontrado,
@@ -14,5 +16,7 @@ export const Route = createFileRoute("/$slug/sucursal/$sucursalSlug")({
 
 function RouteComponent() {
   const { slug, sucursalSlug } = Route.useParams();
-  return <MenuPublicoSucursal slug={slug} sucursalSlug={sucursalSlug} />;
+  return (
+    <MenuPublicoSucursal slug={slug} sucursalSlug={sucursalSlug} inicial={Route.useLoaderData()} />
+  );
 }

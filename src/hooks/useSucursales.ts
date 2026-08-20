@@ -16,6 +16,8 @@ export type BorradorSucursal = {
   nombre: string;
   slug: string;
   direccion: string | null;
+  /** Enlace de Google Maps del negocio. Si falta, se arma uno con la dirección. */
+  maps_url: string | null;
   telefono: string | null;
   whatsapp: string | null;
   timezone: string;

@@ -10,8 +10,11 @@ import {
   type BorradorHorario,
 } from "@/hooks/useSucursales";
 import { traducirError, type ErrorTraducido } from "@/lib/errores";
+import { enlaceMaps } from "@/lib/maps";
+import { esUrlValida } from "@/lib/url";
 import { normalizarSlug } from "@/lib/slug";
 import { BOTONES } from "@/lib/copy";
+import { avisarGuardado } from "@/lib/avisos";
 import type { Sucursal } from "@/types/database";
 
 /** Lunes a domingo en pantalla, pero se guarda con 0 = domingo, como en la base. */
@@ -43,6 +46,7 @@ export default function EditorSucursal({
   const [slug, setSlug] = useState(sucursal?.slug ?? "");
   const [slugTocado, setSlugTocado] = useState(!esNueva);
   const [direccion, setDireccion] = useState(sucursal?.direccion ?? "");
+  const [mapsUrl, setMapsUrl] = useState(sucursal?.maps_url ?? "");
   const [telefono, setTelefono] = useState(sucursal?.telefono ?? "");
   const [whatsapp, setWhatsapp] = useState(sucursal?.whatsapp ?? "");
   const [timezone, setTimezone] = useState(sucursal?.timezone ?? "America/Mexico_City");
@@ -51,6 +55,9 @@ export default function EditorSucursal({
   const [horarios, setHorarios] = useState<Record<number, BorradorHorario> | null>(null);
 
   const zonas = useMemo(() => zonasHorarias(), []);
+
+  // El mismo enlace que verá el comensal: el pegado, o el derivado de la dirección.
+  const vistaPrevia = enlaceMaps({ direccion: direccion.trim() || null, maps_url: mapsUrl.trim() });
 
   // Hasta que llegan los guardados, se muestran los de por defecto.
   const filas: Record<number, BorradorHorario> =
@@ -85,6 +92,12 @@ export default function EditorSucursal({
     e.preventDefault();
     setError(null);
 
+    const maps = mapsUrl.trim();
+    if (maps && !esUrlValida(maps)) {
+      setError("El enlace de Google Maps debe empezar por https://");
+      return;
+    }
+
     try {
       await guardar.mutateAsync({
         id: sucursal?.id,
@@ -92,12 +105,14 @@ export default function EditorSucursal({
           nombre: nombre.trim(),
           slug: slug.trim(),
           direccion: direccion.trim() || null,
+          maps_url: maps || null,
           telefono: telefono.trim() || null,
           whatsapp: whatsapp.trim() || null,
           timezone,
         },
         horarios: ORDEN_VISUAL.map((d) => filas[d]),
       });
+      avisarGuardado();
       alCerrar();
     } catch (err) {
       const traducido = traducirError(err as Error);
@@ -179,8 +194,43 @@ export default function EditorSucursal({
                 id="s-dir"
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
+                placeholder="Av. Juárez 120, Centro"
                 className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary"
               />
+            </div>
+
+            <div>
+              <label htmlFor="s-maps" className="text-sm font-medium text-vm-ink">
+                Enlace de Google Maps <span className="font-normal text-vm-body">(opcional)</span>
+              </label>
+              <input
+                id="s-maps"
+                type="url"
+                inputMode="url"
+                value={mapsUrl}
+                onChange={(e) => setMapsUrl(e.target.value)}
+                placeholder="https://maps.app.goo.gl/…"
+                className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary"
+              />
+              <p className="mt-1.5 text-xs text-vm-body">
+                {vistaPrevia ? (
+                  <>
+                    En el menú, la dirección abrirá{" "}
+                    <a
+                      href={vistaPrevia}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-vm-primary hover:underline"
+                    >
+                      este mapa
+                    </a>
+                    . Pega el enlace de «Compartir» en Maps para que caiga en tu ficha, con tus
+                    reseñas.
+                  </>
+                ) : (
+                  "Sin dirección ni enlace, el menú no muestra mapa."
+                )}
+              </p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">

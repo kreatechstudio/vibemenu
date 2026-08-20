@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import TiraCategorias from "@/components/menu/TiraCategorias";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -103,10 +104,24 @@ function Detalle({
 
 export default function Pinterest({ categorias }: { categorias: CategoriaConProductos[] }) {
   const [abierto, setAbierto] = useState<ProductoConModificadores | null>(null);
-  const productos = categorias.flatMap((c) => c.productos);
+  const [categoria, setCategoria] = useState<string | null>(null);
+
+  const visibles = categoria ? categorias.filter((c) => c.id === categoria) : categorias;
+  const productos = visibles.flatMap((c) => c.productos);
 
   return (
     <>
+      {/* Pastillas arriba del mosaico, como en Pinterest. */}
+      <div className="mx-auto max-w-3xl">
+        <TiraCategorias
+          categorias={categorias}
+          activa={categoria}
+          alElegir={setCategoria}
+          variante="pastillas"
+          className="px-3"
+        />
+      </div>
+
       <div className="mx-auto max-w-3xl px-3 pb-6">
         <div className="columns-2 gap-3 md:columns-3">
           {productos.map((producto) => (

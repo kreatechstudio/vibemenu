@@ -94,6 +94,19 @@ export const permiteColorModificadores = (plan: Plan): boolean =>
 export const permiteDesenfoque = (plan: Plan): boolean =>
   (plan.permite_desenfoque as boolean | undefined) ?? false;
 
+/* ── Sucursales y QR (migración 005) ───────────────────────────────── */
+
+/** Categorías y productos exclusivos de una sucursal, y precios distintos por local. */
+export const permiteMenuPorSucursal = (plan: Plan): boolean => plan.menu_independiente_por_sucursal;
+
+/** El QR impreso lleva el nombre del negocio y los colores del tema. */
+export const permiteQrColor = (plan: Plan): boolean =>
+  (plan.qr_color as boolean | undefined) ?? false;
+
+/** Además: tipografía del tema, logo dentro del código e imagen de fondo. */
+export const permiteQrAvanzado = (plan: Plan): boolean =>
+  (plan.qr_avanzado as boolean | undefined) ?? false;
+
 export function precioDelPlan(plan: Plan, moneda: MonedaCobro): number {
   return moneda === "mxn" ? plan.precio_mxn : plan.precio_usd;
 }

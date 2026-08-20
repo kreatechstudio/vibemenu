@@ -6,7 +6,12 @@ import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
 import Instagram from "@/components/formatos/Instagram";
 import TikTok from "@/components/formatos/TikTok";
-import { useMenuPublico, type CategoriaConProductos } from "@/hooks/useMenuPublico";
+import {
+  useMenuPublico,
+  type CategoriaConProductos,
+  type MenuPublico as DatosMenu,
+} from "@/hooks/useMenuPublico";
+import { useRegistrarVisita } from "@/hooks/useVisitas";
 import { resolverTema, variablesDeTema } from "@/lib/tema";
 import { ESTADOS } from "@/lib/copy";
 import { cn } from "@/lib/utils";
@@ -15,15 +20,23 @@ import type { FormatoMenu } from "@/types/database";
 interface MenuPublicoProps {
   slug: string;
   sucursalSlug?: string;
+  /** Viene del loader de la ruta: el menú ya está resuelto en el servidor. */
+  inicial?: DatosMenu;
 }
 
-const FORMATOS: Record<FormatoMenu, (p: { categorias: CategoriaConProductos[] }) => ReactElement> =
-  {
-    clasico: Clasico,
-    pinterest: Pinterest,
-    instagram: Instagram,
-    tiktok: TikTok,
-  };
+/** Instagram usa `logoUrl` e `inicial` para el círculo "Todo". El resto los ignora. */
+type PropsFormato = {
+  categorias: CategoriaConProductos[];
+  logoUrl?: string | null;
+  inicial?: string;
+};
+
+const FORMATOS: Record<FormatoMenu, (p: PropsFormato) => ReactElement> = {
+  clasico: Clasico,
+  pinterest: Pinterest,
+  instagram: Instagram,
+  tiktok: TikTok,
+};
 
 /**
  * Menu publico del tenant, en `/:slug` y `/:slug/sucursal/:sucursalSlug`.
@@ -34,8 +47,12 @@ const FORMATOS: Record<FormatoMenu, (p: { categorias: CategoriaConProductos[] })
  *
  * TikTok es fullscreen y se lleva la pantalla entera, sin cabecera propia.
  */
-export default function MenuPublico({ slug, sucursalSlug }: MenuPublicoProps) {
-  const { data, isLoading, isError } = useMenuPublico(slug, sucursalSlug);
+export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublicoProps) {
+  const { data, isLoading, isError } = useMenuPublico(slug, sucursalSlug, inicial);
+
+  // Desde el navegador, nunca desde el loader: ahí contaríamos los prefetch del
+  // router y cada rastreador que pase por la ruta.
+  useRegistrarVisita(data?.tenant.id, data?.sucursalActiva?.id ?? null);
 
   if (isLoading) {
     return (
@@ -54,10 +71,16 @@ export default function MenuPublico({ slug, sucursalSlug }: MenuPublicoProps) {
   const tema = resolverTema(data.tenant.tema, data.formato);
   const Formato = FORMATOS[data.formato];
 
+  const propsFormato: PropsFormato = {
+    categorias: data.categorias,
+    logoUrl: data.tenant.logo_url,
+    inicial: data.tenant.nombre_negocio.slice(0, 1),
+  };
+
   if (data.formato === "tiktok") {
     return (
       <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
-        <Formato categorias={data.categorias} />
+        <Formato {...propsFormato} />
         {data.marcaAgua && <MarcaAgua flotante />}
       </main>
     );
@@ -71,6 +94,7 @@ export default function MenuPublico({ slug, sucursalSlug }: MenuPublicoProps) {
         sucursalActiva={data.sucursalActiva}
         menuIndependiente={data.menuIndependiente}
         compacta={data.formato === "instagram"}
+        sobreOscuro={tema.modo_imagen === "completo"}
       />
 
       {data.categorias.length === 0 ? (
@@ -78,7 +102,7 @@ export default function MenuPublico({ slug, sucursalSlug }: MenuPublicoProps) {
           Este menú todavía no tiene productos.
         </p>
       ) : (
-        <Formato categorias={data.categorias} />
+        <Formato {...propsFormato} />
       )}
 
       {data.marcaAgua && <MarcaAgua />}
@@ -94,14 +118,35 @@ export default function MenuPublico({ slug, sucursalSlug }: MenuPublicoProps) {
    * Los dos modos los gobierna `planes.modos_imagen_permitidos`.
    */
   if (tema.modo_imagen === "marco") {
+    // Con desenfoque se difumina LA FOTO, no la tarjeta. El marco queda como un
+    // fondo de bokeh y la carta, translúcida, lo deja translucir. Sin desenfoque,
+    // foto nítida y tarjeta opaca.
+    const tarjeta: React.CSSProperties = tema.desenfoque_texto
+      ? { background: "color-mix(in srgb, var(--menu-fondo) 78%, transparent)" }
+      : { background: "var(--menu-fondo)" };
+
     return (
-      <main
-        className="min-h-screen bg-cover bg-center bg-fixed p-3 sm:p-8"
-        style={{ ...estiloRaiz, backgroundImage: `url(${tema.imagen_fondo_url})` }}
-      >
+      <main className="relative min-h-screen p-3 sm:p-8" style={estiloRaiz}>
+        {/*
+          Capa aparte, no `bg-fixed` en el <main>: un `filter: blur` en el padre
+          también difuminaría la carta. El scale-110 esconde los bordes lavados
+          que el desenfoque deja en la orilla de la foto.
+        */}
         <div
-          className="mx-auto max-w-3xl overflow-hidden rounded-2xl shadow-vm-3"
-          style={{ background: "var(--menu-fondo)" }}
+          aria-hidden
+          className={cn(
+            "fixed inset-0 -z-10 bg-cover bg-center",
+            tema.desenfoque_texto && "scale-110 blur-lg",
+          )}
+          style={{ backgroundImage: `url(${tema.imagen_fondo_url})` }}
+        />
+
+        <div
+          className={cn(
+            "mx-auto max-w-3xl overflow-hidden rounded-2xl shadow-vm-3",
+            tema.desenfoque_texto && "backdrop-blur-sm",
+          )}
+          style={tarjeta}
         >
           {cuerpo}
         </div>

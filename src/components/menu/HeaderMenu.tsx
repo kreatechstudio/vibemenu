@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin } from "lucide-react";
+import RedesSociales, { tieneRedes } from "@/components/menu/RedesSociales";
 import { useSucursalAbierta } from "@/hooks/useMenuPublico";
+import { enlaceMaps } from "@/lib/maps";
 import { ESTADOS } from "@/lib/copy";
 import type { Sucursal, Tenant } from "@/types/database";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,7 @@ export default function HeaderMenu({
   sucursalActiva,
   menuIndependiente,
   compacta = false,
+  sobreOscuro = false,
   abiertaFija,
 }: {
   tenant: Tenant;
@@ -44,6 +47,8 @@ export default function HeaderMenu({
   menuIndependiente: boolean;
   /** Instagram la quiere minima, mas pegada al contenido. */
   compacta?: boolean;
+  /** Modo `completo`: el texto ya va en blanco sobre la foto; los iconos también. */
+  sobreOscuro?: boolean;
   /**
    * Solo para /demo, que usa datos en memoria con ids ficticios.
    * Si se pasa, no se llama a la funcion sucursal_esta_abierta de Postgres:
@@ -54,6 +59,7 @@ export default function HeaderMenu({
   const sucursal = sucursalActiva ?? sucursales[0] ?? null;
   const consulta = useSucursalAbierta(abiertaFija === undefined ? sucursal?.id : undefined);
   const abierta = abiertaFija ?? consulta.data;
+  const mapa = sucursal ? enlaceMaps(sucursal, tenant.nombre_negocio) : null;
 
   return (
     <header
@@ -84,19 +90,55 @@ export default function HeaderMenu({
           >
             {tenant.nombre_negocio}
           </h1>
-          {sucursal?.direccion && (
-            <p
-              className="flex items-center gap-1 truncate text-xs"
-              style={{ color: "var(--menu-texto-suave)" }}
-            >
-              <MapPin className="size-3 shrink-0" aria-hidden />
-              {sucursal.direccion}
-            </p>
-          )}
+          {/*
+            El enlace muestra el NOMBRE de la sucursal, no la dirección: una calle
+            con número y colonia se come dos renglones y empuja todo. La dirección
+            completa viaja en el `title`, y va en color de acento con subrayado para
+            que se lea como enlace y no como un dato más.
+          */}
+          {sucursal &&
+            (mapa ? (
+              <a
+                href={mapa}
+                target="_blank"
+                rel="noreferrer"
+                title={sucursal.direccion ?? undefined}
+                className="flex items-center gap-1 truncate text-xs font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                style={{ color: "var(--menu-primario)" }}
+              >
+                <MapPin className="size-3 shrink-0" aria-hidden />
+                {sucursal.nombre}
+              </a>
+            ) : (
+              <p
+                className="flex items-center gap-1 truncate text-xs"
+                style={{ color: "var(--menu-texto-suave)" }}
+              >
+                <MapPin className="size-3 shrink-0" aria-hidden />
+                {sucursal.nombre}
+              </p>
+            ))}
         </div>
 
         {sucursal && <BadgeAbierto abierta={abierta} />}
       </div>
+
+      {/* Van justo después del nombre y la dirección. */}
+      {tieneRedes(tenant) && (
+        <div className="mx-auto mt-3 flex max-w-2xl">
+          <RedesSociales tenant={tenant} sobreOscuro={sobreOscuro} />
+        </div>
+      )}
+
+      {/* Instagram pide una cabecera minima: ahi la descripcion sobra. */}
+      {tenant.descripcion && !compacta && (
+        <p
+          className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed"
+          style={{ color: "var(--menu-texto-suave)" }}
+        >
+          {tenant.descripcion}
+        </p>
+      )}
 
       {/* Solo los planes con menu independiente muestran el selector de sucursal. */}
       {menuIndependiente && sucursales.length > 1 && (

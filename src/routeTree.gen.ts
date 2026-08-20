@@ -22,6 +22,7 @@ import { Route as AdminQrRouteImport } from './routes/admin.qr'
 import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
+import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
 
@@ -90,6 +91,11 @@ const AdminEquipoRoute = AdminEquipoRouteImport.update({
   path: '/admin/equipo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEmpresaRoute = AdminEmpresaRouteImport.update({
+  id: '/admin/empresa',
+  path: '/admin/empresa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminDisenoRoute = AdminDisenoRouteImport.update({
   id: '/admin/diseno',
   path: '/admin/diseno',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/precios': typeof PreciosRoute
   '/registro': typeof RegistroRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/precios': typeof PreciosRoute
   '/registro': typeof RegistroRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/precios': typeof PreciosRoute
   '/registro': typeof RegistroRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/precios'
     | '/registro'
     | '/admin/diseno'
+    | '/admin/empresa'
     | '/admin/equipo'
     | '/admin/menu'
     | '/admin/modificadores'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/precios'
     | '/registro'
     | '/admin/diseno'
+    | '/admin/empresa'
     | '/admin/equipo'
     | '/admin/menu'
     | '/admin/modificadores'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/precios'
     | '/registro'
     | '/admin/diseno'
+    | '/admin/empresa'
     | '/admin/equipo'
     | '/admin/menu'
     | '/admin/modificadores'
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   PreciosRoute: typeof PreciosRoute
   RegistroRoute: typeof RegistroRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
+  AdminEmpresaRoute: typeof AdminEmpresaRoute
   AdminEquipoRoute: typeof AdminEquipoRoute
   AdminMenuRoute: typeof AdminMenuRoute
   AdminModificadoresRoute: typeof AdminModificadoresRoute
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEquipoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/empresa': {
+      id: '/admin/empresa'
+      path: '/admin/empresa'
+      fullPath: '/admin/empresa'
+      preLoaderRoute: typeof AdminEmpresaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/diseno': {
       id: '/admin/diseno'
       path: '/admin/diseno'
@@ -343,6 +363,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreciosRoute: PreciosRoute,
   RegistroRoute: RegistroRoute,
   AdminDisenoRoute: AdminDisenoRoute,
+  AdminEmpresaRoute: AdminEmpresaRoute,
   AdminEquipoRoute: AdminEquipoRoute,
   AdminMenuRoute: AdminMenuRoute,
   AdminModificadoresRoute: AdminModificadoresRoute,

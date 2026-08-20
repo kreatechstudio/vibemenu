@@ -1,16 +1,24 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ImagePlus, Loader2, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Lock, Store, Trash2, X } from "lucide-react";
 import {
+  borrarImagen,
   subirFotoProducto,
   useBorrarProducto,
   useGuardarProducto,
   type BorradorProducto,
 } from "@/hooks/useCarta";
 import { sincronizarModificadores, useGrupos, useGruposDeProducto } from "@/hooks/useModificadores";
+import {
+  sincronizarPreciosSucursal,
+  usePreciosDeProducto,
+  type PreciosPorSucursal,
+} from "@/hooks/usePreciosSucursal";
 import { traducirError, type ErrorTraducido } from "@/lib/errores";
 import { BOTONES, ESTADOS } from "@/lib/copy";
-import type { Producto } from "@/types/database";
+import { avisarGuardado } from "@/lib/avisos";
+import { precioMenu } from "@/lib/tema";
+import type { Categoria, Producto, Sucursal } from "@/types/database";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,17 +26,29 @@ import { cn } from "@/lib/utils";
  *
  * Una sola foto por producto en todos los planes: es el mayor riesgo de costo de
  * Storage. El video no se sube, solo se guarda su URL embebida.
+ *
+ * Sucursales (Pro): un producto es compartido (`sucursal_id` null) o exclusivo de
+ * una sucursal. Si es compartido puede ademas cobrar distinto en cada local, y eso
+ * vive en `precios_sucursal`, no en copias del producto.
  */
 export default function EditorProducto({
   tenantId,
-  categoriaId,
+  categoria,
   producto,
+  sucursales,
+  permiteIndependiente,
+  sucursalPorDefecto,
   alCerrar,
   alTopar,
 }: {
   tenantId: string;
-  categoriaId: string;
+  /** La categoria completa: si es exclusiva de una sucursal, arrastra al producto. */
+  categoria: Categoria;
   producto: Producto | null;
+  sucursales: Sucursal[];
+  permiteIndependiente: boolean;
+  /** Sucursal en la que el dueño está trabajando. null = menú compartido. */
+  sucursalPorDefecto: string | null;
   alCerrar: () => void;
   /** El padre abre el modal de upsell cuando el trigger rechaza por limite. */
   alTopar: (e: ErrorTraducido) => void;
@@ -40,7 +60,20 @@ export default function EditorProducto({
   const [descripcion, setDescripcion] = useState(producto?.descripcion ?? "");
   const [precio, setPrecio] = useState(String(producto?.precio ?? ""));
   const [imagenUrl, setImagenUrl] = useState(producto?.imagen_url ?? "");
+  // La foto vieja solo se borra si el guardado sale bien. Si el usuario cancela,
+  // el producto sigue apuntando a una imagen que existe.
+  const imagenOriginal = useRef(producto?.imagen_url ?? "");
   const [videoUrl, setVideoUrl] = useState(producto?.video_url ?? "");
+
+  /**
+   * `trg_productos_20_categoria`: si la categoria es exclusiva de una sucursal, el
+   * producto DEBE ser de la misma. No es una preferencia, es un rechazo de
+   * Postgres — asi que aqui ni se ofrece la opcion.
+   */
+  const forzada = categoria.sucursal_id;
+  const [sucursalId, setSucursalId] = useState<string | null>(
+    forzada ?? (esNuevo ? sucursalPorDefecto : (producto?.sucursal_id ?? null)),
+  );
 
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,11 +82,27 @@ export default function EditorProducto({
   const borrar = useBorrarProducto(tenantId);
 
   const { data: grupos } = useGrupos(tenantId);
-  const { data: yaAsignados } = useGruposDeProducto(producto?.id);
+  const { data: yaAsignados, isLoading: cargandoGrupos } = useGruposDeProducto(producto?.id);
+  const { data: preciosGuardados, isLoading: cargandoPrecios } = usePreciosDeProducto(producto?.id);
 
   // `undefined` = todavía no llega la consulta; entonces se usa lo que hay en la base.
   const [seleccion, setSeleccion] = useState<Set<string> | null>(null);
   const asignados = seleccion ?? new Set(yaAsignados ?? []);
+
+  const [precios, setPrecios] = useState<Record<string, string> | null>(null);
+  const preciosVisibles =
+    precios ??
+    Object.fromEntries(Object.entries(preciosGuardados ?? {}).map(([id, p]) => [id, String(p)]));
+
+  /**
+   * Guardar antes de que carguen los grupos o los precios los borraria todos:
+   * `sincronizar*` deja la base exactamente como dice el formulario, y el
+   * formulario todavia estaria vacio.
+   */
+  const datosListos = !cargandoGrupos && !cargandoPrecios;
+
+  // Un producto exclusivo de una sucursal no puede cobrar distinto en otra.
+  const puedeVariarPrecio = permiteIndependiente && sucursalId === null && sucursales.length > 0;
 
   function alternarGrupo(id: string) {
     const copia = new Set(asignados);
@@ -81,19 +130,44 @@ export default function EditorProducto({
     setError(null);
 
     const datos: BorradorProducto = {
-      categoria_id: categoriaId,
+      categoria_id: categoria.id,
       nombre: nombre.trim(),
       descripcion: descripcion.trim() || null,
       precio: Number(precio) || 0,
       imagen_url: imagenUrl || null,
       video_url: videoUrl.trim() || null,
+      sucursal_id: sucursalId,
     };
+
+    /**
+     * Un campo vacío significa "cobra el precio base", y eso es borrar su fila.
+     * Si el producto pasó a ser exclusivo de una sucursal, `deseados` queda vacío
+     * a propósito: se le borran todos los precios sobrescritos, porque ya solo se
+     * vende en un local y su precio es el suyo.
+     */
+    const deseados: PreciosPorSucursal = {};
+    if (puedeVariarPrecio) {
+      for (const s of sucursales) {
+        const texto = (preciosVisibles[s.id] ?? "").trim();
+        if (texto === "") continue;
+        const monto = Number(texto);
+        if (Number.isFinite(monto) && monto >= 0) deseados[s.id] = monto;
+      }
+    }
 
     try {
       // Devuelve el id: si el producto es nuevo, no existe hasta este momento
       // y sin él no se pueden escribir las filas de producto_modificadores.
       const productoId = await guardar.mutateAsync({ id: producto?.id, datos });
       await sincronizarModificadores(productoId, [...asignados]);
+      if (permiteIndependiente) await sincronizarPreciosSucursal(productoId, deseados);
+
+      // Ya nadie apunta a la foto anterior: fuera del bucket.
+      if (imagenOriginal.current && imagenOriginal.current !== imagenUrl) {
+        await borrarImagen(imagenOriginal.current);
+      }
+
+      avisarGuardado();
       alCerrar();
     } catch (err) {
       const traducido = traducirError(err as Error);
@@ -105,6 +179,8 @@ export default function EditorProducto({
       setError(traducido.mensaje);
     }
   }
+
+  const nombreDe = (id: string) => sucursales.find((s) => s.id === id)?.nombre ?? "esa sucursal";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -120,7 +196,7 @@ export default function EditorProducto({
         aria-modal="true"
         aria-label={esNuevo ? "Añadir producto" : `Editar ${producto.nombre}`}
       >
-        <header className="sticky top-0 flex items-center justify-between border-b bg-white px-5 py-4">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-5 py-4">
           <h2 className="text-lg">{esNuevo ? "Añadir producto" : "Editar producto"}</h2>
           <button type="button" onClick={alCerrar} aria-label="Cerrar" className="text-vm-body">
             <X className="size-5" />
@@ -169,16 +245,94 @@ export default function EditorProducto({
               onChange={(e) => setPrecio(e.target.value)}
               className="vm-data mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
             />
+            {puedeVariarPrecio && (
+              <p className="mt-1.5 text-xs text-vm-body">
+                El que cobran todas las sucursales, salvo las que ajustes abajo.
+              </p>
+            )}
           </div>
+
+          {/* Dónde se vende. Solo tiene sentido si el negocio tiene sucursales. */}
+          {sucursales.length > 0 && (
+            <div>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-vm-ink">
+                <Store className="size-3.5 text-vm-body" aria-hidden />
+                Dónde se vende
+                {!permiteIndependiente && !forzada && (
+                  <Lock className="size-3 text-vm-body" aria-hidden />
+                )}
+              </p>
+
+              {forzada ? (
+                <p className="mt-2 rounded-lg bg-vm-bg-soft px-3.5 py-3 text-xs text-vm-body">
+                  Solo en <strong className="text-vm-ink">{nombreDe(forzada)}</strong>, porque la
+                  categoría «{categoria.nombre}» es exclusiva de esa sucursal.
+                </p>
+              ) : (
+                <>
+                  <select
+                    value={sucursalId ?? ""}
+                    disabled={!permiteIndependiente}
+                    onChange={(e) => setSucursalId(e.target.value || null)}
+                    className="mt-2 h-12 w-full rounded-lg border bg-white px-3.5 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20 disabled:cursor-not-allowed disabled:bg-vm-bg-soft disabled:text-vm-body"
+                  >
+                    <option value="">En todas las sucursales</option>
+                    {sucursales.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        Solo en {s.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {!permiteIndependiente && (
+                    <p className="mt-1.5 text-xs text-vm-body">
+                      Tu plan solo admite un menú compartido entre sucursales.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Precios sobrescritos: un producto, un precio por local. */}
+          {puedeVariarPrecio && (
+            <div>
+              <p className="text-sm font-medium text-vm-ink">Precio por sucursal</p>
+              <p className="text-xs text-vm-body">
+                Déjalo vacío y esa sucursal cobra {precioMenu(Number(precio) || 0)}.
+              </p>
+
+              <ul className="mt-3 space-y-2">
+                {sucursales.map((s) => (
+                  <li key={s.id} className="flex items-center gap-3">
+                    <label htmlFor={`ps-${s.id}`} className="min-w-0 flex-1 truncate text-sm">
+                      {s.nombre}
+                    </label>
+                    <input
+                      id={`ps-${s.id}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      disabled={!datosListos}
+                      value={preciosVisibles[s.id] ?? ""}
+                      onChange={(e) => setPrecios({ ...preciosVisibles, [s.id]: e.target.value })}
+                      placeholder={String(Number(precio) || 0)}
+                      className="vm-data h-11 w-32 rounded-lg border px-3 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20 disabled:bg-vm-bg-soft"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div>
             <p className="text-sm font-medium text-vm-ink">Foto</p>
-            <p className="text-xs text-vm-body">Una por producto, en JPG o PNG.</p>
+            <p className="text-xs text-vm-body">Una por producto. Se guarda comprimida en WebP.</p>
 
             <input
               ref={inputFoto}
               type="file"
-              accept="image/jpeg,image/png"
+              accept="image/jpeg,image/png,image/webp"
               onChange={alElegirFoto}
               className="sr-only"
             />
@@ -247,6 +401,7 @@ export default function EditorProducto({
                     <button
                       key={g.id}
                       type="button"
+                      disabled={!datosListos}
                       onClick={() => alternarGrupo(g.id)}
                       aria-pressed={activo}
                       className={cn(
@@ -254,6 +409,7 @@ export default function EditorProducto({
                         activo
                           ? "border-vm-primary bg-vm-primary text-white"
                           : "text-vm-body hover:bg-vm-bg-soft",
+                        !datosListos && "opacity-50",
                       )}
                     >
                       {g.nombre}
@@ -273,10 +429,12 @@ export default function EditorProducto({
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={guardar.isPending || subiendo}
+              disabled={guardar.isPending || subiendo || !datosListos}
               className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-vm-primary text-sm font-medium text-white hover:bg-vm-primary-hover disabled:opacity-50"
             >
-              {guardar.isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {(guardar.isPending || !datosListos) && (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              )}
               {BOTONES.guardarCambios}
             </button>
 
@@ -285,6 +443,7 @@ export default function EditorProducto({
                 type="button"
                 onClick={async () => {
                   await borrar.mutateAsync(producto.id);
+                  await borrarImagen(producto.imagen_url);
                   alCerrar();
                 }}
                 aria-label="Eliminar producto"

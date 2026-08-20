@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { comprimir, rutaDeUrlPublica } from "@/lib/imagen";
 import type { Categoria, Producto, TablesInsert } from "@/types/database";
 
 /**
@@ -53,13 +54,24 @@ function useInvalidarCarta(tenantId: string | undefined) {
   };
 }
 
+/** `sucursalId` null = categoria compartida por todas las sucursales. */
 export function useCrearCategoria(tenantId: string | undefined) {
   const invalidar = useInvalidarCarta(tenantId);
   return useMutation({
-    mutationFn: async ({ nombre, orden }: { nombre: string; orden: number }) => {
+    mutationFn: async ({
+      nombre,
+      orden,
+      sucursalId,
+    }: {
+      nombre: string;
+      orden: number;
+      sucursalId: string | null;
+    }) => {
+      // trg_categorias_10_sucursal rechaza sucursal_id si el plan no trae
+      // menu_independiente_por_sucursal.
       const { error } = await supabase
         .from("categorias")
-        .insert({ tenant_id: tenantId!, nombre, orden });
+        .insert({ tenant_id: tenantId!, nombre, orden, sucursal_id: sucursalId });
       if (error) throw error;
     },
     onSuccess: invalidar,
@@ -142,10 +154,16 @@ export function useAlternarActivo(tenantId: string | undefined) {
   });
 }
 
-const EXTENSIONES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png" };
+const CARPETA_A_PROPOSITO = {
+  productos: "producto",
+  fondos: "fondo",
+  logos: "logo",
+} as const;
+
+export type CarpetaImagen = keyof typeof CARPETA_A_PROPOSITO;
 
 /**
- * Sube una imagen al bucket `vibemenu-media`.
+ * Comprime a WebP y sube al bucket `vibemenu-media`.
  *
  * La ruta DEBE empezar por `{tenant_id}/`: la policy de storage.objects valida que
  * la primera carpeta sea un uuid y que el usuario pertenezca a ese tenant.
@@ -153,19 +171,29 @@ const EXTENSIONES: Record<string, string> = { "image/jpeg": "jpg", "image/png": 
 export async function subirImagen(
   tenantId: string,
   archivo: File,
-  carpeta: "productos" | "fondos" | "logos",
+  carpeta: CarpetaImagen,
 ): Promise<string> {
-  const ext = EXTENSIONES[archivo.type];
-  if (!ext) throw new Error("formato_imagen_invalido");
+  const { blob, extension, tipo } = await comprimir(archivo, CARPETA_A_PROPOSITO[carpeta]);
 
-  const ruta = `${tenantId}/${carpeta}/${crypto.randomUUID()}.${ext}`;
+  const ruta = `${tenantId}/${carpeta}/${crypto.randomUUID()}.${extension}`;
   const { error } = await supabase.storage
     .from("vibemenu-media")
-    .upload(ruta, archivo, { cacheControl: "3600", upsert: false });
+    .upload(ruta, blob, { cacheControl: "31536000", upsert: false, contentType: tipo });
   if (error) throw error;
 
   const { data } = supabase.storage.from("vibemenu-media").getPublicUrl(ruta);
   return data.publicUrl;
+}
+
+/**
+ * Borra del bucket una imagen que ya no se usa. Silencioso a proposito: si la URL
+ * no es nuestra, o el archivo ya no existe, no hay nada que hacer y no vale la
+ * pena romperle el guardado al usuario.
+ */
+export async function borrarImagen(url: string | null | undefined): Promise<void> {
+  const ruta = rutaDeUrlPublica(url);
+  if (!ruta) return;
+  await supabase.storage.from("vibemenu-media").remove([ruta]);
 }
 
 export const subirFotoProducto = (tenantId: string, archivo: File) =>

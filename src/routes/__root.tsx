@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SesionProvider } from "../hooks/useSesion";
 import { SEO } from "../lib/copy";
 import { URL_GOOGLE_FONTS } from "../lib/fuentes";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -82,10 +83,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: SEO.title },
       { name: "description", content: SEO.description },
+      { name: "theme-color", content: "#2B4EFF" },
       { property: "og:title", content: SEO.title },
       { property: "og:description", content: SEO.description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "/og-image.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -97,7 +101,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+
+      // El .ico lo piden Safari y los navegadores viejos aunque no esté enlazado.
+      // Los PNG los prefieren los modernos, que eligen el tamaño que necesitan.
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -128,6 +139,8 @@ function RootComponent() {
       <SesionProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        {/* Los avisos de éxito viven en lib/avisos.ts, nunca con texto suelto. */}
+        <Toaster position="bottom-right" richColors closeButton />
       </SesionProvider>
     </QueryClientProvider>
   );

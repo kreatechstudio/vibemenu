@@ -29,7 +29,9 @@ export type SlugErrorDb =
   | "fuente_no_permitida"
   | "modo_imagen_no_permitido"
   | "color_modificadores_no_permitido"
-  | "desenfoque_no_permitido";
+  | "desenfoque_no_permitido"
+  // Migración 005: validar_precio_sucursal
+  | "precio_por_sucursal_no_permitido";
 
 /** Errores que el usuario resuelve actualizando su plan. */
 export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
@@ -45,6 +47,7 @@ export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
   "modo_imagen_no_permitido",
   "color_modificadores_no_permitido",
   "desenfoque_no_permitido",
+  "precio_por_sucursal_no_permitido",
 ];
 
 const MENSAJES: Record<SlugErrorDb, string> = {
@@ -69,6 +72,7 @@ const MENSAJES: Record<SlugErrorDb, string> = {
   modo_imagen_no_permitido: "La imagen de fondo no está incluida en tu plan.",
   color_modificadores_no_permitido: "Darle color a los modificadores es parte de Basic.",
   desenfoque_no_permitido: "El desenfoque detrás del texto es parte de Pro.",
+  precio_por_sucursal_no_permitido: "Los precios distintos por sucursal son parte de Pro.",
 };
 
 const esSlugConocido = (m: string): m is SlugErrorDb => m in MENSAJES;

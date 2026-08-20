@@ -1,13 +1,15 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import MenuPublico from "@/pages/MenuPublico";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
-import { menuExiste } from "@/lib/menuExiste";
+import { obtenerMenuPublico } from "@/hooks/useMenuPublico";
 
 export const Route = createFileRoute("/$slug/")({
-  // El loader corre en el servidor: un slug inexistente responde 404 de verdad,
-  // no un 200 con el esqueleto de carga dentro.
+  // El menú se arma en el servidor. Dos razones: un slug inexistente responde un
+  // 404 de verdad, y la carta viaja en el HTML inicial, así que Google la indexa.
   loader: async ({ params }) => {
-    if (!(await menuExiste(params.slug))) throw notFound();
+    const menu = await obtenerMenuPublico(params.slug);
+    if (!menu) throw notFound();
+    return menu;
   },
   component: RouteComponent,
   notFoundComponent: MenuNoEncontrado,
@@ -15,5 +17,5 @@ export const Route = createFileRoute("/$slug/")({
 
 function RouteComponent() {
   const { slug } = Route.useParams();
-  return <MenuPublico slug={slug} />;
+  return <MenuPublico slug={slug} inicial={Route.useLoaderData()} />;
 }

@@ -213,6 +213,64 @@
 }
 
 /*
+ * Tira horizontal de categorías. En escritorio lleva una barra fina, teñida con
+ * el color del menú del tenant. En móvil se oculta: ahí el gesto es táctil y una
+ * barra visible solo estorba.
+ *
+ * `pointer: coarse` distingue dedo de ratón mejor que el ancho de pantalla: una
+ * tablet grande sigue siendo táctil.
+ */
+@layer components {
+  .tira-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--menu-texto, #0b0b0f) 22%, transparent) transparent;
+  }
+
+  .tira-scroll > * {
+    scroll-snap-align: start;
+  }
+
+  .tira-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .tira-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .tira-scroll::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--menu-texto, #0b0b0f) 20%, transparent);
+  }
+
+  .tira-scroll::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--menu-texto, #0b0b0f) 38%, transparent);
+  }
+
+  /* Sobre foto o video: la barra oscura desaparecería. */
+  .tira-scroll-claro {
+    scrollbar-color: rgb(255 255 255 / 0.35) transparent;
+  }
+
+  .tira-scroll-claro::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 0.35);
+  }
+
+  @media (pointer: coarse) {
+    .tira-scroll {
+      scrollbar-width: none;
+    }
+
+    .tira-scroll::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+/*
  * Entrada del hero en CSS puro, no en Framer Motion.
  * Framer renderiza opacity:0 en el SSR y solo lo revela al hidratar: si el bundle
  * falla, el hero queda invisible. Con @keyframes el texto es visible aunque el JS

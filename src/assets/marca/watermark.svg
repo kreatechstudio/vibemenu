@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 36" width="200" height="36">
+  <g transform="translate(0,4) scale(0.28)" opacity="0.55">
+    <rect x="8" y="8" width="38" height="38" rx="8" fill="#0B0B0F" opacity="1"></rect>
+    <rect x="54" y="8" width="38" height="38" rx="8" fill="#0B0B0F" opacity="1"></rect>
+    <rect x="8" y="54" width="38" height="38" rx="8" fill="none" stroke="#0B0B0F" stroke-width="4.5" opacity="1"></rect>
+    <rect x="60" y="60" width="26" height="26" rx="6" fill="#0B0B0F" opacity="0.55" transform="rotate(45 73 73)"></rect>
+  </g>
+  <text x="34" y="24" font-family="Inter, sans-serif" font-weight="500" font-size="13" fill="#0B0B0F" opacity="0.55">Hecho con Vibemenu</text>
+</svg>

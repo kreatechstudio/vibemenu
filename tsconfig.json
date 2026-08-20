@@ -5,7 +5,9 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    // "bun" es solo para los *.test.ts, que corren con `bun test`.
+    // Sin esto, tsc no conoce el módulo "bun:test" y el typecheck del repo falla.
+    "types": ["vite/client", "bun"],
 
     /* Bundler mode */
     "moduleResolution": "Bundler",

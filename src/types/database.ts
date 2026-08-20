@@ -155,6 +155,9 @@ export type Database = {
           permite_color_modificadores: boolean;
           modos_imagen_permitidos: string[];
           permite_desenfoque: boolean;
+          /* Migración 005 — QR imprimible escalonado. */
+          qr_color: boolean;
+          qr_avanzado: boolean;
         };
         Insert: {
           formatos_permitidos?: string[];
@@ -177,6 +180,8 @@ export type Database = {
           permite_color_modificadores?: boolean;
           modos_imagen_permitidos?: string[];
           permite_desenfoque?: boolean;
+          qr_color?: boolean;
+          qr_avanzado?: boolean;
         };
         Update: {
           formatos_permitidos?: string[];
@@ -201,6 +206,21 @@ export type Database = {
           permite_desenfoque?: boolean;
         };
         Relationships: [];
+      };
+      /* Migración 005. Sin tenant_id: se deriva de `productos`. */
+      precios_sucursal: {
+        Row: { created_at: string; precio: number; producto_id: string; sucursal_id: string };
+        Insert: { created_at?: string; precio: number; producto_id: string; sucursal_id: string };
+        Update: {
+          created_at?: string;
+          precio?: number;
+          producto_id?: string;
+          sucursal_id?: string;
+        };
+        Relationships: [
+          Rel<"precios_sucursal_producto_id_fkey", "producto_id", "productos">,
+          Rel<"precios_sucursal_sucursal_id_fkey", "sucursal_id", "sucursales">,
+        ];
       };
       producto_modificadores: {
         Row: { grupo_id: string; producto_id: string };
@@ -275,6 +295,8 @@ export type Database = {
           created_at: string;
           direccion: string | null;
           id: string;
+          /* Migración 004 */
+          maps_url: string | null;
           nombre: string;
           slug: string;
           telefono: string | null;
@@ -287,6 +309,7 @@ export type Database = {
           created_at?: string;
           direccion?: string | null;
           id?: string;
+          maps_url?: string | null;
           nombre: string;
           slug: string;
           telefono?: string | null;
@@ -299,6 +322,7 @@ export type Database = {
           created_at?: string;
           direccion?: string | null;
           id?: string;
+          maps_url?: string | null;
           nombre?: string;
           slug?: string;
           telefono?: string | null;
@@ -380,6 +404,8 @@ export type Database = {
       tenants: {
         Row: {
           created_at: string;
+          /* Migración 004 */
+          descripcion: string | null;
           estado: string;
           formato_activo: string;
           formatos_desbloqueados: string[];
@@ -395,9 +421,15 @@ export type Database = {
           trial_iniciado_at: string;
           updated_at: string;
           whatsapp: string | null;
+          /* Migración 007 — redes sociales del negocio. */
+          facebook_url: string | null;
+          instagram_url: string | null;
+          tiktok_url: string | null;
+          google_reviews_url: string | null;
         };
         Insert: {
           created_at?: string;
+          descripcion?: string | null;
           estado?: string;
           formato_activo?: string;
           formatos_desbloqueados?: string[];
@@ -413,9 +445,14 @@ export type Database = {
           trial_iniciado_at?: string;
           updated_at?: string;
           whatsapp?: string | null;
+          facebook_url?: string | null;
+          instagram_url?: string | null;
+          tiktok_url?: string | null;
+          google_reviews_url?: string | null;
         };
         Update: {
           created_at?: string;
+          descripcion?: string | null;
           estado?: string;
           formato_activo?: string;
           formatos_desbloqueados?: string[];
@@ -431,8 +468,40 @@ export type Database = {
           trial_iniciado_at?: string;
           updated_at?: string;
           whatsapp?: string | null;
+          facebook_url?: string | null;
+          instagram_url?: string | null;
+          tiktok_url?: string | null;
+          google_reviews_url?: string | null;
         };
         Relationships: [Rel<"tenants_plan_id_fkey", "plan_id", "planes">];
+      };
+      /* Migración 007. Un contador por (tenant, sucursal, día); `sucursal_id` null = menú general. */
+      visitas_menu: {
+        Row: {
+          id: number;
+          tenant_id: string;
+          sucursal_id: string | null;
+          dia: string;
+          visitas: number;
+        };
+        Insert: {
+          id?: number;
+          tenant_id: string;
+          sucursal_id?: string | null;
+          dia: string;
+          visitas?: number;
+        };
+        Update: {
+          id?: number;
+          tenant_id?: string;
+          sucursal_id?: string | null;
+          dia?: string;
+          visitas?: number;
+        };
+        Relationships: [
+          Rel<"visitas_menu_tenant_id_fkey", "tenant_id", "tenants">,
+          Rel<"visitas_menu_sucursal_id_fkey", "sucursal_id", "sucursales">,
+        ];
       };
     };
     Views: Record<never, never>;
@@ -448,6 +517,11 @@ export type Database = {
         Returns: string[];
       };
       pertenece_a_tenant: { Args: { check_tenant_id: string }; Returns: boolean };
+      /* Migración 007. La llama el menú público, sin sesión. */
+      registrar_visita: {
+        Args: { p_tenant_id: string; p_sucursal_id?: string | null };
+        Returns: undefined;
+      };
       sucursal_esta_abierta: { Args: { p_sucursal_id: string }; Returns: boolean };
     };
     Enums: Record<never, never>;
@@ -471,6 +545,7 @@ export type Sucursal = Tables<"sucursales">;
 export type Horario = Tables<"horarios">;
 export type Categoria = Tables<"categorias">;
 export type Producto = Tables<"productos">;
+export type PrecioSucursal = Tables<"precios_sucursal">;
 export type GrupoModificador = Tables<"grupos_modificadores">;
 export type OpcionModificador = Tables<"opciones_modificador">;
 export type Suscripcion = Tables<"suscripciones">;

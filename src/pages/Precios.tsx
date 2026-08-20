@@ -11,6 +11,8 @@ import {
   modosImagenDelPlan,
   permiteColorModificadores,
   permiteDesenfoque,
+  permiteQrAvanzado,
+  permiteQrColor,
   precioDelPlan,
   textoLimite,
 } from "@/lib/plan";
@@ -49,7 +51,7 @@ const CARACTERISTICAS: Fila[] = [
   },
   {
     grupo: "Tu menú",
-    etiqueta: "Menú independiente por sucursal",
+    etiqueta: "Menú y precios propios por sucursal",
     valor: (p) => p.menu_independiente_por_sucursal,
   },
   { grupo: "Tu menú", etiqueta: "Sin marca de agua", valor: (p) => !p.marca_agua },
@@ -81,6 +83,22 @@ const CARACTERISTICAS: Fila[] = [
   },
 
   {
+    grupo: "Tu QR",
+    etiqueta: "QR imprimible con tu nombre",
+    valor: () => true,
+  },
+  {
+    grupo: "Tu QR",
+    etiqueta: "Los colores de tu menú",
+    valor: (p) => permiteQrColor(p),
+  },
+  {
+    grupo: "Tu QR",
+    etiqueta: "Tu tipografía, tu logo y tu foto",
+    valor: (p) => permiteQrAvanzado(p),
+  },
+
+  {
     grupo: "Tu equipo",
     etiqueta: "Usuarios del panel",
     valor: (p) => textoLimite(p.limite_usuarios),
@@ -89,7 +107,7 @@ const CARACTERISTICAS: Fila[] = [
   { grupo: "Tu equipo", etiqueta: "Dominio propio", valor: (p) => p.permite_dominio_propio },
 ];
 
-const GRUPOS = ["Tu menú", "Diseño", "Tu equipo"] as const;
+const GRUPOS = ["Tu menú", "Diseño", "Tu QR", "Tu equipo"] as const;
 
 function Celda({ valor }: { valor: string | boolean }) {
   if (typeof valor === "boolean") {

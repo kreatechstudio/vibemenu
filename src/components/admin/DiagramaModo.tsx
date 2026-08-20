@@ -37,19 +37,26 @@ export default function DiagramaModo({
 
   if (modo === "marco") {
     return (
-      <div
-        className="grid aspect-[4/3] w-full place-items-center overflow-hidden rounded-lg border p-3"
-        style={fondo}
-        aria-hidden
-      >
-        {/* La carta va en una tarjeta al centro: la foto solo enmarca. */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border" aria-hidden>
+        {/* Con desenfoque se difumina LA FOTO, no la tarjeta. Por eso la foto va
+            en su propia capa: un `filter` en el padre se llevaría la carta también. */}
         <div
-          className="w-full space-y-1.5 rounded-md p-3 shadow-sm"
-          style={{ background: "var(--menu-fondo, #FBF7F2)" }}
-        >
-          <div className="h-1.5 w-1/2 rounded-full bg-black/25" />
-          <div className="h-1.5 w-full rounded-full bg-black/15" />
-          <div className="h-1.5 w-4/5 rounded-full bg-black/15" />
+          className={`absolute inset-0 ${desenfoque ? "scale-110 blur-[6px]" : ""}`}
+          style={fondo}
+        />
+        <div className="absolute inset-0 grid place-items-center p-3">
+          <div
+            className={`w-full space-y-1.5 rounded-md p-3 shadow-sm ${desenfoque ? "backdrop-blur-[2px]" : ""}`}
+            style={{
+              background: desenfoque
+                ? "color-mix(in srgb, var(--menu-fondo, #FBF7F2) 78%, transparent)"
+                : "var(--menu-fondo, #FBF7F2)",
+            }}
+          >
+            <div className="h-1.5 w-1/2 rounded-full bg-black/25" />
+            <div className="h-1.5 w-full rounded-full bg-black/15" />
+            <div className="h-1.5 w-4/5 rounded-full bg-black/15" />
+          </div>
         </div>
       </div>
     );

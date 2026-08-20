@@ -8,7 +8,15 @@ import { cn } from "@/lib/utils";
  * Adaptado: import desde framer-motion en vez de "motion/react", locale es-MX en
  * vez de en-US, y sin color de texto por defecto (lo pone quien lo usa).
  *
- * Uso en Vibemenu: metricas del panel admin (total productos, sucursales).
+ * Uso en Vibemenu: metricas del panel admin (total productos, sucursales, visitas).
+ *
+ * El original renderiza `{startValue}` como hijo y luego escribe el numero a mano
+ * en `ref.current.textContent`. Eso se rompe en cuanto el padre vuelve a pintar
+ * por cualquier motivo — un refetch de react-query al volver a la pestana, por
+ * ejemplo: React reescribe el hijo, deja "0" en pantalla, y el spring ya no tiene
+ * nada que animar porque su valor no cambio. El dashboard mostraba 0 productos
+ * teniendo 2. Aqui el hijo es SIEMPRE el valor actual del spring, asi que un
+ * repintado escribe exactamente lo que ya se veia.
  */
 interface NumberTickerProps extends ComponentPropsWithoutRef<"span"> {
   value: number;
@@ -17,6 +25,12 @@ interface NumberTickerProps extends ComponentPropsWithoutRef<"span"> {
   delay?: number;
   decimalPlaces?: number;
 }
+
+const formatear = (n: number, decimales: number) =>
+  Intl.NumberFormat("es-MX", {
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  }).format(Number(n.toFixed(decimales)));
 
 export function NumberTicker({
   value,
@@ -49,19 +63,14 @@ export function NumberTicker({
   useEffect(
     () =>
       springValue.on("change", (latest) => {
-        if (ref.current) {
-          ref.current.textContent = Intl.NumberFormat("es-MX", {
-            minimumFractionDigits: decimalPlaces,
-            maximumFractionDigits: decimalPlaces,
-          }).format(Number(latest.toFixed(decimalPlaces)));
-        }
+        if (ref.current) ref.current.textContent = formatear(latest, decimalPlaces);
       }),
     [springValue, decimalPlaces],
   );
 
   return (
     <span ref={ref} className={cn("inline-block tabular-nums", className)} {...props}>
-      {startValue}
+      {formatear(springValue.get(), decimalPlaces)}
     </span>
   );
 }

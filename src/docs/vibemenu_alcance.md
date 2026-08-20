@@ -59,6 +59,37 @@ La segunda palanca de venta, además de los formatos. Todo vive en `tenants.tema
 
 El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción `fuentes_permitidas_validas` de la tabla. Agregar una exige tocar los dos lados y el `<link>` de Google Fonts en `__root.tsx`.
 
+## QR imprimible por plan
+
+La tarjeta del QR reutiliza el tema del menú: no hay un editor de QR aparte. Lo que el dueño elige en **Diseño** es lo que sale impreso.
+
+| Capacidad | Free | Basic | Pro | Enterprise | Columna en `planes` |
+|---|---|---|---|---|---|
+| Tarjeta con el nombre del negocio y de la sucursal | ✅ | ✅ | ✅ | ✅ | — |
+| Colores del tema (fondo y código) | ❌ | ✅ | ✅ | ✅ | `qr_color` |
+| Tipografía del tema, logo dentro del código, imagen de fondo | ❌ | ❌ | ✅ | ✅ | `qr_avanzado` |
+| «Hecho con Vibemenu» al pie | sí | no | no | no | `marca_agua` |
+
+La descripción del negocio es opcional en la tarjeta y se corta a dos renglones. La ruta se imprime abajo para poder teclearla sin escanear: si no cabe, primero se achica y solo entonces se parte después de una barra.
+
+**Dos reglas duras que ningún plan negocia.** El código se dibuja siempre sobre un panel blanco opaco: la imagen de fondo va detrás de la tarjeta, nunca detrás del código. Y si el color de acento del tenant no llega a 4:1 de contraste contra ese panel, el código se imprime en negro y se le avisa al dueño — un QR con los colores correctos que ningún celular lee no sirve de nada. Cuando el logo va al centro, el código se genera con corrección de errores nivel `H`.
+
+Las medidas de la tarjeta (1000×1400) viven una sola vez, en `src/lib/qr.ts`. La vista previa las usa escalando el DOM y la exportación a PNG las usa pintando un canvas: lo que se ve es lo que se imprime.
+
+## Redes sociales y visitas (migración 007)
+
+Cuatro enlaces en `tenants`: Facebook, Instagram, TikTok y las reseñas de Google. Van en el negocio, no en la sucursal — una cafetería tiene un Instagram aunque tenga cinco locales. El mapa sí es de cada sucursal (`sucursales.maps_url`). Se pintan como iconos en la cabecera del menú con `--menu-primario`, así que combinan solos con el tema; nunca con el azul de Facebook ni el degradado de Instagram.
+
+**Visitas.** `visitas_menu` guarda un contador por `(tenant, sucursal, día)`, no una fila por visita: eso crece sin techo y no aporta nada que el contador no diga. El comensal no tiene sesión, así que no puede escribir en la tabla; el único camino es la función `registrar_visita`, SECURITY DEFINER, que valida que la sucursal sea del tenant. Se llama **desde el navegador**, nunca desde el loader del servidor: ahí contaríamos los prefetch del router y cada rastreador que pase. Una visita = una sesión del navegador por menú; recargar la página no cuenta otra vez.
+
+El día se calcula con la zona horaria de la sucursal. Con `current_date` a secas, un negocio en México vería las visitas de las 18:00 contadas al día siguiente, que es UTC.
+
+## Precios distintos por sucursal
+
+Un producto, un precio base en `productos.precio`, y cero o más filas en `precios_sucursal (producto_id, sucursal_id, precio)`. Si una sucursal no tiene fila, cobra el precio base. **No se duplica el producto por local**: no hay dos fichas que mantener sincronizadas.
+
+Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el trigger `validar_precio_sucursal` además exige que el producto y la sucursal sean del mismo tenant. Un producto exclusivo de una sucursal no admite precios por sucursal: su precio ya es el de su local.
+
 **Regla de precio congelado:** el precio se fija al momento en que el tenant se suscribe a un plan (`suscripciones.precio_congelado_usd/mxn`, ambas monedas). Si en el futuro se sube el precio de lista en la tabla `planes`, los tenants ya suscritos NO se ven afectados — solo aplica a nuevas altas o upgrades.
 
 **Historial de suscripciones:** `suscripciones` guarda una fila por periodo de plan, no una sola fila mutable. Un índice único parcial garantiza una sola fila `'activa'` por tenant; el resto queda como historial visible para el owner. Los recibos fiscales son fase 2 (tabla `pagos` alimentada por `invoice.paid`).
@@ -98,7 +129,9 @@ El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción
 
 ### QR y compartir
 - [ ] Generación de QR on-the-fly a partir del slug
-- [ ] Descarga en PNG/SVG para imprimir
+- [ ] Un QR por sucursal, apuntando a `/:slug/sucursal/:sucursalSlug`
+- [ ] Tarjeta imprimible con el tema del tenant, escalonada por plan (`qr_color`, `qr_avanzado`)
+- [ ] Descarga: PNG de la tarjeta completa, SVG del código solo
 
 ### Landing pública de Vibemenu
 - [ ] Landing de venta del servicio (hero, planes, CTA registro)
@@ -128,9 +161,10 @@ El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción
 | `/admin` | Dashboard | Resumen del tenant | Owner/Encargado |
 | `/admin/menu` | Gestión de menú | Categorías y productos | Owner/Encargado |
 | `/admin/modificadores` | Modificadores | Catálogo de grupos y opciones | Owner/Encargado |
-| `/admin/sucursales` | Sucursales | CRUD + horarios | Owner/Encargado |
-| `/admin/diseño` | Diseño | Formato activo, colores, tipografía | Owner/Encargado |
-| `/admin/qr` | QR | Descarga de código QR | Owner/Encargado |
+| `/admin/sucursales` | Sucursales | CRUD + horarios + enlace de Google Maps | Owner/Encargado |
+| `/admin/empresa` | Mi negocio | Nombre, slug, logo, descripción, contacto | Owner/Encargado |
+| `/admin/diseno` | Diseño | Formato activo, colores, tipografía | Owner/Encargado |
+| `/admin/qr` | QR | Tarjeta imprimible, un QR por sucursal | Owner/Encargado |
 | `/admin/equipo` | Equipo | Multi-usuario (Pro/Enterprise) | Owner |
 | `/admin/suscripcion` | Suscripción | Plan actual, Stripe Customer Portal | Owner |
 

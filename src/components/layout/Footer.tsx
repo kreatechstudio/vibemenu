@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { UtensilsCrossed } from "lucide-react";
+import Logo from "@/components/marca/Logo";
 import { FOOTER } from "@/lib/copy";
 
 export default function Footer() {
@@ -7,11 +7,8 @@ export default function Footer() {
     <footer className="mt-auto border-t bg-vm-bg-soft">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-[2fr_1fr_1fr] md:px-10">
         <div className="max-w-sm">
-          <Link to="/" className="flex items-center gap-2">
-            <UtensilsCrossed className="size-5 text-vm-primary" aria-hidden />
-            <span className="font-display text-lg font-bold tracking-tight text-vm-ink">
-              Vibemenu
-            </span>
+          <Link to="/" aria-label="Vibemenu, inicio">
+            <Logo />
           </Link>
           <p className="mt-3 font-display text-base font-bold text-vm-ink">{FOOTER.tagline}</p>
           <p className="mt-2 text-sm leading-relaxed text-vm-body">{FOOTER.descripcion}</p>

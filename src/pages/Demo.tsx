@@ -99,7 +99,11 @@ export default function Demo() {
                 compacta={formato === "instagram"}
                 abiertaFija
               />
-              <Formato categorias={CATEGORIAS_DEMO} />
+              <Formato
+                categorias={CATEGORIAS_DEMO}
+                logoUrl={TENANT_DEMO.logo_url}
+                inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
+              />
             </div>
           )}
         </motion.div>

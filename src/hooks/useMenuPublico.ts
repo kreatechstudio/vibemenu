@@ -27,110 +27,139 @@ export type MenuPublico = {
 
 /**
  * Menu publico de un tenant, por slug. Se lee sin sesion: todas estas tablas
- * tienen `select using (true)` en RLS.
+ * tienen `select using (true)` en RLS, asi que tambien funciona desde el servidor.
  *
  * Menu compartido vs. independiente: `sucursal_id` nullable en `categorias` y
  * `productos`. NULL = visible en todas las sucursales. Un uuid = exclusivo de esa.
- * Cuando hay sucursal activa se traen las dos cosas: las suyas y las compartidas.
+ * Cuando hay sucursal activa se traen las dos cosas: las suyas y las compartidas,
+ * y el precio que se muestra es el de `precios_sucursal` si esa sucursal lo fijo.
  *
- * Devuelve null si el slug no existe, para que la pagina muestre
- * "Este menú no existe o ya no está disponible."
+ * Devuelve null si el slug (o la sucursal) no existe. El loader de la ruta lo
+ * convierte en un 404 de verdad.
  */
-export function useMenuPublico(slug: string, sucursalSlug?: string) {
+export async function obtenerMenuPublico(
+  slug: string,
+  sucursalSlug?: string,
+): Promise<MenuPublico | null> {
+  const { data: tenantRow, error: errorTenant } = await supabase
+    .from("tenants")
+    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (errorTenant) throw errorTenant;
+  if (!tenantRow) return null;
+
+  const { plan, ...tenant } = tenantRow;
+
+  const { data: sucursales, error: errorSuc } = await supabase
+    .from("sucursales")
+    .select("*")
+    .eq("tenant_id", tenant.id)
+    .eq("activa", true)
+    .order("created_at");
+  if (errorSuc) throw errorSuc;
+
+  const sucursalActiva = sucursalSlug
+    ? (sucursales.find((s) => s.slug === sucursalSlug) ?? null)
+    : null;
+
+  // Si se pidio una sucursal que no existe, el menu tampoco existe.
+  if (sucursalSlug && !sucursalActiva) return null;
+
+  const visiblesEn = <T extends { sucursal_id: string | null }>(filas: T[]) =>
+    sucursalActiva
+      ? filas.filter((f) => f.sucursal_id === null || f.sucursal_id === sucursalActiva.id)
+      : filas;
+
+  const [catRes, prodRes, gruposRes, vinculosRes, preciosRes] = await Promise.all([
+    supabase.from("categorias").select("*").eq("tenant_id", tenant.id).order("orden"),
+    supabase
+      .from("productos")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .eq("activo", true)
+      .order("orden"),
+    supabase
+      .from("grupos_modificadores")
+      .select("*, opciones:opciones_modificador(*)")
+      .eq("tenant_id", tenant.id)
+      .order("orden"),
+    supabase.from("producto_modificadores").select("producto_id, grupo_id"),
+    // Los precios sobrescritos solo existen dentro de una sucursal concreta.
+    sucursalActiva
+      ? supabase
+          .from("precios_sucursal")
+          .select("producto_id, precio")
+          .eq("sucursal_id", sucursalActiva.id)
+      : null,
+  ]);
+
+  for (const r of [catRes, prodRes, gruposRes, vinculosRes]) {
+    if (r.error) throw r.error;
+  }
+  if (preciosRes?.error) throw preciosRes.error;
+
+  // Sin fila propia, la sucursal cobra `productos.precio`.
+  const precioEnSucursal = new Map(
+    (preciosRes?.data ?? []).map((f) => [f.producto_id, f.precio] as const),
+  );
+
+  const gruposPorId = new Map(
+    (gruposRes.data ?? []).map((g) => [
+      g.id,
+      { ...g, opciones: [...g.opciones].sort((a, b) => a.orden - b.orden) },
+    ]),
+  );
+
+  // producto_modificadores no tiene tenant_id; se filtra por los grupos del tenant.
+  const gruposDeProducto = new Map<string, GrupoConOpciones[]>();
+  for (const v of vinculosRes.data ?? []) {
+    const grupo = gruposPorId.get(v.grupo_id);
+    if (!grupo) continue;
+    const lista = gruposDeProducto.get(v.producto_id) ?? [];
+    lista.push(grupo);
+    gruposDeProducto.set(v.producto_id, lista);
+  }
+
+  const productos = visiblesEn(prodRes.data ?? []);
+  const categorias = visiblesEn(catRes.data ?? []);
+
+  const categoriasConProductos: CategoriaConProductos[] = categorias
+    .map((c) => ({
+      ...c,
+      productos: productos
+        .filter((p) => p.categoria_id === c.id)
+        .map((p) => ({
+          ...p,
+          precio: precioEnSucursal.get(p.id) ?? p.precio,
+          grupos: gruposDeProducto.get(p.id) ?? [],
+        })),
+    }))
+    .filter((c) => c.productos.length > 0);
+
+  return {
+    tenant: tenant as Tenant,
+    formato: tenant.formato_activo as FormatoMenu,
+    marcaAgua: plan?.marca_agua ?? true,
+    menuIndependiente: plan?.menu_independiente_por_sucursal ?? false,
+    sucursales: sucursales ?? [],
+    sucursalActiva,
+    categorias: categoriasConProductos,
+  };
+}
+
+/**
+ * `inicial` lo trae el loader de la ruta. Sin eso, el SSR sirve el esqueleto y el
+ * menu del negocio no existe en el HTML: invisible para Google. Para un producto
+ * que vende "tu menu digital", eso es regalar el posicionamiento del cliente.
+ */
+export function useMenuPublico(slug: string, sucursalSlug?: string, inicial?: MenuPublico) {
   return useQuery({
     queryKey: ["menu-publico", slug, sucursalSlug ?? null],
     staleTime: 60_000,
-    queryFn: async (): Promise<MenuPublico | null> => {
-      const { data: tenantRow, error: errorTenant } = await supabase
-        .from("tenants")
-        .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
-        .eq("slug", slug)
-        .maybeSingle();
-
-      if (errorTenant) throw errorTenant;
-      if (!tenantRow) return null;
-
-      const { plan, ...tenant } = tenantRow;
-
-      const { data: sucursales, error: errorSuc } = await supabase
-        .from("sucursales")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .eq("activa", true)
-        .order("created_at");
-      if (errorSuc) throw errorSuc;
-
-      const sucursalActiva = sucursalSlug
-        ? (sucursales.find((s) => s.slug === sucursalSlug) ?? null)
-        : null;
-
-      // Si se pidio una sucursal que no existe, el menu tampoco existe.
-      if (sucursalSlug && !sucursalActiva) return null;
-
-      const visiblesEn = <T extends { sucursal_id: string | null }>(filas: T[]) =>
-        sucursalActiva
-          ? filas.filter((f) => f.sucursal_id === null || f.sucursal_id === sucursalActiva.id)
-          : filas;
-
-      const [catRes, prodRes, gruposRes, vinculosRes] = await Promise.all([
-        supabase.from("categorias").select("*").eq("tenant_id", tenant.id).order("orden"),
-        supabase
-          .from("productos")
-          .select("*")
-          .eq("tenant_id", tenant.id)
-          .eq("activo", true)
-          .order("orden"),
-        supabase
-          .from("grupos_modificadores")
-          .select("*, opciones:opciones_modificador(*)")
-          .eq("tenant_id", tenant.id)
-          .order("orden"),
-        supabase.from("producto_modificadores").select("producto_id, grupo_id"),
-      ]);
-
-      for (const r of [catRes, prodRes, gruposRes, vinculosRes]) {
-        if (r.error) throw r.error;
-      }
-
-      const gruposPorId = new Map(
-        (gruposRes.data ?? []).map((g) => [
-          g.id,
-          { ...g, opciones: [...g.opciones].sort((a, b) => a.orden - b.orden) },
-        ]),
-      );
-
-      // producto_modificadores no tiene tenant_id; se filtra por los grupos del tenant.
-      const gruposDeProducto = new Map<string, GrupoConOpciones[]>();
-      for (const v of vinculosRes.data ?? []) {
-        const grupo = gruposPorId.get(v.grupo_id);
-        if (!grupo) continue;
-        const lista = gruposDeProducto.get(v.producto_id) ?? [];
-        lista.push(grupo);
-        gruposDeProducto.set(v.producto_id, lista);
-      }
-
-      const productos = visiblesEn(prodRes.data ?? []);
-      const categorias = visiblesEn(catRes.data ?? []);
-
-      const categoriasConProductos: CategoriaConProductos[] = categorias
-        .map((c) => ({
-          ...c,
-          productos: productos
-            .filter((p) => p.categoria_id === c.id)
-            .map((p) => ({ ...p, grupos: gruposDeProducto.get(p.id) ?? [] })),
-        }))
-        .filter((c) => c.productos.length > 0);
-
-      return {
-        tenant: tenant as Tenant,
-        formato: tenant.formato_activo as FormatoMenu,
-        marcaAgua: plan?.marca_agua ?? true,
-        menuIndependiente: plan?.menu_independiente_por_sucursal ?? false,
-        sucursales: sucursales ?? [],
-        sucursalActiva,
-        categorias: categoriasConProductos,
-      };
-    },
+    initialData: inicial,
+    queryFn: () => obtenerMenuPublico(slug, sucursalSlug),
   });
 }
 

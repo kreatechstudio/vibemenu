@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, Navigate, useLocation } from "@tanstack/react-router";
 import {
+  Building2,
   ExternalLink,
   LayoutDashboard,
   Link2,
@@ -16,6 +17,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import Logo from "@/components/marca/Logo";
 import { useSesion, cerrarSesion } from "@/hooks/useSesion";
 import { useTenantActual, type ContextoTenant } from "@/hooks/useTenantActual";
 import { NOMBRE_FORMATO, NOMBRE_PLAN, type FormatoMenu, type NombrePlan } from "@/types/database";
@@ -34,6 +36,7 @@ const NAV: ItemNav[] = [
   { a: "/admin/menu", etiqueta: "Mi carta", icono: UtensilsCrossed },
   { a: "/admin/modificadores", etiqueta: "Modificadores", icono: SlidersHorizontal },
   { a: "/admin/sucursales", etiqueta: "Sucursales", icono: Store },
+  { a: "/admin/empresa", etiqueta: "Mi negocio", icono: Building2 },
   { a: "/admin/diseno", etiqueta: "Diseño", icono: Palette },
   { a: "/admin/qr", etiqueta: "QR", icono: QrCode },
   {
@@ -64,9 +67,8 @@ function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => vo
 
   return (
     <div className="flex h-full flex-col bg-vm-bg-soft">
-      <div className="flex items-center gap-2 px-5 py-5">
-        <UtensilsCrossed className="size-5 text-vm-primary" aria-hidden />
-        <span className="font-display text-lg font-bold tracking-tight text-vm-ink">Vibemenu</span>
+      <div className="px-5 py-5">
+        <Logo tamano="sm" />
       </div>
 
       <nav className="flex-1 space-y-1 px-3">

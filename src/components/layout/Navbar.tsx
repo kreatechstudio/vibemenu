@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Menu, UtensilsCrossed, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import Logo from "@/components/marca/Logo";
 import { NAVBAR } from "@/lib/copy";
 import { useSesion } from "@/hooks/useSesion";
 import { cn } from "@/lib/utils";
@@ -38,11 +39,8 @@ export default function Navbar() {
       )}
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-10">
-        <Link to="/" className="flex items-center gap-2">
-          <UtensilsCrossed className="size-5 text-vm-primary" aria-hidden />
-          <span className="font-display text-lg font-bold tracking-tight text-vm-ink">
-            Vibemenu
-          </span>
+        <Link to="/" aria-label="Vibemenu, inicio">
+          <Logo />
         </Link>
 
         <ul className="hidden items-center gap-8 md:flex">

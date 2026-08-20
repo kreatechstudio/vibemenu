@@ -17,9 +17,15 @@ export const TENANT_DEMO: Tenant = {
   nombre_negocio: "Tacos El Primo",
   slug: "tacos-el-primo",
   giro: "Taquería",
+  descripcion: "Tacos al carbón y parrilladas desde 1998. Masa de maíz azul molida a diario.",
   logo_url: null,
   whatsapp: null,
   telefono: null,
+  // La demo enseña los iconos de redes: es media pantalla de la cabecera.
+  facebook_url: "https://facebook.com/tacoselprimo",
+  instagram_url: "https://instagram.com/tacoselprimo",
+  tiktok_url: "https://tiktok.com/@tacoselprimo",
+  google_reviews_url: "https://maps.google.com/?cid=0",
   formato_activo: "pinterest",
   formatos_desbloqueados: ["clasico", "pinterest", "instagram", "tiktok"],
   tema: {
@@ -43,6 +49,7 @@ export const SUCURSAL_DEMO: Sucursal = {
   nombre: "Centro",
   slug: "centro",
   direccion: "5 de Mayo 120, Centro Histórico",
+  maps_url: null,
   telefono: null,
   whatsapp: null,
   timezone: "America/Mexico_City",
