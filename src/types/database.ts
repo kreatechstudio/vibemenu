@@ -132,6 +132,43 @@ export type Database = {
           Rel<"opciones_modificador_grupo_id_fkey", "grupo_id", "grupos_modificadores">,
         ];
       };
+      /* Migración 010 — verificada contra el schema real via MCP de Supabase. */
+      pagos: {
+        Row: {
+          fecha_pago: string;
+          id: string;
+          moneda: string;
+          monto: number;
+          stripe_hosted_invoice_url: string | null;
+          stripe_invoice_id: string;
+          suscripcion_id: string | null;
+          tenant_id: string;
+        };
+        Insert: {
+          fecha_pago?: string;
+          id?: string;
+          moneda: string;
+          monto: number;
+          stripe_hosted_invoice_url?: string | null;
+          stripe_invoice_id: string;
+          suscripcion_id?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          fecha_pago?: string;
+          id?: string;
+          moneda?: string;
+          monto?: number;
+          stripe_hosted_invoice_url?: string | null;
+          stripe_invoice_id?: string;
+          suscripcion_id?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          Rel<"pagos_suscripcion_id_fkey", "suscripcion_id", "suscripciones">,
+          Rel<"pagos_tenant_id_fkey", "tenant_id", "tenants">,
+        ];
+      };
       planes: {
         Row: {
           formatos_permitidos: string[];
@@ -331,6 +368,13 @@ export type Database = {
           whatsapp?: string | null;
         };
         Relationships: [Rel<"sucursales_tenant_id_fkey", "tenant_id", "tenants">];
+      };
+      /* Migración 009 — verificada contra el schema real via MCP de Supabase. */
+      super_admins: {
+        Row: { created_at: string; user_id: string };
+        Insert: { created_at?: string; user_id: string };
+        Update: { created_at?: string; user_id?: string };
+        Relationships: [];
       };
       suscripciones: {
         Row: {
@@ -549,6 +593,8 @@ export type PrecioSucursal = Tables<"precios_sucursal">;
 export type GrupoModificador = Tables<"grupos_modificadores">;
 export type OpcionModificador = Tables<"opciones_modificador">;
 export type Suscripcion = Tables<"suscripciones">;
+export type Pago = Tables<"pagos">;
+export type SuperAdmin = Tables<"super_admins">;
 
 /* Uniones cerradas: el schema las guarda como text con CHECK. */
 export type FormatoMenu = "clasico" | "pinterest" | "instagram" | "tiktok";

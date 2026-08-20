@@ -145,9 +145,9 @@ function Cargando() {
 /**
  * Cascaron del panel. Es tambien el guard: sin sesion manda a /login.
  *
- * Un usuario autenticado sin tenant solo ocurre si se registro con confirmacion de
- * correo y perdio el borrador de localStorage antes de entrar. Se le explica en vez
- * de dejarlo en una pantalla rota.
+ * Un usuario autenticado sin tenant pasa por /onboarding: ocurre con Google (no hay
+ * paso previo donde llenar los datos del negocio) o con email si perdio el borrador
+ * de localStorage antes de confirmar su correo.
  */
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -163,13 +163,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="max-w-sm text-center">
           <h1 className="text-2xl text-vm-ink">Aún no tienes un menú</h1>
           <p className="mt-3 text-sm text-vm-body">
-            Tu cuenta existe, pero falta crear tu negocio. Vuelve a registrarlo con el mismo correo.
+            Tu cuenta existe, pero falta crear tu negocio.
           </p>
           <Link
-            to="/registro"
+            to="/onboarding"
             className="mt-6 inline-flex h-12 items-center rounded-lg bg-vm-primary px-6 text-sm font-medium text-white"
           >
-            Crear mi menú
+            Terminar de configurar
           </Link>
         </div>
       </main>

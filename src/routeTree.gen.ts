@@ -9,13 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuperadminRouteImport } from './routes/superadmin'
+import { Route as RestablecerRouteImport } from './routes/restablecer'
 import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as RecuperarRouteImport } from './routes/recuperar'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as PreciosRouteImport } from './routes/precios'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SlugIndexRouteImport } from './routes/$slug.index'
+import { Route as AuthCompletarRouteImport } from './routes/auth.completar'
 import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
 import { Route as AdminSucursalesRouteImport } from './routes/admin.sucursales'
 import { Route as AdminQrRouteImport } from './routes/admin.qr'
@@ -26,14 +33,39 @@ import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
 
+const SuperadminRoute = SuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestablecerRoute = RestablecerRouteImport.update({
+  id: '/restablecer',
+  path: '/restablecer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecuperarRoute = RecuperarRouteImport.update({
+  id: '/recuperar',
+  path: '/recuperar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PreciosRoute = PreciosRouteImport.update({
   id: '/precios',
   path: '/precios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -44,6 +76,11 @@ const LoginRoute = LoginRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +96,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const SlugIndexRoute = SlugIndexRouteImport.update({
   id: '/$slug/',
   path: '/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCompletarRoute = AuthCompletarRouteImport.update({
+  id: '/auth/completar',
+  path: '/auth/completar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSuscripcionRoute = AdminSuscripcionRouteImport.update({
@@ -110,10 +152,16 @@ const SlugSucursalSucursalSlugRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cookies': typeof CookiesRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/precios': typeof PreciosRoute
+  '/privacidad': typeof PrivacidadRoute
+  '/recuperar': typeof RecuperarRoute
   '/registro': typeof RegistroRoute
+  '/restablecer': typeof RestablecerRoute
+  '/superadmin': typeof SuperadminRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
@@ -122,16 +170,23 @@ export interface FileRoutesByFullPath {
   '/admin/qr': typeof AdminQrRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
+  '/auth/completar': typeof AuthCompletarRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cookies': typeof CookiesRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/precios': typeof PreciosRoute
+  '/privacidad': typeof PrivacidadRoute
+  '/recuperar': typeof RecuperarRoute
   '/registro': typeof RegistroRoute
+  '/restablecer': typeof RestablecerRoute
+  '/superadmin': typeof SuperadminRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
@@ -140,6 +195,7 @@ export interface FileRoutesByTo {
   '/admin/qr': typeof AdminQrRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
+  '/auth/completar': typeof AuthCompletarRoute
   '/$slug': typeof SlugIndexRoute
   '/admin': typeof AdminIndexRoute
   '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
@@ -147,10 +203,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cookies': typeof CookiesRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/precios': typeof PreciosRoute
+  '/privacidad': typeof PrivacidadRoute
+  '/recuperar': typeof RecuperarRoute
   '/registro': typeof RegistroRoute
+  '/restablecer': typeof RestablecerRoute
+  '/superadmin': typeof SuperadminRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
@@ -159,6 +221,7 @@ export interface FileRoutesById {
   '/admin/qr': typeof AdminQrRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
+  '/auth/completar': typeof AuthCompletarRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
@@ -167,10 +230,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cookies'
     | '/demo'
     | '/login'
+    | '/onboarding'
     | '/precios'
+    | '/privacidad'
+    | '/recuperar'
     | '/registro'
+    | '/restablecer'
+    | '/superadmin'
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
@@ -179,16 +248,23 @@ export interface FileRouteTypes {
     | '/admin/qr'
     | '/admin/sucursales'
     | '/admin/suscripcion'
+    | '/auth/completar'
     | '/$slug/'
     | '/admin/'
     | '/$slug/sucursal/$sucursalSlug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cookies'
     | '/demo'
     | '/login'
+    | '/onboarding'
     | '/precios'
+    | '/privacidad'
+    | '/recuperar'
     | '/registro'
+    | '/restablecer'
+    | '/superadmin'
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
@@ -197,16 +273,23 @@ export interface FileRouteTypes {
     | '/admin/qr'
     | '/admin/sucursales'
     | '/admin/suscripcion'
+    | '/auth/completar'
     | '/$slug'
     | '/admin'
     | '/$slug/sucursal/$sucursalSlug'
   id:
     | '__root__'
     | '/'
+    | '/cookies'
     | '/demo'
     | '/login'
+    | '/onboarding'
     | '/precios'
+    | '/privacidad'
+    | '/recuperar'
     | '/registro'
+    | '/restablecer'
+    | '/superadmin'
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
@@ -215,6 +298,7 @@ export interface FileRouteTypes {
     | '/admin/qr'
     | '/admin/sucursales'
     | '/admin/suscripcion'
+    | '/auth/completar'
     | '/$slug/'
     | '/admin/'
     | '/$slug/sucursal/$sucursalSlug'
@@ -222,10 +306,16 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CookiesRoute: typeof CookiesRoute
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   PreciosRoute: typeof PreciosRoute
+  PrivacidadRoute: typeof PrivacidadRoute
+  RecuperarRoute: typeof RecuperarRoute
   RegistroRoute: typeof RegistroRoute
+  RestablecerRoute: typeof RestablecerRoute
+  SuperadminRoute: typeof SuperadminRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
   AdminEmpresaRoute: typeof AdminEmpresaRoute
   AdminEquipoRoute: typeof AdminEquipoRoute
@@ -234,6 +324,7 @@ export interface RootRouteChildren {
   AdminQrRoute: typeof AdminQrRoute
   AdminSucursalesRoute: typeof AdminSucursalesRoute
   AdminSuscripcionRoute: typeof AdminSuscripcionRoute
+  AuthCompletarRoute: typeof AuthCompletarRoute
   SlugIndexRoute: typeof SlugIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
   SlugSucursalSucursalSlugRoute: typeof SlugSucursalSucursalSlugRoute
@@ -241,6 +332,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/superadmin': {
+      id: '/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof SuperadminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restablecer': {
+      id: '/restablecer'
+      path: '/restablecer'
+      fullPath: '/restablecer'
+      preLoaderRoute: typeof RestablecerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/registro': {
       id: '/registro'
       path: '/registro'
@@ -248,11 +353,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegistroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recuperar': {
+      id: '/recuperar'
+      path: '/recuperar'
+      fullPath: '/recuperar'
+      preLoaderRoute: typeof RecuperarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/precios': {
       id: '/precios'
       path: '/precios'
       fullPath: '/precios'
       preLoaderRoute: typeof PreciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -267,6 +393,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -288,6 +421,13 @@ declare module '@tanstack/react-router' {
       path: '/$slug'
       fullPath: '/$slug/'
       preLoaderRoute: typeof SlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/completar': {
+      id: '/auth/completar'
+      path: '/auth/completar'
+      fullPath: '/auth/completar'
+      preLoaderRoute: typeof AuthCompletarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/suscripcion': {
@@ -358,10 +498,16 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CookiesRoute: CookiesRoute,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   PreciosRoute: PreciosRoute,
+  PrivacidadRoute: PrivacidadRoute,
+  RecuperarRoute: RecuperarRoute,
   RegistroRoute: RegistroRoute,
+  RestablecerRoute: RestablecerRoute,
+  SuperadminRoute: SuperadminRoute,
   AdminDisenoRoute: AdminDisenoRoute,
   AdminEmpresaRoute: AdminEmpresaRoute,
   AdminEquipoRoute: AdminEquipoRoute,
@@ -370,6 +516,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminQrRoute: AdminQrRoute,
   AdminSucursalesRoute: AdminSucursalesRoute,
   AdminSuscripcionRoute: AdminSuscripcionRoute,
+  AuthCompletarRoute: AuthCompletarRoute,
   SlugIndexRoute: SlugIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
   SlugSucursalSucursalSlugRoute: SlugSucursalSucursalSlugRoute,

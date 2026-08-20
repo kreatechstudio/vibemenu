@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import BotonGoogle from "@/components/ui/boton-google";
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
@@ -75,14 +76,9 @@ export default function Login() {
               <label htmlFor="password" className="text-sm font-medium text-vm-ink">
                 Contraseña
               </label>
-              <button
-                type="button"
-                className="text-xs text-vm-primary hover:underline"
-                onClick={() => supabase.auth.resetPasswordForEmail(email)}
-                disabled={!email.includes("@")}
-              >
+              <Link to="/recuperar" className="text-xs text-vm-primary hover:underline">
                 ¿Olvidaste tu contraseña?
-              </button>
+              </Link>
             </div>
             <input
               id="password"
@@ -110,6 +106,14 @@ export default function Login() {
             {enviando && <Loader2 className="size-4 animate-spin" aria-hidden />}
             Entrar
           </button>
+
+          <div className="flex items-center gap-3 text-xs text-vm-body">
+            <span className="h-px flex-1 bg-border" />
+            o
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <BotonGoogle />
         </form>
 
         <p className="mt-6 text-center text-sm text-vm-body">

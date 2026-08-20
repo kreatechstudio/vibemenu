@@ -221,6 +221,43 @@ Deno.serve(async (req) => {
         await cerrarPeriodo(evento.data.object.id, "cancelada");
         break;
       }
+
+      case "invoice.paid": {
+        const factura = evento.data.object;
+        const suscripcionId =
+          typeof factura.subscription === "string"
+            ? factura.subscription
+            : factura.subscription?.id;
+        if (!suscripcionId) break;
+
+        // El orden de llegada entre checkout.session.completed e invoice.paid no
+        // esta garantizado. Si la fila de suscripciones todavia no existe, este
+        // recibo puntual se pierde — aceptable para v1, no hay reintento.
+        const { data: fila } = await db
+          .from("suscripciones")
+          .select("id, tenant_id")
+          .eq("stripe_subscription_id", suscripcionId)
+          .order("fecha_inicio", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!fila) break;
+
+        // upsert + ignoreDuplicates: Stripe entrega el webhook al menos una vez,
+        // un reintento no debe duplicar el recibo (stripe_invoice_id es unique).
+        const { error } = await db.from("pagos").upsert(
+          {
+            tenant_id: fila.tenant_id,
+            suscripcion_id: fila.id,
+            monto: (factura.amount_paid ?? 0) / 100,
+            moneda: (factura.currency ?? "usd").toLowerCase(),
+            stripe_invoice_id: factura.id,
+            stripe_hosted_invoice_url: factura.hosted_invoice_url ?? null,
+          },
+          { onConflict: "stripe_invoice_id", ignoreDuplicates: true },
+        );
+        if (error) throw error;
+        break;
+      }
     }
   } catch (e) {
     // 500 hace que Stripe reintente. Es lo que queremos ante un fallo transitorio.

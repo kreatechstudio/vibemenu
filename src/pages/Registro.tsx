@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Check, Loader2, MailCheck } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import MockupFormato from "@/components/landing/MockupFormato";
+import BotonGoogle from "@/components/ui/boton-google";
 import { useSlugDisponible, type EstadoSlug } from "@/hooks/useSlugDisponible";
 import { supabase } from "@/lib/supabase";
 import { crearTenant, guardarTenantPendiente } from "@/lib/registro";
@@ -242,6 +243,14 @@ export default function Registro() {
               </p>
             )}
 
+            <p className="text-xs leading-relaxed text-vm-body">
+              Al crear tu cuenta aceptas el{" "}
+              <Link to="/privacidad" className="text-vm-primary hover:underline">
+                Aviso de Privacidad
+              </Link>{" "}
+              de Vibemenu.
+            </p>
+
             <button
               type="submit"
               disabled={!puedeEnviar}
@@ -250,6 +259,14 @@ export default function Registro() {
               {enviando && <Loader2 className="size-4 animate-spin" aria-hidden />}
               {BOTONES.registro}
             </button>
+
+            <div className="flex items-center gap-3 text-xs text-vm-body">
+              <span className="h-px flex-1 bg-border" />
+              o
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <BotonGoogle />
 
             <p className="text-center text-sm text-vm-body">
               ¿Ya tienes menú?{" "}

@@ -5,7 +5,7 @@ import { FOOTER } from "@/lib/copy";
 export default function Footer() {
   return (
     <footer className="mt-auto border-t bg-vm-bg-soft">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-[2fr_1fr_1fr] md:px-10">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-[2fr_1fr_1fr_1fr] md:px-10">
         <div className="max-w-sm">
           <Link to="/" aria-label="Vibemenu, inicio">
             <Logo />
@@ -46,6 +46,22 @@ export default function Footer() {
             <li>
               <Link to="/login" className="hover:text-vm-ink">
                 Entrar
+              </Link>
+            </li>
+          </ul>
+        </nav>
+
+        <nav aria-label="Legal">
+          <p className="text-sm font-medium text-vm-ink">Legal</p>
+          <ul className="mt-4 space-y-3 text-sm text-vm-body">
+            <li>
+              <Link to="/privacidad" className="hover:text-vm-ink">
+                Privacidad
+              </Link>
+            </li>
+            <li>
+              <Link to="/cookies" className="hover:text-vm-ink">
+                Cookies
               </Link>
             </li>
           </ul>

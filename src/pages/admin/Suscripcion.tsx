@@ -6,6 +6,8 @@ import { usePlanes } from "@/hooks/usePlanes";
 import { useCheckout, usePortalStripe } from "@/hooks/useStripe";
 import { suscripcionActiva, useHistorialSuscripciones } from "@/hooks/useSuscripciones";
 import type { SuscripcionConPlan } from "@/hooks/useSuscripciones";
+import { usePagos } from "@/hooks/usePagos";
+import type { Pago } from "@/types/database";
 import { formatearPrecio, precioDelPlan, textoLimite } from "@/lib/plan";
 import { PRECIOS } from "@/lib/copy";
 import {
@@ -51,7 +53,7 @@ const NOMBRE_MOTIVO: Record<MotivoCambio, string> = {
   vencimiento: "Vencimiento",
 };
 
-function Historial({ filas }: { filas: SuscripcionConPlan[] }) {
+function Historial({ filas, pagos }: { filas: SuscripcionConPlan[]; pagos: Pago[] }) {
   if (filas.length === 0) {
     return (
       <div className="mt-4 rounded-xl border border-dashed p-8 text-center">
@@ -107,8 +109,25 @@ function Historial({ filas }: { filas: SuscripcionConPlan[] }) {
                 <td className="px-4 py-3.5 text-vm-body">
                   {NOMBRE_MOTIVO[s.motivo_cambio as MotivoCambio]}
                 </td>
-                {/* La facturación llega en fase 2, colgada de una tabla `pagos`. */}
-                <td className="px-4 py-3.5 text-vm-body/60">Próximamente</td>
+                <td className="px-4 py-3.5">
+                  {(() => {
+                    const pago = pagos.find((p) => p.suscripcion_id === s.id);
+                    if (!pago?.stripe_hosted_invoice_url) {
+                      return <span className="text-vm-body/60">—</span>;
+                    }
+                    return (
+                      <a
+                        href={pago.stripe_hosted_invoice_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-vm-primary hover:underline"
+                      >
+                        Ver
+                        <ExternalLink className="size-3.5" aria-hidden />
+                      </a>
+                    );
+                  })()}
+                </td>
               </tr>
             );
           })}
@@ -125,6 +144,7 @@ function Contenido() {
     ctx?.tenant.id,
     ctx?.esOwner ?? false,
   );
+  const { data: pagos } = usePagos(ctx?.tenant.id, ctx?.esOwner ?? false);
   const checkout = useCheckout();
   const portal = usePortalStripe();
   // Dos errores separados: el de la comparativa no debe pintarse junto al botón
@@ -238,12 +258,12 @@ function Contenido() {
       {/* ── Historial ────────────────────────────────────── */}
       <h2 className="mt-12 text-lg">Historial</h2>
       <p className="mt-1 text-sm text-vm-body">
-        Una fila por periodo. Los recibos fiscales llegan más adelante.
+        Una fila por periodo. El recibo es el comprobante de Stripe, no una factura fiscal.
       </p>
       {isLoading ? (
         <div className="mt-4 h-32 animate-pulse rounded-xl bg-vm-bg-soft" />
       ) : (
-        <Historial filas={historial ?? []} />
+        <Historial filas={historial ?? []} pagos={pagos ?? []} />
       )}
 
       {/* ── Comparativa ──────────────────────────────────── */}
