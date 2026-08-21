@@ -1,16 +1,18 @@
 /**
  * Datos de la empresa y proveedores citados en el Aviso de Privacidad y la política de Cookies.
  *
- * El domicilio fiscal es un marcador de posición: LFPDPPP exige un domicilio real en el
- * aviso de privacidad. Sustitúyelo antes de publicar estas páginas.
+ * `domicilio` es a nivel ciudad/estado a propósito, no la calle: mientras no haya un apartado
+ * postal u oficina virtual, publicar el domicilio particular de Carlos es un riesgo de
+ * seguridad personal que no vale la pena. Cambialo por una dirección postal real en cuanto
+ * la tengas — sigue siendo lo que recomienda la LFPDPPP para el aviso de privacidad.
  */
 export const EMPRESA = {
   razonSocial: "KreaTech Studio",
   responsable: "Carlos López",
-  dominio: "vibemenu.com",
-  correoContacto: "hola@vibemenu.com",
-  correoPrivacidad: "privacidad@vibemenu.com",
-  domicilio: "[Domicilio fiscal de KreaTech Studio — completar antes de publicar]",
+  dominio: "vibemenu.com.mx",
+  correoContacto: "clopez@kreatechstudio.com.mx",
+  correoPrivacidad: "privacidad@kreatechstudio.com.mx",
+  domicilio: "Nuevo Laredo, Tamaulipas, México",
 } as const;
 
 /** Misma fecha en los tres documentos: si cambia uno, cambian todos. */
@@ -25,8 +27,12 @@ export type Proveedor = {
 
 /**
  * Subprocesadores reales del stack. `estado: "en migración"` marca lo que Carlos
- * anunció pero aún no está en producción (Cloudflare R2 y Turnstile) — se listan porque
- * el aviso de privacidad debe anticiparse a la migración, no reaccionar después.
+ * anunció pero aún no está en producción.
+ *
+ * La migración de imágenes a Cloudflare R2 se evaluó y se pausó (2026-08-20): con
+ * la compresión de `src/lib/imagen.ts`, el uso real de Supabase Storage es de
+ * kilobytes, no gigabytes — no hay urgencia de moverlas. Cloudflare se queda en
+ * esta lista solo por Turnstile, que sigue en el roadmap.
  */
 export const PROVEEDORES: Proveedor[] = [
   {
@@ -50,9 +56,15 @@ export const PROVEEDORES: Proveedor[] = [
   },
   {
     nombre: "Cloudflare",
-    rol: "Almacenamiento y entrega de imágenes (R2), y verificación de que no eres un bot (Turnstile) en el registro",
-    datos:
-      "Imágenes de producto; en Turnstile, señales técnicas del navegador sin cookies publicitarias",
+    rol: "Verificación de que no eres un bot (Turnstile) en el registro",
+    datos: "Señales técnicas del navegador, sin cookies publicitarias ni identidad",
     estado: "en migración",
+  },
+  {
+    nombre: "Google Analytics",
+    rol: "Estadísticas de tráfico y uso del sitio",
+    datos:
+      "Páginas visitadas, dispositivo, ubicación aproximada y cómo llegaste al sitio. No se envía tu nombre ni correo",
+    estado: "activo",
   },
 ];

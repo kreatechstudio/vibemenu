@@ -4,17 +4,36 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SesionProvider } from "../hooks/useSesion";
 import { SEO } from "../lib/copy";
 import { URL_GOOGLE_FONTS } from "../lib/fuentes";
+import { GA_MEASUREMENT_ID, trackPageView } from "../lib/analytics";
 import { Toaster } from "../components/ui/sonner";
+
+function AnalyticsRouteTracker() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname + state.location.searchStr,
+  });
+  const primerRender = useRef(true);
+
+  useEffect(() => {
+    if (primerRender.current) {
+      primerRender.current = false;
+      return;
+    }
+    trackPageView(pathname);
+  }, [pathname]);
+
+  return null;
+}
 
 function NotFoundComponent() {
   return (
@@ -110,6 +129,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "manifest", href: "/site.webmanifest" },
     ],
+    scripts: [
+      {
+        src: `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`,
+        async: true,
+      },
+      {
+        children: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`,
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -137,6 +168,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SesionProvider>
+        <AnalyticsRouteTracker />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         {/* Los avisos de éxito viven en lib/avisos.ts, nunca con texto suelto. */}
