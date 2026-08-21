@@ -212,15 +212,20 @@ tenant nuevo nace en el plan Pro (antes nacía directo en Free) sin pedir tarjet
 quien no se suscribió — reutiliza los mismos triggers de downgrade que ya existían. Ver
 `vibemenu_emails.md` para el correo.
 
+**Webhook registrado en modo live: ✅ ya existe** (2026-08-21). Endpoint
+`we_1U6uxUEWXMEt3EVbVWBgmzYb` con los 5 eventos de la tabla de arriba, `status: enabled`.
+Probado con `procesar-trials-vencidos` respondiendo 200 con el `CRON_SECRET` real.
+
+**El producto suelto ya no está activo.** `prod_UCvck2gbDgTkPy` ("Monthly Vibe Menu") y sus dos
+precios se archivaron el 2026-08-21 (`active: false` — Stripe no deja borrar un `Price` que ya
+se usó, archivarlo es el equivalente real). Ya no aparece en listados activos ni se puede volver
+a cobrar; queda en el historial de Stripe por si algún pago viejo lo referencia.
+
 ## Lo que NO existe todavía
 
-**Un producto suelto sin relación con Vibemenu.** El account de Stripe tiene un producto
-`prod_UCvck2gbDgTkPy` ("Monthly Vibe Menu") con dos precios en MXN ($250 y $450/mes) que no
-aparecen en `planes` ni en `vibemenu_stripe_price_ids.sql` — parece un borrador de una prueba
-anterior. No se toca sin confirmar con el dueño de la cuenta que es basura segura de borrar.
-
-**Webhook registrado en modo live.** Ver la sección de arriba — es el bloqueador real antes de
-cobrar de verdad: sin el endpoint registrado en Stripe Dashboard, ningún evento llega.
+Nada pendiente de esta lista por ahora — la próxima revisión debería confirmar que los tres
+secretos nuevos (`CRON_SECRET` en Supabase; `TRIALS_CRON_SECRET` y `SUPABASE_SERVICE_ROLE_KEY`
+en GitHub) siguen correctos si algún día se rota alguno.
 
 **Cobro por moneda automático.** El tenant elige USD o MXN en el checkout, y esa
 elección se guarda en `suscripciones.moneda_cobro`. No hay detección por IP.
