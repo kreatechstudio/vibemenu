@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import BotonGoogle from "@/components/ui/boton-google";
+import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components/ui/captcha";
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
@@ -14,6 +15,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<TurnstileInstance>(null);
+
+  const puedeEnviar = !enviando && (!captchaHabilitado || captchaToken !== null);
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
@@ -24,6 +29,7 @@ export default function Login() {
       const { data, error: errorAuth } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: captchaToken ? { captchaToken } : undefined,
       });
       if (errorAuth) throw errorAuth;
 
@@ -43,6 +49,8 @@ export default function Login() {
           ? "Correo o contraseña incorrectos."
           : traducido.mensaje,
       );
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setEnviando(false);
     }
@@ -102,9 +110,11 @@ export default function Login() {
             </p>
           )}
 
+          <Captcha ref={captchaRef} onToken={setCaptchaToken} />
+
           <button
             type="submit"
-            disabled={enviando}
+            disabled={!puedeEnviar}
             className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-vm-primary text-sm font-medium text-white transition-colors hover:bg-vm-primary-hover disabled:opacity-50"
           >
             {enviando && <Loader2 className="size-4 animate-spin" aria-hidden />}

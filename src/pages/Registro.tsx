@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Check, Loader2, MailCheck } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import MockupFormato from "@/components/landing/MockupFormato";
 import BotonGoogle from "@/components/ui/boton-google";
+import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components/ui/captcha";
 import { useSlugDisponible, type EstadoSlug } from "@/hooks/useSlugDisponible";
 import { supabase } from "@/lib/supabase";
 import { crearTenant, guardarTenantPendiente } from "@/lib/registro";
@@ -63,6 +64,8 @@ export default function Registro() {
   const [enviando, setEnviando] = useState(false);
   const [errorGlobal, setErrorGlobal] = useState<string | null>(null);
   const [confirmaCorreo, setConfirmaCorreo] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<TurnstileInstance>(null);
 
   const estadoSlug = useSlugDisponible(slug);
   const puedeEnviar =
@@ -70,6 +73,7 @@ export default function Registro() {
     email.includes("@") &&
     password.length >= 6 &&
     estadoSlug.estado === "disponible" &&
+    (!captchaHabilitado || captchaToken !== null) &&
     !enviando;
 
   // El slug sigue al nombre del negocio hasta que el usuario lo edita a mano.
@@ -90,7 +94,11 @@ export default function Registro() {
     };
 
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
       if (error) throw error;
 
       // Con confirmacion de correo activada, signUp no devuelve sesion y el insert
@@ -106,6 +114,8 @@ export default function Registro() {
       await navigate({ to: "/admin" });
     } catch (err) {
       setErrorGlobal(traducirError(err as Error).mensaje);
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setEnviando(false);
     }
@@ -251,6 +261,8 @@ export default function Registro() {
               </Link>{" "}
               de Vibemenu.
             </p>
+
+            <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
             <button
               type="submit"

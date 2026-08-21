@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertCircle, Loader2, MailCheck } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components/ui/captcha";
 import { supabase } from "@/lib/supabase";
 import { traducirError } from "@/lib/errores";
 
@@ -10,6 +11,11 @@ export default function RecuperarContrasena() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<TurnstileInstance>(null);
+
+  const puedeEnviar =
+    !enviando && email.includes("@") && (!captchaHabilitado || captchaToken !== null);
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
@@ -19,11 +25,14 @@ export default function RecuperarContrasena() {
     try {
       const { error: errorAuth } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/restablecer`,
+        captchaToken: captchaToken ?? undefined,
       });
       if (errorAuth) throw errorAuth;
       setEnviado(true);
     } catch (err) {
       setError(traducirError(err as Error).mensaje);
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setEnviando(false);
     }
@@ -86,9 +95,11 @@ export default function RecuperarContrasena() {
             </p>
           )}
 
+          <Captcha ref={captchaRef} onToken={setCaptchaToken} />
+
           <button
             type="submit"
-            disabled={enviando || !email.includes("@")}
+            disabled={!puedeEnviar}
             className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-vm-primary text-sm font-medium text-white transition-colors hover:bg-vm-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {enviando && <Loader2 className="size-4 animate-spin" aria-hidden />}
