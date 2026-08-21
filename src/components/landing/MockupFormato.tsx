@@ -25,6 +25,10 @@ export type VariantMockup = "mobile" | "phone" | "desktop";
 const CREMA = "#FBF7F2";
 const TERRACOTA = "#C2410C";
 const CARBON = "#1C1917";
+// Mismo gris que --menu-modificadores por defecto (ver src/lib/tema.ts) — los
+// modificadores nunca van en el color del producto, para que se lean como
+// una opción, no como parte del nombre.
+const MODIFICADOR = "#57534E";
 
 /** Las mismas fotos de /demo (ya verificadas ahi), en miniatura. */
 const foto = (id: string, w = 300) =>
@@ -40,6 +44,16 @@ const FOTOS = [
   foto("photo-1551782450-a2132b4ba21d"), // taco de suadero
   foto("photo-1541167760496-1628856ab772"), // michelada
 ] as const;
+
+/**
+ * Subconjunto de FOTOS para los círculos de historias de Instagram: ahi la
+ * imagen se recorta muy chico y muy cerrado (object-cover en un círculo de
+ * ~35px), así que solo entran las fotos con una composición centrada y
+ * simple. El café con la planta detrás (FOTOS[0]), el guacamole en
+ * molcajete (FOTOS[1]) y la parrillada (FOTOS[5]) tienen demasiadas capas
+ * — se ven amontonados/irreconocibles a ese tamaño en vez de redondos.
+ */
+const FOTOS_HISTORIAS = [FOTOS[7], FOTOS[2], FOTOS[3], FOTOS[4], FOTOS[6]] as const;
 
 const CATEGORIAS = ["Todo", "Cafetería", "Desayunos"] as const;
 const CATEGORIAS_AMPLIO = ["Todo", "Cafetería", "Desayunos", "Postres", "Bebidas"] as const;
@@ -74,24 +88,34 @@ function Pastillas({
   );
 }
 
-function ListaClasico({ items }: { items: [string, string][] }) {
+type ItemClasico = { nombre: string; precio: string; modificador?: string };
+
+/** El nombre nunca lleva el modificador — va debajo, en gris, como en el formato real. */
+function ListaClasico({ items }: { items: ItemClasico[] }) {
   return (
     <ul className="space-y-2.5">
-      {items.map(([nombre, precio]) => (
-        <li key={nombre} className="flex items-baseline gap-1.5">
-          <span
-            className="text-[11px] font-medium"
-            style={{ color: CARBON, fontFamily: "Georgia, serif" }}
-          >
-            {nombre}
-          </span>
-          <span
-            className="min-w-0 flex-1 border-b border-dotted"
-            style={{ borderColor: "#00000033" }}
-          />
-          <span className="vm-data text-[11px]" style={{ color: CARBON }}>
-            ${precio}
-          </span>
+      {items.map((item) => (
+        <li key={item.nombre}>
+          <div className="flex items-baseline gap-1.5">
+            <span
+              className="text-[11px] font-medium"
+              style={{ color: CARBON, fontFamily: "Georgia, serif" }}
+            >
+              {item.nombre}
+            </span>
+            <span
+              className="min-w-0 flex-1 border-b border-dotted"
+              style={{ borderColor: "#00000033" }}
+            />
+            <span className="vm-data text-[11px]" style={{ color: CARBON }}>
+              ${item.precio}
+            </span>
+          </div>
+          {item.modificador && (
+            <p className="mt-0.5 text-[8px] leading-tight" style={{ color: MODIFICADOR }}>
+              {item.modificador}
+            </p>
+          )}
         </li>
       ))}
     </ul>
@@ -99,27 +123,31 @@ function ListaClasico({ items }: { items: [string, string][] }) {
 }
 
 function Clasico({ variant }: { variant: VariantMockup }) {
-  const cafeteria: [string, string][] = [
-    ["Flat White", "65"],
-    ["Cold Brew", "58"],
-    ["Cappuccino", "55"],
-    ["Latte de Vainilla", "62"],
-    ["Chai Latte", "60"],
+  const cafeteria: ItemClasico[] = [
+    { nombre: "Flat White", precio: "65", modificador: "Leche: Entera · Avena (+$8)" },
+    { nombre: "Cold Brew", precio: "58" },
+    { nombre: "Cappuccino", precio: "55" },
+    { nombre: "Latte de Vainilla", precio: "62" },
+    { nombre: "Chai Latte", precio: "60" },
   ];
-  const desayunos: [string, string][] = [
-    ["Avocado Toast", "120"],
-    ["Chilaquiles", "135"],
-    ["Huevos Rancheros", "110"],
-    ["Hotcakes de Nuez", "95"],
-    ["Molletes", "89"],
+  const desayunos: ItemClasico[] = [
+    {
+      nombre: "Avocado Toast",
+      precio: "120",
+      modificador: "Extra: Aguacate (+$15) · Huevo (+$18)",
+    },
+    { nombre: "Chilaquiles", precio: "135", modificador: "Salsa: Verde · Roja" },
+    { nombre: "Huevos Rancheros", precio: "110" },
+    { nombre: "Hotcakes de Nuez", precio: "95" },
+    { nombre: "Molletes", precio: "89" },
   ];
 
   if (variant === "mobile") {
-    const items: [string, string][] = [
-      ["Flat White", "65"],
-      ["Cold Brew", "58"],
-      ["Avocado Toast", "120"],
-      ["Chilaquiles", "135"],
+    const items: ItemClasico[] = [
+      { nombre: "Flat White", precio: "65", modificador: "Leche: Entera · Avena (+$8)" },
+      { nombre: "Cold Brew", precio: "58" },
+      { nombre: "Avocado Toast", precio: "120" },
+      { nombre: "Chilaquiles", precio: "135", modificador: "Salsa: Verde · Roja" },
     ];
     return (
       <div className="h-full w-full p-5" style={{ background: CREMA }}>
@@ -236,17 +264,35 @@ const CONFIG_INSTAGRAM: Record<
     padding: number;
     avatar: number;
     historia: number;
+    etiqueta: number;
     categorias: readonly string[];
   }
 > = {
-  mobile: { columnas: 3, celdas: 9, padding: 10, avatar: 24, historia: 32, categorias: CATEGORIAS },
-  phone: { columnas: 3, celdas: 12, padding: 14, avatar: 26, historia: 34, categorias: CATEGORIAS },
+  mobile: {
+    columnas: 3,
+    celdas: 9,
+    padding: 10,
+    avatar: 24,
+    historia: 32,
+    etiqueta: 8.5,
+    categorias: CATEGORIAS,
+  },
+  phone: {
+    columnas: 3,
+    celdas: 12,
+    padding: 14,
+    avatar: 26,
+    historia: 34,
+    etiqueta: 9,
+    categorias: CATEGORIAS,
+  },
   desktop: {
     columnas: 4,
     celdas: 12,
     padding: 16,
     avatar: 28,
     historia: 36,
+    etiqueta: 10,
     categorias: CATEGORIAS_AMPLIO,
   },
 };
@@ -277,9 +323,13 @@ function Instagram({ variant }: { variant: VariantMockup }) {
       {/* Las categorías son los círculos de historias. */}
       <div className="flex gap-2" style={{ marginBottom: cfg.padding * 0.8 }}>
         {cfg.categorias.map((c, i) => (
-          <div key={c} className="flex w-9 flex-col items-center gap-[2px]">
+          <div
+            key={c}
+            className="flex shrink-0 flex-col items-center gap-[3px]"
+            style={{ width: cfg.historia + 8 }}
+          >
             <span
-              className="grid place-items-center rounded-full p-[1.5px]"
+              className="grid shrink-0 place-items-center rounded-full p-[1.5px]"
               style={{
                 background: i === 0 ? TERRACOTA : `${CARBON}25`,
                 width: cfg.historia,
@@ -288,14 +338,17 @@ function Instagram({ variant }: { variant: VariantMockup }) {
             >
               <span className="grid size-full place-items-center rounded-full bg-white p-[1px]">
                 <img
-                  src={FOTOS[i % FOTOS.length]}
+                  src={FOTOS_HISTORIAS[i % FOTOS_HISTORIAS.length]}
                   alt=""
                   loading="lazy"
                   className="size-full rounded-full object-cover"
                 />
               </span>
             </span>
-            <span className="w-full truncate text-center text-[6px]" style={{ color: CARBON }}>
+            <span
+              className="w-full truncate text-center font-medium leading-none"
+              style={{ color: CARBON, fontSize: cfg.etiqueta }}
+            >
               {c}
             </span>
           </div>
