@@ -62,9 +62,19 @@ function plantillaInvitacion(opts: {
                  style="max-width:600px; width:100%; background-color:#FFFFFF; border:1px solid #E4E6ED; border-radius:16px;">
             <tr>
               <td style="padding:32px 40px 0 40px;">
-                <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;">
-                  Vibemenu
-                </span>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding-right:8px; vertical-align:middle;">
+                      <img src="${SITIO}/logo-email.png" width="22" height="22" alt=""
+                           style="display:block; width:22px; height:22px;" />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;">
+                        Vibemenu
+                      </span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>

@@ -30,6 +30,14 @@ El azul `#2B4EFF` y el resto de tokens sí se respetan tal cual.
 **Configura primero el remitente.** En Authentication → Emails → SMTP Settings, pon el nombre
 del remitente como `Vibemenu`. Si no, los correos salen a nombre de Supabase.
 
+**El logo es una imagen, no el SVG de marca.** `src/assets/marca/*.svg` son para la web —
+llevan `font-family="Space Grotesk"` embebido, que ningún cliente de correo carga, y el
+soporte de SVG en `<img>` es irregular (Outlook de escritorio en particular no lo renderiza).
+`public/logo-email.png` es el isotipo rasterizado a partir de `isotype.svg` (mismas
+coordenadas y colores, fondo transparente), servido en `https://vibemenu.com.mx/logo-email.png`
+— es lo que usan las 4 plantillas de correo. El `alt=""` es intencional: el nombre "Vibemenu"
+ya va al lado como texto real, así que un lector de pantalla no necesita repetirlo.
+
 ---
 
 ## 1. Confirm signup
@@ -80,11 +88,26 @@ Confirma tu correo y publica tu menú
             <!-- Logo -->
             <tr>
               <td style="padding:32px 40px 0 40px;">
-                <span
-                  style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;"
-                >
-                  Vibemenu
-                </span>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding-right:8px; vertical-align:middle;">
+                      <img
+                        src="https://vibemenu.com.mx/logo-email.png"
+                        width="22"
+                        height="22"
+                        alt=""
+                        style="display:block; width:22px; height:22px;"
+                      />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <span
+                        style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;"
+                      >
+                        Vibemenu
+                      </span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
 
@@ -224,11 +247,26 @@ Restablece tu contraseña de Vibemenu
           >
             <tr>
               <td style="padding:32px 40px 0 40px;">
-                <span
-                  style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;"
-                >
-                  Vibemenu
-                </span>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding-right:8px; vertical-align:middle;">
+                      <img
+                        src="https://vibemenu.com.mx/logo-email.png"
+                        width="22"
+                        height="22"
+                        alt=""
+                        style="display:block; width:22px; height:22px;"
+                      />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <span
+                        style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;"
+                      >
+                        Vibemenu
+                      </span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
 
