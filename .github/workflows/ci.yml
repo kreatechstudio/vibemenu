@@ -1,0 +1,55 @@
+name: Revisiones automaticas
+
+# Corre en las dos ramas que se usan a diario y en cualquier pull request.
+# El build de produccion NO se revisa aqui a proposito: Vercel ya compila el
+# proyecto en cada push y avisa si truena, asi que repetirlo seria pagar dos
+# veces por la misma senal.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+# Si llegan dos pushes seguidos a la misma rama, la corrida vieja se cancela.
+# Con varias sesiones trabajando en paralelo, evita que se amontonen corridas
+# revisando codigo que ya quedo atras.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  revisiones:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bun, no npm: el proyecto tiene bun.lock y los tests importan de
+      # "bun:test", que solo existe dentro de Bun.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # --frozen-lockfile instala exactamente lo que dice bun.lock y falla si
+      # alguien subio un package.json que no cuadra con el lockfile. De paso
+      # respeta el minimumReleaseAge de bunfig.toml sin tener que repetirlo.
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
+
+      # Los tres pasos siguientes llevan `if: always()` para que corran aunque
+      # uno anterior falle: asi una corrida roja muestra TODOS los problemas de
+      # un jalon, en vez de obligar a un push por cada error descubierto.
+      - name: Tests
+        if: always()
+        run: bun test src/lib
+
+      - name: Tipos
+        if: always()
+        run: bun run typecheck
+
+      - name: Lint
+        if: always()
+        run: bun run lint
+
+# Si algo sale rojo, GitHub le manda correo a quien hizo el push. La rama main
+# NO esta protegida: un CI rojo avisa, pero no bloquea el push. Si algun dia
+# quieren que bloquee, se activa en Settings > Branches > Branch protection,
+# y a partir de ahi main solo se toca por pull request.
