@@ -41,6 +41,15 @@ export default function PreviewPanel() {
       className="overflow-hidden rounded-xl border bg-white shadow-vm-3"
       aria-label="Vista previa del panel de Vibemenu"
     >
+      <div className="hidden items-center gap-1.5 border-b bg-vm-bg-soft px-4 py-2.5 sm:flex">
+        <span className="size-2.5 rounded-full bg-vm-ink/15" />
+        <span className="size-2.5 rounded-full bg-vm-ink/15" />
+        <span className="size-2.5 rounded-full bg-vm-ink/15" />
+        <span className="ml-2 flex-1 truncate rounded-full border bg-white px-3 py-1 text-xs text-vm-body">
+          cafearoma.vibemenu.com.mx/panel
+        </span>
+      </div>
+
       <div className="grid md:grid-cols-[220px_1fr]">
         <aside className="hidden border-r bg-vm-bg-soft p-4 md:block">
           <div className="px-2 pb-4">

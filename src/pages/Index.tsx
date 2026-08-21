@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, MonitorSmartphone, Sparkles } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import PreviewPanel from "@/components/landing/PreviewPanel";
-import MockupFormato from "@/components/landing/MockupFormato";
+import FormatoStage from "@/components/landing/FormatoStage";
 import { slideUp } from "@/lib/animations";
 import { CTA_FINAL, COMO_FUNCIONA, FORMATOS_COPY, HERO, TESTIMONIOS } from "@/lib/copy";
 import { FORMATOS, NOMBRE_FORMATO } from "@/types/database";
@@ -77,6 +77,10 @@ export default function Index() {
             Tú eliges cómo se ve tu carta. Cambia de formato cuando quieras, sin volver a capturar
             nada.
           </p>
+          <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-vm-body/80">
+            <MonitorSmartphone className="size-3.5" aria-hidden />
+            Compara cómo se ve cada formato en escritorio y en celular
+          </p>
         </motion.div>
 
         <div className="mx-auto mt-14 grid max-w-6xl gap-6 md:grid-cols-2">
@@ -91,7 +95,7 @@ export default function Index() {
               whileHover={{ y: -4 }}
               className="rounded-xl border bg-white p-5 shadow-vm-1 transition-shadow hover:shadow-vm-2"
             >
-              <MockupFormato formato={formato} />
+              <FormatoStage formato={formato} />
               <p className="mt-5 text-xs font-medium tracking-wide text-vm-primary">
                 {NOMBRE_FORMATO[formato].toUpperCase()}
               </p>
