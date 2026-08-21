@@ -76,7 +76,7 @@ export default function FormatoStage({ formato }: { formato: FormatoMenu }) {
         onPointerMove={alMover}
         onPointerEnter={alEntrar}
         onPointerLeave={alSalir}
-        className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border bg-vm-bg-soft shadow-vm-1"
+        className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border bg-vm-bg-soft shadow-vm-1 sm:aspect-[4/3]"
       >
         {/* Capa de fondo: escritorio, siempre a lo ancho completo. */}
         <div className="absolute inset-0" aria-hidden>
