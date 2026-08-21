@@ -18,9 +18,11 @@ import {
   X,
 } from "lucide-react";
 import Logo from "@/components/marca/Logo";
+import AvatarUsuario from "@/components/ui/avatar-usuario";
 import { useSesion, cerrarSesion } from "@/hooks/useSesion";
 import { useTenantActual, type ContextoTenant } from "@/hooks/useTenantActual";
 import { NOMBRE_FORMATO, NOMBRE_PLAN, type FormatoMenu, type NombrePlan } from "@/types/database";
+import { nombreDeUsuario, avatarDeUsuario } from "@/lib/perfil";
 import { cn } from "@/lib/utils";
 
 type ItemNav = {
@@ -64,6 +66,7 @@ const COLOR_ESTADO: Record<string, string> = {
 
 function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => void }) {
   const { pathname } = useLocation();
+  const { user } = useSesion();
 
   return (
     <div className="flex h-full flex-col bg-vm-bg-soft">
@@ -109,6 +112,14 @@ function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => vo
           );
         })}
       </nav>
+
+      <div className="flex items-center gap-2.5 border-t p-4">
+        <AvatarUsuario nombre={nombreDeUsuario(user)} avatarUrl={avatarDeUsuario(user)} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-vm-ink">{nombreDeUsuario(user)}</p>
+          {user?.email && <p className="truncate text-xs text-vm-body">{user.email}</p>}
+        </div>
+      </div>
 
       <div className="border-t p-4">
         <p className="truncate text-sm font-medium text-vm-ink">{ctx.tenant.nombre_negocio}</p>
