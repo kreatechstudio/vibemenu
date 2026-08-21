@@ -5,6 +5,9 @@ import type { RolUsuario } from "@/types/database";
 export type MiembroEquipo = {
   user_id: string;
   email: string;
+  /* Migración 011 — de raw_user_meta_data: null para quien entró con email/password. */
+  nombre: string | null;
+  avatar_url: string | null;
   rol: RolUsuario;
   created_at: string;
 };
@@ -49,12 +52,13 @@ export function useQuitarDelEquipo(tenantId: string | undefined) {
 }
 
 /**
- * Invitar a un encargado exige crear un usuario en auth, y eso solo lo puede
- * hacer el `service_role_key`, que jamas vive en el frontend. La llamada va a la
- * Edge Function `invitar-encargado` (ver supabase/functions/).
+ * Crea (o reenvia) una invitacion y manda el correo por Resend. No crea la
+ * cuenta del encargado todavia -- eso pasa hasta que acepta en
+ * /invitacion/:token (Edge Function `aceptar-invitacion`), que es cuando de
+ * verdad hace falta el `service_role_key`. Ver supabase/functions/invitar-encargado.
  *
- * Mientras no este desplegada, `functions.invoke` responde 404 y se traduce a un
- * mensaje claro en vez de un error crudo.
+ * El error real (correo ya invitado, ya administra otro negocio, funcion sin
+ * desplegar, etc.) se traduce en el llamador con `traducirErrorEdge`.
  */
 export function useInvitarEncargado(tenantId: string | undefined) {
   const qc = useQueryClient();

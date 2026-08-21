@@ -27,19 +27,22 @@ function LogoGoogle() {
 /**
  * Redirige a Google. supabase-js crea el usuario en auth.users si no existe
  * — el aterrizaje en /auth/completar decide si va al panel o a onboarding.
+ *
+ * `rutaRegreso` cambia ese aterrizaje: /invitacion/:token lo usa para volver
+ * a la misma invitación tras el login, en vez de a /auth/completar.
  */
-async function iniciarLoginGoogle() {
+async function iniciarLoginGoogle(rutaRegreso: string) {
   await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${window.location.origin}/auth/completar` },
+    options: { redirectTo: `${window.location.origin}${rutaRegreso}` },
   });
 }
 
-export default function BotonGoogle() {
+export default function BotonGoogle({ rutaRegreso = "/auth/completar" }: { rutaRegreso?: string }) {
   return (
     <button
       type="button"
-      onClick={() => void iniciarLoginGoogle()}
+      onClick={() => void iniciarLoginGoogle(rutaRegreso)}
       className="inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-lg border text-sm font-medium text-vm-ink transition-colors hover:bg-vm-bg-soft"
     >
       <LogoGoogle />

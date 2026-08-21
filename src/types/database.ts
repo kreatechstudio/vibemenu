@@ -112,6 +112,43 @@ export type Database = {
         };
         Relationships: [Rel<"horarios_sucursal_id_fkey", "sucursal_id", "sucursales">];
       };
+      /* Migración 012: invitaciones de equipo por correo. */
+      invitaciones: {
+        Row: {
+          aceptada_at: string | null;
+          created_at: string;
+          email: string;
+          estado: string;
+          expira_at: string;
+          id: string;
+          invitado_por: string;
+          tenant_id: string;
+          token: string;
+        };
+        Insert: {
+          aceptada_at?: string | null;
+          created_at?: string;
+          email: string;
+          estado?: string;
+          expira_at?: string;
+          id?: string;
+          invitado_por: string;
+          tenant_id: string;
+          token?: string;
+        };
+        Update: {
+          aceptada_at?: string | null;
+          created_at?: string;
+          email?: string;
+          estado?: string;
+          expira_at?: string;
+          id?: string;
+          invitado_por?: string;
+          tenant_id?: string;
+          token?: string;
+        };
+        Relationships: [Rel<"invitaciones_tenant_id_fkey", "tenant_id", "tenants">];
+      };
       opciones_modificador: {
         Row: { grupo_id: string; id: string; nombre: string; orden: number; precio_extra: number };
         Insert: {
@@ -551,6 +588,17 @@ export type Database = {
     Views: Record<never, never>;
     Functions: {
       es_owner_de_tenant: { Args: { check_tenant_id: string }; Returns: boolean };
+      /* Migración 012. SECURITY DEFINER, ejecutable por anon: el invitado aun puede no tener sesion. */
+      invitacion_info: {
+        Args: { p_token: string };
+        Returns: {
+          tenant_nombre: string;
+          email: string;
+          estado: string;
+          expira_at: string;
+          cuenta_existente: boolean;
+        }[];
+      };
       /* Migración 003. SECURITY DEFINER: solo devuelve el equipo del tenant de quien llama. */
       equipo_del_tenant: {
         Args: { p_tenant_id: string };
@@ -595,11 +643,13 @@ export type OpcionModificador = Tables<"opciones_modificador">;
 export type Suscripcion = Tables<"suscripciones">;
 export type Pago = Tables<"pagos">;
 export type SuperAdmin = Tables<"super_admins">;
+export type Invitacion = Tables<"invitaciones">;
 
 /* Uniones cerradas: el schema las guarda como text con CHECK. */
 export type FormatoMenu = "clasico" | "pinterest" | "instagram" | "tiktok";
 export type EstadoTenant = "trial" | "activo" | "suspendido" | "cancelado";
 export type RolUsuario = "owner" | "encargado";
+export type EstadoInvitacion = "pendiente" | "aceptada" | "cancelada";
 export type NombrePlan = "free" | "basic" | "pro" | "enterprise";
 export type MonedaCobro = "usd" | "mxn";
 export type EstadoSuscripcion = "activa" | "cancelada" | "vencida" | "reemplazada";

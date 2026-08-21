@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Lock, Trash2, UserPlus } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import AvatarUsuario from "@/components/ui/avatar-usuario";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { useEquipo, useInvitarEncargado, useQuitarDelEquipo } from "@/hooks/useEquipo";
 import { useSesion } from "@/hooks/useSesion";
-import { traducirError } from "@/lib/errores";
+import { traducirErrorEdge } from "@/lib/erroresEdge";
 import { alcanzoLimite } from "@/lib/plan";
 import type { MiembroEquipo } from "@/hooks/useEquipo";
 
@@ -21,8 +22,22 @@ const FECHA = new Intl.DateTimeFormat("es-MX", { day: "2-digit", month: "short",
 
 /** Tabla de ejemplo, difuminada detrás del muro. Nunca son datos reales. */
 const EJEMPLO: MiembroEquipo[] = [
-  { user_id: "1", email: "dueño@cafeaurora.mx", rol: "owner", created_at: "2026-01-10" },
-  { user_id: "2", email: "gerente@cafeaurora.mx", rol: "encargado", created_at: "2026-03-02" },
+  {
+    user_id: "1",
+    email: "dueño@cafeaurora.mx",
+    nombre: "Dueño",
+    avatar_url: null,
+    rol: "owner",
+    created_at: "2026-01-10",
+  },
+  {
+    user_id: "2",
+    email: "gerente@cafeaurora.mx",
+    nombre: null,
+    avatar_url: null,
+    rol: "encargado",
+    created_at: "2026-03-02",
+  },
 ];
 
 function Tabla({
@@ -41,7 +56,7 @@ function Tabla({
       <table className="w-full min-w-[520px] text-sm">
         <thead className="bg-vm-bg-soft text-left text-xs text-vm-body">
           <tr>
-            <th className="px-5 py-3 font-medium">Correo</th>
+            <th className="px-5 py-3 font-medium">Miembro</th>
             <th className="px-5 py-3 font-medium">Rol</th>
             <th className="px-5 py-3 font-medium">Desde</th>
             <th className="px-5 py-3" />
@@ -52,13 +67,21 @@ function Tabla({
             const esOwner = m.rol === "owner";
             return (
               <tr key={m.user_id} className="border-t">
-                <td className="px-5 py-3.5 text-vm-ink">
-                  {m.email}
-                  {m.user_id === userIdActual && (
-                    <span className="ml-2 rounded-full bg-vm-bg-soft px-2 py-0.5 text-[11px] text-vm-body">
-                      Tú
-                    </span>
-                  )}
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <AvatarUsuario nombre={m.nombre || m.email} avatarUrl={m.avatar_url} />
+                    <div className="min-w-0">
+                      <p className="truncate text-vm-ink">
+                        {m.nombre || m.email}
+                        {m.user_id === userIdActual && (
+                          <span className="ml-2 rounded-full bg-vm-bg-soft px-2 py-0.5 text-[11px] text-vm-body">
+                            Tú
+                          </span>
+                        )}
+                      </p>
+                      {m.nombre && <p className="truncate text-xs text-vm-body">{m.email}</p>}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-5 py-3.5">
                   <span
@@ -157,16 +180,7 @@ function Contenido() {
       setAviso(`Le enviamos una invitación a ${email.trim()}.`);
       setEmail("");
     } catch (err) {
-      const mensaje = (err as Error).message ?? "";
-      // "No existe" y "no la pude contactar" son cosas distintas. Un fallo de CORS
-      // llega como error de red y decir "falta desplegar" manda a depurar mal.
-      setError(
-        /404|not found/i.test(mensaje)
-          ? "La función `invitar-encargado` no está desplegada."
-          : /failed to send|failed to fetch/i.test(mensaje)
-            ? "No pudimos contactar el servidor. Revisa tu conexión y vuelve a intentar."
-            : traducirError(err as Error).mensaje,
-      );
+      setError(await traducirErrorEdge(err));
     }
   }
 

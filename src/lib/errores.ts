@@ -31,7 +31,9 @@ export type SlugErrorDb =
   | "color_modificadores_no_permitido"
   | "desenfoque_no_permitido"
   // Migración 005: validar_precio_sucursal
-  | "precio_por_sucursal_no_permitido";
+  | "precio_por_sucursal_no_permitido"
+  // Migración 012: validar_un_tenant_por_usuario
+  | "ya_perteneces_a_un_tenant";
 
 /** Errores que el usuario resuelve actualizando su plan. */
 export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
@@ -73,6 +75,7 @@ const MENSAJES: Record<SlugErrorDb, string> = {
   color_modificadores_no_permitido: "Darle color a los modificadores es parte de Basic.",
   desenfoque_no_permitido: "El desenfoque detrás del texto es parte de Pro.",
   precio_por_sucursal_no_permitido: "Los precios distintos por sucursal son parte de Pro.",
+  ya_perteneces_a_un_tenant: "Tu cuenta ya administra un negocio en Vibemenu.",
 };
 
 const esSlugConocido = (m: string): m is SlugErrorDb => m in MENSAJES;
