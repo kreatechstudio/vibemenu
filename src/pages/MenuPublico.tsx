@@ -13,7 +13,7 @@ import {
   type MenuPublico as DatosMenu,
 } from "@/hooks/useMenuPublico";
 import { useRegistrarVisita } from "@/hooks/useVisitas";
-import { resolverTema, variablesDeTema } from "@/lib/tema";
+import { resolverTema, variablesDeTema, type TemaResuelto } from "@/lib/tema";
 import { ESTADOS } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import type { FormatoMenu, Tenant } from "@/types/database";
@@ -39,12 +39,35 @@ const FORMATOS: Record<FormatoMenu, (p: PropsFormato) => ReactElement> = {
   tiktok: TikTok,
 };
 
+/** El logo del negocio (o su inicial), con una animación de "respirar". Lo comparten los dos splash de abajo. */
+function LogoCarga({ tenant, tema }: { tenant: Tenant; tema: TemaResuelto }) {
+  return tenant.logo_url ? (
+    <img
+      src={tenant.logo_url}
+      alt=""
+      className="size-20 animate-pulse rounded-full object-cover shadow-vm-2"
+    />
+  ) : (
+    <div
+      className="grid size-20 animate-pulse place-items-center rounded-full text-2xl font-bold text-white shadow-vm-2"
+      style={{ background: tema.color_primario }}
+      aria-hidden
+    >
+      {tenant.nombre_negocio.slice(0, 1).toUpperCase()}
+    </div>
+  );
+}
+
 /**
  * Se ve mientras carga el menú — con el logo y el color de fondo del negocio,
  * no con el esqueleto gris de la plataforma. Solo se puede pintar así cuando
- * ya se conoce al tenant (por ejemplo, al cambiar de sucursal, donde el
- * anterior sigue siendo el mismo negocio); sin eso no hay de quién tomar el
- * logo o el color, y se cae al esqueleto neutro de siempre.
+ * ya se conoce al tenant (por ejemplo, al cambiar de sucursal desde el
+ * selector, donde el anterior sigue siendo el mismo negocio); sin eso no hay
+ * de quién tomar el logo o el color, y se cae al esqueleto neutro de siempre.
+ *
+ * Este caso es raro: con SSR el HTML ya trae el menú resuelto, así que casi
+ * nunca hay nada que "cargar" del lado del cliente. La bienvenida de marca
+ * que sí ve todo el mundo al abrir un link es <Cortina />, más abajo.
  */
 function SplashCarga({ conocido }: { conocido: { tenant: Tenant; formato: FormatoMenu } | null }) {
   if (!conocido) {
@@ -67,23 +90,48 @@ function SplashCarga({ conocido }: { conocido: { tenant: Tenant; formato: Format
       aria-busy="true"
       aria-label={`Cargando el menú de ${tenant.nombre_negocio}`}
     >
-      {tenant.logo_url ? (
-        <img
-          src={tenant.logo_url}
-          alt=""
-          className="size-20 animate-pulse rounded-full object-cover shadow-vm-2"
-        />
-      ) : (
-        <div
-          className="grid size-20 animate-pulse place-items-center rounded-full text-2xl font-bold text-white shadow-vm-2"
-          style={{ background: tema.color_primario }}
-          aria-hidden
-        >
-          {tenant.nombre_negocio.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <LogoCarga tenant={tenant} tema={tema} />
       <Loader2 className="size-6 animate-spin" style={{ color: tema.color_primario }} aria-hidden />
     </main>
+  );
+}
+
+/**
+ * Bienvenida de marca: cubre la carta un instante con el logo y el color del
+ * negocio cada vez que alguien abre un link del menú — el principal o el de
+ * una sucursal — antes de dejar ver el contenido. El `key` de abajo (en
+ * `MenuPublico`) la vuelve a montar en cada tenant/sucursal, así que
+ * reaparece al cambiar de sucursal aunque el componente no se desmonte.
+ *
+ * No espera ninguna carga real (con SSR la carta ya está lista); es
+ * deliberadamente breve — lo justo para que se sienta una entrada de marca y
+ * no un parpadeo, sin hacer esperar a quien ya abrió el link antes.
+ */
+function Cortina({ tenant, tema }: { tenant: Tenant; tema: TemaResuelto }) {
+  const [visible, setVisible] = useState(true);
+  const [saliendo, setSaliendo] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSaliendo(true), tenant.logo_url ? 550 : 350);
+    return () => clearTimeout(t);
+  }, [tenant.logo_url]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className={cn(
+        "fixed inset-0 z-[999] flex flex-col items-center justify-center gap-5 transition-opacity duration-300",
+        saliendo ? "pointer-events-none opacity-0" : "opacity-100",
+      )}
+      style={{ background: tema.color_fondo }}
+      aria-hidden
+      onTransitionEnd={() => {
+        if (saliendo) setVisible(false);
+      }}
+    >
+      <LogoCarga tenant={tenant} tema={tema} />
+    </div>
   );
 }
 
@@ -129,12 +177,25 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
     inicial: data.tenant.nombre_negocio.slice(0, 1),
   };
 
+  // El `key` la remonta (y por lo tanto la vuelve a mostrar) cada vez que
+  // cambia el tenant o la sucursal activa, no solo la primera vez.
+  const cortina = (
+    <Cortina
+      key={`${data.tenant.id}-${data.sucursalActiva?.id ?? "principal"}`}
+      tenant={data.tenant}
+      tema={tema}
+    />
+  );
+
   if (data.formato === "tiktok") {
     return (
-      <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
-        <Formato {...propsFormato} />
-        {data.marcaAgua && <MarcaAgua flotante />}
-      </main>
+      <>
+        <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
+          <Formato {...propsFormato} />
+          {data.marcaAgua && <MarcaAgua flotante />}
+        </main>
+        {cortina}
+      </>
     );
   }
 
@@ -178,31 +239,34 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
       : { background: "var(--menu-fondo)" };
 
     return (
-      <main className="relative min-h-screen p-3 sm:p-8" style={estiloRaiz}>
-        {/*
-          Capa aparte, no `bg-fixed` en el <main>: un `filter: blur` en el padre
-          también difuminaría la carta. El scale-110 esconde los bordes lavados
-          que el desenfoque deja en la orilla de la foto.
-        */}
-        <div
-          aria-hidden
-          className={cn(
-            "fixed inset-0 -z-10 bg-cover bg-center",
-            tema.desenfoque_texto && "scale-110 blur-lg",
-          )}
-          style={{ backgroundImage: `url(${tema.imagen_fondo_url})` }}
-        />
+      <>
+        <main className="relative min-h-screen p-3 sm:p-8" style={estiloRaiz}>
+          {/*
+            Capa aparte, no `bg-fixed` en el <main>: un `filter: blur` en el padre
+            también difuminaría la carta. El scale-110 esconde los bordes lavados
+            que el desenfoque deja en la orilla de la foto.
+          */}
+          <div
+            aria-hidden
+            className={cn(
+              "fixed inset-0 -z-10 bg-cover bg-center",
+              tema.desenfoque_texto && "scale-110 blur-lg",
+            )}
+            style={{ backgroundImage: `url(${tema.imagen_fondo_url})` }}
+          />
 
-        <div
-          className={cn(
-            "mx-auto max-w-3xl overflow-hidden rounded-2xl shadow-vm-3",
-            tema.desenfoque_texto && "backdrop-blur-sm",
-          )}
-          style={tarjeta}
-        >
-          {cuerpo}
-        </div>
-      </main>
+          <div
+            className={cn(
+              "mx-auto max-w-3xl overflow-hidden rounded-2xl shadow-vm-3",
+              tema.desenfoque_texto && "backdrop-blur-sm",
+            )}
+            style={tarjeta}
+          >
+            {cuerpo}
+          </div>
+        </main>
+        {cortina}
+      </>
     );
   }
 
@@ -218,18 +282,24 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
     } as React.CSSProperties;
 
     return (
-      <main className="relative min-h-screen bg-cover bg-center bg-fixed" style={sobreFoto}>
-        <div className="absolute inset-0 bg-black/50" aria-hidden />
-        <div className={cn("relative min-h-screen", tema.desenfoque_texto && "backdrop-blur-sm")}>
-          {cuerpo}
-        </div>
-      </main>
+      <>
+        <main className="relative min-h-screen bg-cover bg-center bg-fixed" style={sobreFoto}>
+          <div className="absolute inset-0 bg-black/50" aria-hidden />
+          <div className={cn("relative min-h-screen", tema.desenfoque_texto && "backdrop-blur-sm")}>
+            {cuerpo}
+          </div>
+        </main>
+        {cortina}
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen" style={{ ...estiloRaiz, background: "var(--menu-fondo)" }}>
-      {cuerpo}
-    </main>
+    <>
+      <main className="min-h-screen" style={{ ...estiloRaiz, background: "var(--menu-fondo)" }}>
+        {cuerpo}
+      </main>
+      {cortina}
+    </>
   );
 }
