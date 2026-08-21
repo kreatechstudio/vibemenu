@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import MenuPublicoSucursal from "@/pages/MenuPublicoSucursal";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
 import { obtenerMenuPublico } from "@/hooks/useMenuPublico";
+import { metaMenuPublico } from "@/lib/seoTenant";
 
 export const Route = createFileRoute("/$slug/sucursal/$sucursalSlug")({
   // Una sucursal inexistente, o de otro negocio, tambien es un 404.
@@ -10,6 +11,12 @@ export const Route = createFileRoute("/$slug/sucursal/$sucursalSlug")({
     if (!menu) throw notFound();
     return menu;
   },
+  head: ({ loaderData, params }) =>
+    loaderData
+      ? {
+          meta: metaMenuPublico(loaderData, `/${params.slug}/sucursal/${params.sucursalSlug}`),
+        }
+      : {},
   component: RouteComponent,
   notFoundComponent: MenuNoEncontrado,
 });
