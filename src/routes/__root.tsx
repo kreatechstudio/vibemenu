@@ -16,6 +16,7 @@ import { SesionProvider } from "../hooks/useSesion";
 import { SEO } from "../lib/copy";
 import { URL_GOOGLE_FONTS } from "../lib/fuentes";
 import { GA_MEASUREMENT_ID, trackPageView } from "../lib/analytics";
+import { EMPRESA } from "../lib/legal";
 import { Toaster } from "../components/ui/sonner";
 
 function AnalyticsRouteTracker() {
@@ -106,9 +107,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: SEO.title },
       { property: "og:description", content: SEO.description },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/og-image.png" },
+      { property: "og:url", content: `https://${EMPRESA.dominio}/` },
+      { property: "og:image", content: `https://${EMPRESA.dominio}/og-image.png` },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "/og-image.png" },
+      { name: "twitter:title", content: SEO.title },
+      { name: "twitter:description", content: SEO.description },
+      { name: "twitter:image", content: `https://${EMPRESA.dominio}/og-image.png` },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
