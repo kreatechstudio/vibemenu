@@ -1,0 +1,46 @@
+name: Respaldo de la base de datos
+
+# Corre de madrugada, hora baja de trafico (03:00 CDMX aprox), para no competir
+# por conexiones con el trafico real de los menus publicos.
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente de Postgres
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      # --format=custom: comprimido y restaurable con pg_restore, no un .sql plano.
+      # SUPABASE_DB_URL debe ser el Session pooler (aws-0-<region>.pooler.supabase.com:5432),
+      # NO la conexion directa: GitHub Actions no tiene salida IPv6, y la conexion
+      # directa de Supabase solo es IPv4 con el add-on de pago. El pooler en modo
+      # sesion si es IPv4 en todos los planes, y Supabase lo recomienda para pg_dump.
+      - name: Volcar la base de datos
+        run: |
+          FECHA=$(date +%Y-%m-%d)
+          pg_dump "${{ secrets.SUPABASE_DB_URL }}" \
+            --format=custom --no-owner --no-acl \
+            --file="vibemenu-$FECHA.dump"
+          echo "ARCHIVO=vibemenu-$FECHA.dump" >> "$GITHUB_ENV"
+
+      # R2 habla el protocolo S3: el mismo cliente aws, apuntado a otro endpoint.
+      - name: Subir a Cloudflare R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          aws s3 cp "$ARCHIVO" \
+            "s3://${{ secrets.R2_BUCKET_BACKUPS }}/$ARCHIVO" \
+            --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+
+# Si este job falla, GitHub le manda un correo solo al dueño del repo — no hace
+# falta configurar una alerta aparte.
+#
+# El bucket necesita una regla de ciclo de vida que borre objetos con mas de N
+# dias (ver vibemenu_backups.md). Sin eso, el bucket crece para siempre y algun
+# dia deja de caber en el nivel gratis de R2.
