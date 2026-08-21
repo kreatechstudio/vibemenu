@@ -41,6 +41,8 @@ type FilaTenantSuperAdmin = {
   slug: string;
   estado: string;
   created_at: string;
+  /* Migración 013 — para saber a quién falta darle de alta el dominio en Vercel. */
+  dominio_personalizado: string | null;
   plan: Pick<Plan, "nombre"> | null;
   suscripciones: SuscripcionResumen[];
 };
@@ -64,7 +66,7 @@ export function useTenantsSuperAdmin(habilitado: boolean) {
       const { data, error } = await supabase
         .from("tenants")
         .select(
-          "id, nombre_negocio, slug, estado, created_at, plan:planes(nombre), suscripciones(estado, precio_congelado_usd, precio_congelado_mxn, moneda_cobro, fecha_renovacion)",
+          "id, nombre_negocio, slug, estado, created_at, dominio_personalizado, plan:planes(nombre), suscripciones(estado, precio_congelado_usd, precio_congelado_mxn, moneda_cobro, fecha_renovacion)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;

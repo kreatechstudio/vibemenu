@@ -1,15 +1,18 @@
 import { useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { AlertTriangle, Check, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, ImagePlus, Loader2, Lock, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { useActualizarTenant } from "@/hooks/useActualizarTenant";
 import { borrarImagen, subirImagen } from "@/hooks/useCarta";
 import { useSlugDisponible } from "@/hooks/useSlugDisponible";
+import { useDominioDisponible } from "@/hooks/useDominioDisponible";
 import { traducirError } from "@/lib/errores";
 import { esUrlValida } from "@/lib/url";
 import { avisarGuardado } from "@/lib/avisos";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
+import { MENSAJE_ERROR_DOMINIO, normalizarDominio } from "@/lib/dominio";
 import { BOTONES, ESTADOS } from "@/lib/copy";
 import { EMPRESA } from "@/lib/legal";
 import { cn } from "@/lib/utils";
@@ -73,6 +76,7 @@ function Contenido() {
   const [telefono, setTelefono] = useState(tenant?.telefono ?? "");
   const [whatsapp, setWhatsapp] = useState(tenant?.whatsapp ?? "");
   const [logoUrl, setLogoUrl] = useState(tenant?.logo_url ?? "");
+  const [dominio, setDominio] = useState(tenant?.dominio_personalizado ?? "");
 
   // Sin la migración 007 estas columnas llegan como `undefined`, no como null.
   const [redes, setRedes] = useState<Record<ClaveRed, string>>({
@@ -89,6 +93,10 @@ function Contenido() {
   const cambioSlug = tenant ? slug !== tenant.slug : false;
   const estadoSlug = useSlugDisponible(cambioSlug ? slug : "");
 
+  // Mismo criterio que el slug: solo se consulta disponibilidad si en verdad cambió.
+  const cambioDominio = tenant ? dominio !== (tenant.dominio_personalizado ?? "") : false;
+  const estadoDominio = useDominioDisponible(cambioDominio ? dominio : "");
+
   if (!ctx || !tenant) return null;
 
   // TS no estrecha `tenant` dentro de las funciones de abajo: se captura aquí.
@@ -100,6 +108,9 @@ function Contenido() {
       estadoSlug.estado === "ocupado" ||
       estadoSlug.estado === "reservado" ||
       estadoSlug.estado === "vacio");
+  const dominioInvalido =
+    cambioDominio && (estadoDominio.estado === "invalido" || estadoDominio.estado === "ocupado");
+  const permiteDominio = ctx.plan.permite_dominio_propio;
 
   async function alElegirLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
@@ -140,6 +151,7 @@ function Contenido() {
         telefono: telefono.trim() || null,
         whatsapp: whatsapp.trim() || null,
         logo_url: logoUrl || null,
+        dominio_personalizado: permiteDominio ? dominio.trim() || null : undefined,
         ...limpias,
       });
 
@@ -316,6 +328,81 @@ function Contenido() {
         </Bloque>
 
         <Bloque
+          titulo="Dominio personalizado"
+          nota={
+            permiteDominio
+              ? "Tu menú responde también en este dominio, sin pasar por vibemenu.com.mx."
+              : undefined
+          }
+        >
+          {permiteDominio ? (
+            <>
+              <label htmlFor="e-dominio" className="sr-only">
+                Dominio personalizado
+              </label>
+              <div className="flex h-12 items-center rounded-lg border pl-4 focus-within:border-vm-primary focus-within:ring-2 focus-within:ring-vm-primary/20">
+                <input
+                  id="e-dominio"
+                  value={dominio}
+                  onChange={(e) => setDominio(normalizarDominio(e.target.value))}
+                  placeholder="menu.tunegocio.com"
+                  className="vm-data h-full min-w-0 flex-1 rounded-lg pr-4 text-sm outline-none"
+                />
+                {cambioDominio && estadoDominio.estado === "verificando" && (
+                  <Loader2 className="mr-4 size-4 shrink-0 animate-spin text-vm-body" aria-hidden />
+                )}
+                {cambioDominio && estadoDominio.estado === "disponible" && (
+                  <Check className="mr-4 size-4 shrink-0 text-vm-success" aria-hidden />
+                )}
+              </div>
+
+              {cambioDominio && estadoDominio.estado === "invalido" && (
+                <p className="mt-2 text-xs text-vm-danger">
+                  {MENSAJE_ERROR_DOMINIO[estadoDominio.motivo]}
+                </p>
+              )}
+              {cambioDominio && estadoDominio.estado === "ocupado" && (
+                <p className="mt-2 text-xs text-vm-danger">Ese dominio ya está en uso.</p>
+              )}
+
+              {dominio.trim().length > 0 && !dominioInvalido && (
+                <div className="mt-4 rounded-lg bg-vm-bg-soft px-4 py-3 text-xs text-vm-body">
+                  <p className="font-medium text-vm-ink">Configura tu DNS</p>
+                  {dominio.split(".").length > 2 ? (
+                    <p className="mt-1">
+                      En el proveedor donde compraste tu dominio, crea un registro{" "}
+                      <span className="vm-data font-medium">CNAME</span> que apunte{" "}
+                      <span className="vm-data font-medium">{dominio}</span> a{" "}
+                      <span className="vm-data font-medium">cname.vercel-dns.com</span>.
+                    </p>
+                  ) : (
+                    <p className="mt-1">
+                      Como es un dominio raíz (sin "www" ni otro prefijo), crea un registro{" "}
+                      <span className="vm-data font-medium">A</span> que apunte{" "}
+                      <span className="vm-data font-medium">{dominio}</span> a{" "}
+                      <span className="vm-data font-medium">76.76.21.21</span>.
+                    </p>
+                  )}
+                  <p className="mt-2">
+                    Después de guardar, avísanos: activar tu dominio del lado del servidor es un
+                    paso manual que hacemos una sola vez.
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="flex items-center gap-1.5 text-xs text-vm-body">
+              <Lock className="size-3.5 shrink-0" aria-hidden />
+              Usar tu propio dominio es parte de{" "}
+              <Link to="/admin/suscripcion" className="font-medium text-vm-primary hover:underline">
+                Pro
+              </Link>
+              .
+            </p>
+          )}
+        </Bloque>
+
+        <Bloque
           titulo="Contacto"
           nota="Los de tu negocio. Cada sucursal puede tener los suyos, y esos mandan en su menú."
         >
@@ -387,7 +474,7 @@ function Contenido() {
       <div className="sticky bottom-0 -mx-4 mt-6 flex items-center justify-end border-t bg-white/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
         <button
           type="submit"
-          disabled={actualizar.isPending || subiendo || slugInvalido}
+          disabled={actualizar.isPending || subiendo || slugInvalido || dominioInvalido}
           className={cn(
             "inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-vm-primary px-6 text-sm font-medium text-white hover:bg-vm-primary-hover",
             "disabled:cursor-not-allowed disabled:opacity-50",

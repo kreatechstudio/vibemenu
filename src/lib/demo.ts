@@ -26,6 +26,7 @@ export const TENANT_DEMO: Tenant = {
   instagram_url: "https://instagram.com/tacoselprimo",
   tiktok_url: "https://tiktok.com/@tacoselprimo",
   google_reviews_url: "https://maps.google.com/?cid=0",
+  dominio_personalizado: null,
   formato_activo: "pinterest",
   formatos_desbloqueados: ["clasico", "pinterest", "instagram", "tiktok"],
   tema: {

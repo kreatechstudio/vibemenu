@@ -507,6 +507,8 @@ export type Database = {
           instagram_url: string | null;
           tiktok_url: string | null;
           google_reviews_url: string | null;
+          /* Migración 013 — dominio personalizado (plan Pro). */
+          dominio_personalizado: string | null;
         };
         Insert: {
           created_at?: string;
@@ -530,6 +532,7 @@ export type Database = {
           instagram_url?: string | null;
           tiktok_url?: string | null;
           google_reviews_url?: string | null;
+          dominio_personalizado?: string | null;
         };
         Update: {
           created_at?: string;
@@ -553,6 +556,7 @@ export type Database = {
           instagram_url?: string | null;
           tiktok_url?: string | null;
           google_reviews_url?: string | null;
+          dominio_personalizado?: string | null;
         };
         Relationships: [Rel<"tenants_plan_id_fkey", "plan_id", "planes">];
       };

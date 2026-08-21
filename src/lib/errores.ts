@@ -33,7 +33,10 @@ export type SlugErrorDb =
   // Migración 005: validar_precio_sucursal
   | "precio_por_sucursal_no_permitido"
   // Migración 012: validar_un_tenant_por_usuario
-  | "ya_perteneces_a_un_tenant";
+  | "ya_perteneces_a_un_tenant"
+  // Migración 013: validar_dominio_tenant
+  | "dominio_reservado"
+  | "dominio_propio_no_permitido";
 
 /** Errores que el usuario resuelve actualizando su plan. */
 export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
@@ -50,6 +53,7 @@ export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
   "color_modificadores_no_permitido",
   "desenfoque_no_permitido",
   "precio_por_sucursal_no_permitido",
+  "dominio_propio_no_permitido",
 ];
 
 const MENSAJES: Record<SlugErrorDb, string> = {
@@ -76,6 +80,8 @@ const MENSAJES: Record<SlugErrorDb, string> = {
   desenfoque_no_permitido: "El desenfoque detrás del texto es parte de Pro.",
   precio_por_sucursal_no_permitido: "Los precios distintos por sucursal son parte de Pro.",
   ya_perteneces_a_un_tenant: "Tu cuenta ya administra un negocio en Vibemenu.",
+  dominio_reservado: "Ese dominio está reservado para Vibemenu.",
+  dominio_propio_no_permitido: "El dominio personalizado es parte de Pro.",
 };
 
 const esSlugConocido = (m: string): m is SlugErrorDb => m in MENSAJES;
@@ -99,6 +105,15 @@ export function traducirError(error: PostgrestError | Error | null): ErrorTraduc
   // Slug unico ya tomado: viola el unique de tenants.slug.
   if (pg.code === "23505" && pg.message?.includes("slug")) {
     return { mensaje: ESTADOS.slugNoDisponible, esLimiteDePlan: false, slug: null };
+  }
+
+  // Dominio personalizado ya tomado: viola tenants_dominio_personalizado_key.
+  if (pg.code === "23505" && pg.message?.includes("dominio_personalizado")) {
+    return {
+      mensaje: "Ese dominio ya está en uso por otro negocio.",
+      esLimiteDePlan: false,
+      slug: null,
+    };
   }
 
   const mensajeCrudo = pg.message ?? "";

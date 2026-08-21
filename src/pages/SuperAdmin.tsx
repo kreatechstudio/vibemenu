@@ -93,13 +93,14 @@ export default function SuperAdmin() {
           <div className="mt-6 h-64 animate-pulse rounded-xl bg-vm-bg-soft" />
         ) : (
           <div className="mt-6 overflow-x-auto rounded-xl border">
-            <table className="w-full min-w-[820px] text-sm">
+            <table className="w-full min-w-[980px] text-sm">
               <thead className="bg-vm-bg-soft text-left text-xs text-vm-body">
                 <tr>
                   <th className="px-4 py-3 font-medium">Negocio</th>
                   <th className="px-4 py-3 font-medium">Plan</th>
                   <th className="px-4 py-3 font-medium">Estado</th>
                   <th className="px-4 py-3 font-medium">Alta</th>
+                  <th className="px-4 py-3 font-medium">Dominio propio</th>
                   <th className="px-4 py-3 text-right font-medium">Suscripción activa</th>
                   <th className="px-4 py-3 font-medium">Renueva</th>
                 </tr>
@@ -141,6 +142,18 @@ export default function SuperAdmin() {
                       </td>
                       <td className="px-4 py-3.5 text-vm-body">
                         {FECHA.format(new Date(t.created_at))}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {t.dominio_personalizado ? (
+                          <span
+                            className="rounded-full bg-vm-warning-soft px-2.5 py-1 text-xs font-medium text-vm-warning"
+                            title="Falta darlo de alta en Vercel (Project → Settings → Domains) si aún no se hizo."
+                          >
+                            {t.dominio_personalizado}
+                          </span>
+                        ) : (
+                          <span className="text-vm-body">—</span>
+                        )}
                       </td>
                       <td className="vm-data px-4 py-3.5 text-right text-vm-ink">
                         {monto !== null ? formatearPrecio(monto, moneda) : "—"}

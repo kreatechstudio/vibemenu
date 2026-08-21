@@ -5,6 +5,7 @@ import type {
   FormatoMenu,
   GrupoModificador,
   OpcionModificador,
+  Plan,
   Producto,
   Sucursal,
   Tenant,
@@ -48,6 +49,31 @@ export async function obtenerMenuPublico(
     .maybeSingle();
 
   if (errorTenant) throw errorTenant;
+  return armarMenuPublico(tenantRow, sucursalSlug);
+}
+
+/**
+ * Igual que `obtenerMenuPublico`, pero busca por `dominio_personalizado` en vez
+ * de slug. La usa la ruta raiz cuando el Host de la request no es vibemenu.com.mx:
+ * asi el dueno de un dominio propio ve su carta en "/", no en "/<slug>".
+ */
+export async function obtenerMenuPublicoPorDominio(host: string): Promise<MenuPublico | null> {
+  const { data: tenantRow, error: errorTenant } = await supabase
+    .from("tenants")
+    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
+    .eq("dominio_personalizado", host)
+    .maybeSingle();
+
+  if (errorTenant) throw errorTenant;
+  return armarMenuPublico(tenantRow);
+}
+
+async function armarMenuPublico(
+  tenantRow:
+    | (Tenant & { plan: Pick<Plan, "marca_agua" | "menu_independiente_por_sucursal"> | null })
+    | null,
+  sucursalSlug?: string,
+): Promise<MenuPublico | null> {
   if (!tenantRow) return null;
 
   const { plan, ...tenant } = tenantRow;
