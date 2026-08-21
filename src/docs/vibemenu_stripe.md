@@ -212,6 +212,46 @@ tenant nuevo nace en el plan Pro (antes nacía directo en Free) sin pedir tarjet
 quien no se suscribió — reutiliza los mismos triggers de downgrade que ya existían. Ver
 `vibemenu_emails.md` para el correo.
 
+---
+
+## 7. Datos fiscales — preparación para CFDI real (aún NO se timbra nada)
+
+**Estado (2026-08-21): 🟡 preparado, no conectado.** KreaTech Studio todavía no factura — no hay
+RFC con actividad empresarial, e.firma ni PAC contratado. Sin eso, ningún proveedor puede timbrar
+un CFDI válido, y no es algo resoluble desde este repo.
+
+Lo que sí se construyó, para no tener que perseguir a cada cliente por sus datos el día que se
+active: tabla `datos_fiscales` (`vibemenu_migracion_datos_fiscales.sql`), **separada** de
+`tenants` — `tenants` tiene `tenants_select_publico using (true)` porque el menú público la lee
+sin login, así que un RFC ahí quedaría visible con el anon key. `datos_fiscales` no tiene ninguna
+policy pública: solo `es_owner_de_tenant(tenant_id)`, para select/insert/update/delete. El owner
+la llena desde `/admin/suscripcion` (`src/hooks/useDatosFiscales.ts`), con RFC, razón social,
+código postal, régimen fiscal y uso de CFDI validados contra el catálogo SAT
+(`src/lib/facturacion.ts`).
+
+**El recibo de Stripe (sección 6 de este doc, `pagos`) sigue siendo el único comprobante hasta que
+esto se conecte.** No es intercambiable con un CFDI — el SAT no lo reconoce como factura.
+
+### Para activar CFDI real, en este orden:
+
+1. **KreaTech Studio se registra ante el SAT** con RFC de actividad empresarial (si aún opera con
+   RFC de persona física sin actividad, hay que dar de alta el régimen correcto) y tramita su
+   e.firma.
+2. **Contratar un PAC** (Facturapi, Facturama, SW Sapien, Bind ERP...). Facturapi es la opción más
+   simple de integrar por API y, como Stripe, separa modo de prueba (sandbox, sin CSD real) de
+   modo live — se puede construir y probar la integración completa ANTES de terminar el paso 1,
+   con una cuenta de prueba gratuita.
+3. **Nueva Edge Function** (p. ej. `generar-factura`), disparada manualmente por el owner desde
+   `/admin/suscripcion` o automática en `invoice.paid`, que lee `datos_fiscales` + el monto del
+   pago y llama al PAC para timbrar. Necesita sus propias credenciales en secrets (igual que
+   `RESEND_API_KEY` o `STRIPE_SECRET_KEY`), nunca hardcodeadas.
+4. Guardar el UUID/XML/PDF que regresa el PAC — probablemente una tabla `facturas` colgando de
+   `pagos`, mismo patrón de RLS que `pagos` (solo owner, solo Edge Function con service_role
+   escribe).
+
+Ninguno de estos 4 pasos existe todavía. El punto 2 es el primero que no depende de trámites
+externos — se puede empezar ahí en cuanto se elija PAC.
+
 **Webhook registrado en modo live: ✅ ya existe** (2026-08-21). Endpoint
 `we_1U6uxUEWXMEt3EVbVWBgmzYb` con los 5 eventos de la tabla de arriba, `status: enabled`.
 Probado con `procesar-trials-vencidos` respondiendo 200 con el `CRON_SECRET` real.

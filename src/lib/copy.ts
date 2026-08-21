@@ -118,6 +118,25 @@ export const PRECIOS = {
   notaAhorroAnual: (porcentaje: number) => `Ahorra ${porcentaje}% pagando anual`,
 } as const;
 
+export const FACTURACION = {
+  titulo: "Datos de facturación",
+  nota: "Por ahora Vibemenu no emite facturas fiscales (CFDI). Guarda tus datos aquí y en cuanto lancemos esa opción, ya estarán listos — sin que tengas que volver a capturarlos.",
+  campos: {
+    rfc: "RFC",
+    razonSocial: "Razón social",
+    codigoPostal: "Código postal fiscal",
+    regimenFiscal: "Régimen fiscal",
+    usoCfdi: "Uso de CFDI",
+    email: "Correo para facturas",
+  },
+  placeholderRazonSocial: "Como aparece en tu constancia de situación fiscal",
+  placeholderEmail: "contabilidad@tunegocio.com",
+  seleccionar: "Selecciona una opción",
+  errorRfc: "Ese RFC no tiene un formato válido.",
+  errorCp: "El código postal debe tener 5 dígitos.",
+  guardado: "Datos de facturación guardados.",
+} as const;
+
 export const BOTONES = {
   registro: "Prueba gratis, sin tarjeta",
   verDemo: "Ver demo en vivo",

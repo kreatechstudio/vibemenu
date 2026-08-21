@@ -52,6 +52,40 @@ export type Database = {
           Rel<"categorias_tenant_id_fkey", "tenant_id", "tenants">,
         ];
       };
+      /* Migración 017 — datos fiscales del receptor, preparación para CFDI. */
+      datos_fiscales: {
+        Row: {
+          codigo_postal: string | null;
+          email: string | null;
+          razon_social: string | null;
+          regimen_fiscal: string | null;
+          rfc: string | null;
+          tenant_id: string;
+          updated_at: string;
+          uso_cfdi: string | null;
+        };
+        Insert: {
+          codigo_postal?: string | null;
+          email?: string | null;
+          razon_social?: string | null;
+          regimen_fiscal?: string | null;
+          rfc?: string | null;
+          tenant_id: string;
+          updated_at?: string;
+          uso_cfdi?: string | null;
+        };
+        Update: {
+          codigo_postal?: string | null;
+          email?: string | null;
+          razon_social?: string | null;
+          regimen_fiscal?: string | null;
+          rfc?: string | null;
+          tenant_id?: string;
+          updated_at?: string;
+          uso_cfdi?: string | null;
+        };
+        Relationships: [Rel<"datos_fiscales_tenant_id_fkey", "tenant_id", "tenants">];
+      };
       grupos_modificadores: {
         Row: {
           id: string;
@@ -705,6 +739,7 @@ export type GrupoModificador = Tables<"grupos_modificadores">;
 export type OpcionModificador = Tables<"opciones_modificador">;
 export type Suscripcion = Tables<"suscripciones">;
 export type Pago = Tables<"pagos">;
+export type DatosFiscales = Tables<"datos_fiscales">;
 export type SuperAdmin = Tables<"super_admins">;
 export type Invitacion = Tables<"invitaciones">;
 export type NotaInterna = Tables<"notas_internas">;

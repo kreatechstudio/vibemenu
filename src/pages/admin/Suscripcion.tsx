@@ -8,9 +8,13 @@ import { trackEvent } from "@/lib/analytics";
 import { suscripcionActiva, useHistorialSuscripciones } from "@/hooks/useSuscripciones";
 import type { SuscripcionConPlan } from "@/hooks/useSuscripciones";
 import { usePagos } from "@/hooks/usePagos";
-import type { Pago } from "@/types/database";
+import { useDatosFiscales, useGuardarDatosFiscales } from "@/hooks/useDatosFiscales";
+import type { DatosFiscales as DatosFiscalesTipo, Pago } from "@/types/database";
 import { formatearPrecio, porcentajeAhorroAnual, precioDelPlan, textoLimite } from "@/lib/plan";
-import { PRECIOS } from "@/lib/copy";
+import { BOTONES, FACTURACION, PRECIOS } from "@/lib/copy";
+import { codigoPostalValido, REGIMENES_FISCALES, rfcValido, USOS_CFDI } from "@/lib/facturacion";
+import { traducirError } from "@/lib/errores";
+import { avisarExito } from "@/lib/avisos";
 import {
   NOMBRE_PLAN,
   type EstadoSuscripcion,
@@ -139,6 +143,167 @@ function Historial({ filas, pagos }: { filas: SuscripcionConPlan[]; pagos: Pago[
   );
 }
 
+/** Como está en la constancia de situación fiscal: 12 caracteres persona moral, 13 física. */
+function DatosFiscalesForm({
+  tenantId,
+  datos,
+}: {
+  tenantId: string;
+  datos: DatosFiscalesTipo | null;
+}) {
+  const guardar = useGuardarDatosFiscales(tenantId);
+  const [rfc, setRfc] = useState(datos?.rfc ?? "");
+  const [razonSocial, setRazonSocial] = useState(datos?.razon_social ?? "");
+  const [codigoPostal, setCodigoPostal] = useState(datos?.codigo_postal ?? "");
+  const [regimenFiscal, setRegimenFiscal] = useState(datos?.regimen_fiscal ?? "");
+  const [usoCfdi, setUsoCfdi] = useState(datos?.uso_cfdi ?? "");
+  const [email, setEmail] = useState(datos?.email ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  async function alGuardar(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (rfc.trim() && !rfcValido(rfc)) {
+      setError(FACTURACION.errorRfc);
+      return;
+    }
+    if (codigoPostal.trim() && !codigoPostalValido(codigoPostal)) {
+      setError(FACTURACION.errorCp);
+      return;
+    }
+
+    try {
+      await guardar.mutateAsync({
+        rfc: rfc.trim() || null,
+        razon_social: razonSocial.trim() || null,
+        codigo_postal: codigoPostal.trim() || null,
+        regimen_fiscal: regimenFiscal || null,
+        uso_cfdi: usoCfdi || null,
+        email: email.trim() || null,
+      });
+      avisarExito(FACTURACION.guardado);
+    } catch (err) {
+      setError(traducirError(err as Error).mensaje);
+    }
+  }
+
+  return (
+    <form onSubmit={alGuardar} className="mt-4 rounded-xl border p-5 sm:p-6">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label htmlFor="f-rfc" className="text-sm font-medium text-vm-ink">
+            {FACTURACION.campos.rfc}
+          </label>
+          <input
+            id="f-rfc"
+            value={rfc}
+            onChange={(e) => setRfc(e.target.value.toUpperCase())}
+            placeholder="XAXX010101000"
+            maxLength={13}
+            className="mt-2 h-12 w-full rounded-lg border px-4 text-sm uppercase outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="f-razon" className="text-sm font-medium text-vm-ink">
+            {FACTURACION.campos.razonSocial}
+          </label>
+          <input
+            id="f-razon"
+            value={razonSocial}
+            onChange={(e) => setRazonSocial(e.target.value)}
+            placeholder={FACTURACION.placeholderRazonSocial}
+            className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="f-cp" className="text-sm font-medium text-vm-ink">
+            {FACTURACION.campos.codigoPostal}
+          </label>
+          <input
+            id="f-cp"
+            value={codigoPostal}
+            onChange={(e) => setCodigoPostal(e.target.value)}
+            placeholder="06000"
+            maxLength={5}
+            inputMode="numeric"
+            className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="f-email" className="text-sm font-medium text-vm-ink">
+            {FACTURACION.campos.email}
+          </label>
+          <input
+            id="f-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={FACTURACION.placeholderEmail}
+            className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="f-regimen" className="text-sm font-medium text-vm-ink">
+            {FACTURACION.campos.regimenFiscal}
+          </label>
+          <select
+            id="f-regimen"
+            value={regimenFiscal}
+            onChange={(e) => setRegimenFiscal(e.target.value)}
+            className="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          >
+            <option value="">{FACTURACION.seleccionar}</option>
+            {REGIMENES_FISCALES.map((r) => (
+              <option key={r.clave} value={r.clave}>
+                {r.etiqueta}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="f-uso" className="text-sm font-medium text-vm-ink">
+            {FACTURACION.campos.usoCfdi}
+          </label>
+          <select
+            id="f-uso"
+            value={usoCfdi}
+            onChange={(e) => setUsoCfdi(e.target.value)}
+            className="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          >
+            <option value="">{FACTURACION.seleccionar}</option>
+            {USOS_CFDI.map((u) => (
+              <option key={u.clave} value={u.clave}>
+                {u.etiqueta}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg bg-vm-danger-soft px-3.5 py-2.5 text-sm text-vm-danger">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={guardar.isPending}
+        className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-vm-primary px-5 text-sm font-medium text-white hover:bg-vm-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {guardar.isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+        {BOTONES.guardarCambios}
+      </button>
+    </form>
+  );
+}
+
 function Contenido() {
   const { data: ctx } = useTenantActual();
   const { data: planes } = usePlanes();
@@ -147,6 +312,10 @@ function Contenido() {
     ctx?.esOwner ?? false,
   );
   const { data: pagos } = usePagos(ctx?.tenant.id, ctx?.esOwner ?? false);
+  const { data: datosFiscales, isLoading: cargandoFiscales } = useDatosFiscales(
+    ctx?.tenant.id,
+    ctx?.esOwner ?? false,
+  );
   const checkout = useCheckout();
   const portal = usePortalStripe();
   const [intervalo, setIntervalo] = useState<IntervaloCobro>("mensual");
@@ -279,6 +448,15 @@ function Contenido() {
         <div className="mt-4 h-32 animate-pulse rounded-xl bg-vm-bg-soft" />
       ) : (
         <Historial filas={historial ?? []} pagos={pagos ?? []} />
+      )}
+
+      {/* ── Datos de facturación ─────────────────────────── */}
+      <h2 className="mt-12 text-lg">{FACTURACION.titulo}</h2>
+      <p className="mt-1 max-w-prose text-sm text-vm-body">{FACTURACION.nota}</p>
+      {cargandoFiscales ? (
+        <div className="mt-4 h-40 animate-pulse rounded-xl bg-vm-bg-soft" />
+      ) : (
+        <DatosFiscalesForm key={tenant.id} tenantId={tenant.id} datos={datosFiscales ?? null} />
       )}
 
       {/* ── Comparativa ──────────────────────────────────── */}
