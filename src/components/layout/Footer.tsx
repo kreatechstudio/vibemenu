@@ -64,6 +64,16 @@ export default function Footer() {
                 Cookies
               </Link>
             </li>
+            <li>
+              <a
+                href={FOOTER.estadoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-vm-ink"
+              >
+                {FOOTER.estadoLabel}
+              </a>
+            </li>
           </ul>
         </nav>
       </div>
