@@ -47,7 +47,7 @@ export type OpcionesTarjeta = {
   sucursal: string | null;
   /** Descripcion del negocio. El dueno decide si la imprime. */
   descripcion: string | null;
-  /** `vibemenu.com/cafe-charly`, para que se pueda teclear sin escanear. */
+  /** `vibemenu.com.mx/cafe-charly`, para que se pueda teclear sin escanear. */
   pie: string;
   fuenteCss: string;
   colorFondo: string;
@@ -204,7 +204,7 @@ function partirEnLineas(
 
 /**
  * La ruta del menu. Primero intenta un renglon; si no cabe, achica; y si aun asi
- * se sale, la parte despues de una barra. `vibemenu.com/cafe-charly/sucursal/…`
+ * se sale, la parte despues de una barra. `vibemenu.com.mx/cafe-charly/sucursal/…`
  * no cabe en 840px por mucho que se encoja, y recortarla la vuelve intecleable.
  */
 export function partirPie(pie: string): { lineas: string[]; tamano: number } {

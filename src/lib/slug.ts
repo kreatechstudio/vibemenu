@@ -1,4 +1,4 @@
-/** Longitud minima y maxima del slug publico (vibemenu.com/<slug>). */
+/** Longitud minima y maxima del slug publico (vibemenu.com.mx/<slug>). */
 export const SLUG_MIN = 3;
 export const SLUG_MAX = 40;
 

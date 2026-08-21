@@ -11,6 +11,7 @@ import { esUrlValida } from "@/lib/url";
 import { avisarGuardado } from "@/lib/avisos";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { BOTONES, ESTADOS } from "@/lib/copy";
+import { EMPRESA } from "@/lib/legal";
 import { cn } from "@/lib/utils";
 
 export default function Empresa() {
@@ -272,7 +273,7 @@ function Contenido() {
             Dirección web
           </label>
           <div className="flex h-12 items-center rounded-lg border pl-4 focus-within:border-vm-primary focus-within:ring-2 focus-within:ring-vm-primary/20">
-            <span className="vm-data shrink-0 text-sm text-vm-body">vibemenu.com/</span>
+            <span className="vm-data shrink-0 text-sm text-vm-body">{EMPRESA.dominio}/</span>
             <input
               id="e-slug"
               required

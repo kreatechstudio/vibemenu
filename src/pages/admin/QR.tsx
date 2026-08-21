@@ -16,6 +16,7 @@ import {
   type OpcionesTarjeta,
 } from "@/lib/qr";
 import { BOTONES } from "@/lib/copy";
+import { EMPRESA } from "@/lib/legal";
 import type { FormatoMenu } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -103,7 +104,7 @@ function Contenido() {
   const ruta = sucursal ? `/${tenant.slug}/sucursal/${sucursal.slug}` : `/${tenant.slug}`;
   const origen = typeof window === "undefined" ? "" : window.location.origin;
   const url = `${origen}${ruta}`;
-  const visible = `vibemenu.com${ruta}`;
+  const visible = `${EMPRESA.dominio}${ruta}`;
   const archivo = sucursal ? `vibemenu-${tenant.slug}-${sucursal.slug}` : `vibemenu-${tenant.slug}`;
 
   const hayLogo = Boolean(tenant.logo_url);

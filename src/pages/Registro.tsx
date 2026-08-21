@@ -10,6 +10,7 @@ import { crearTenant, guardarTenantPendiente } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { BOTONES, ESTADOS } from "@/lib/copy";
+import { EMPRESA } from "@/lib/legal";
 import { cn } from "@/lib/utils";
 
 function AvisoSlug({ estado }: { estado: EstadoSlug }) {
@@ -184,7 +185,7 @@ export default function Registro() {
                 )}
               >
                 <span className="select-none self-stretch border-r bg-vm-bg-soft px-3.5 py-3.5 text-sm text-vm-body">
-                  vibemenu.com/
+                  {EMPRESA.dominio}/
                 </span>
                 <input
                   id="slug"
