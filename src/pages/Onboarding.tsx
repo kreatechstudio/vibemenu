@@ -9,6 +9,7 @@ import { crearTenant } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { EMPRESA } from "@/lib/legal";
+import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 function AvisoSlug({ estado }: { estado: EstadoSlug }) {
@@ -87,6 +88,7 @@ export default function Onboarding() {
         slug: slug.trim(),
         giro: giro.trim() || null,
       });
+      trackEvent("sign_up", { method: "google" });
       await navigate({ to: "/admin" });
     } catch (err) {
       setError(traducirError(err as Error).mensaje);

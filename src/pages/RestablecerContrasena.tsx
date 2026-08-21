@@ -5,6 +5,7 @@ import Layout from "@/components/layout/Layout";
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
+import { trackEvent } from "@/lib/analytics";
 
 type Estado = "verificando" | "listo" | "error";
 
@@ -54,7 +55,10 @@ export default function RestablecerContrasena() {
       const { data, error: errorAuth } = await supabase.auth.updateUser({ password });
       if (errorAuth) throw errorAuth;
 
-      if (data.user) await asegurarTenantDelUsuario(data.user.id);
+      if (data.user) {
+        const creado = await asegurarTenantDelUsuario(data.user.id);
+        if (creado) trackEvent("sign_up", { method: "email" });
+      }
       await navigate({ to: "/admin" });
     } catch (err) {
       setError(traducirError(err as Error).mensaje);

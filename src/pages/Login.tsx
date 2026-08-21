@@ -6,6 +6,7 @@ import BotonGoogle from "@/components/ui/boton-google";
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,7 +29,10 @@ export default function Login() {
 
       // Si se registro con confirmacion de correo pendiente, el tenant todavia
       // no existe. Se crea ahora, desde el borrador guardado en el registro.
-      if (data.user) await asegurarTenantDelUsuario(data.user.id);
+      if (data.user) {
+        const creado = await asegurarTenantDelUsuario(data.user.id);
+        if (creado) trackEvent("sign_up", { method: "email" });
+      }
 
       await navigate({ to: "/admin" });
     } catch (err) {

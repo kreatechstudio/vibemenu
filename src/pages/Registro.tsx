@@ -11,6 +11,7 @@ import { traducirError } from "@/lib/errores";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { BOTONES, ESTADOS } from "@/lib/copy";
 import { EMPRESA } from "@/lib/legal";
+import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 function AvisoSlug({ estado }: { estado: EstadoSlug }) {
@@ -101,6 +102,7 @@ export default function Registro() {
       }
 
       await crearTenant(borrador);
+      trackEvent("sign_up", { method: "email" });
       await navigate({ to: "/admin" });
     } catch (err) {
       setErrorGlobal(traducirError(err as Error).mensaje);

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink, Info, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { usePlanes } from "@/hooks/usePlanes";
 import { useCheckout, usePortalStripe } from "@/hooks/useStripe";
+import { trackEvent } from "@/lib/analytics";
 import { suscripcionActiva, useHistorialSuscripciones } from "@/hooks/useSuscripciones";
 import type { SuscripcionConPlan } from "@/hooks/useSuscripciones";
 import { usePagos } from "@/hooks/usePagos";
@@ -151,6 +152,18 @@ function Contenido() {
   // del portal, que está en otra sección. Antes parecía que fallaba el equivocado.
   const [errorPortal, setErrorPortal] = useState<string | null>(null);
   const [errorCheckout, setErrorCheckout] = useState<string | null>(null);
+
+  // Stripe regresa aqui con ?checkout=ok tras un pago exitoso (ver success_url
+  // en supabase/functions/crear-checkout). Se limpia el query param al leerlo
+  // para no volver a contar la conversion si el dueno refresca la pagina.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") !== "ok") return;
+    trackEvent("purchase", { method: "stripe" });
+    params.delete("checkout");
+    const resto = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (resto ? `?${resto}` : ""));
+  }, []);
 
   if (!ctx) return null;
 

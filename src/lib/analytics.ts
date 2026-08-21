@@ -21,3 +21,13 @@ export function trackPageView(path: string) {
     page_title: document.title,
   });
 }
+
+/**
+ * Eventos de conversion del embudo landing -> registro -> pago. Usa nombres
+ * recomendados de GA4 ("sign_up", "purchase") para que aparezcan solos en los
+ * informes de conversiones, sin tener que configurarlos a mano en GA.
+ */
+export function trackEvent(name: string, params?: Record<string, unknown>) {
+  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+  window.gtag("event", name, params);
+}
