@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { crearTenant, guardarTenantPendiente } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
-import { BOTONES, ESTADOS } from "@/lib/copy";
+import { BOTONES, ESTADOS, REGISTRO } from "@/lib/copy";
 import { EMPRESA } from "@/lib/legal";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -140,9 +140,7 @@ export default function Registro() {
       <section className="mx-auto grid max-w-6xl gap-14 px-4 py-16 md:px-10 md:py-24 lg:grid-cols-[1fr_420px] lg:items-center">
         <div className="order-2 lg:order-1">
           <h1 className="text-3xl text-balance md:text-4xl">Crea tu menú en dos minutos.</h1>
-          <p className="mt-4 text-lg text-pretty text-vm-body">
-            Sin tarjeta de crédito. Gratis para siempre, hasta 20 productos.
-          </p>
+          <p className="mt-4 text-lg text-pretty text-vm-body">{REGISTRO.nota}</p>
 
           <form onSubmit={alEnviar} className="mt-9 space-y-5">
             <div>

@@ -45,6 +45,11 @@ export async function crearTenant(t: TenantPendiente) {
   const { error } = await supabase.from("tenants").insert(t);
   if (error) throw error;
   limpiarTenantPendiente();
+
+  // Fire and forget: un correo de bienvenida que falla no debe tumbar el
+  // registro. trg_crear_owner ya corrio dentro del insert de arriba, asi que
+  // la funcion ya encuentra el tenant_usuarios al consultarlo.
+  void supabase.functions.invoke("enviar-bienvenida").catch(() => {});
 }
 
 /**

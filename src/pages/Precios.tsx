@@ -13,13 +13,14 @@ import {
   permiteDesenfoque,
   permiteQrAvanzado,
   permiteQrColor,
+  porcentajeAhorroAnual,
   precioDelPlan,
   textoLimite,
 } from "@/lib/plan";
 import { CLAVES_FUENTE } from "@/lib/fuentes";
 import { PLANES_COPY, PRECIOS } from "@/lib/copy";
 import { NOMBRE_FORMATO, NOMBRE_PLAN } from "@/types/database";
-import type { FormatoMenu, MonedaCobro, NombrePlan, Plan } from "@/types/database";
+import type { FormatoMenu, IntervaloCobro, MonedaCobro, NombrePlan, Plan } from "@/types/database";
 import { slideUp } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
@@ -120,12 +121,21 @@ function Celda({ valor }: { valor: string | boolean }) {
   return <span className="text-sm text-vm-ink">{valor}</span>;
 }
 
-function TarjetaPlan({ plan, moneda }: { plan: Plan; moneda: MonedaCobro }) {
+function TarjetaPlan({
+  plan,
+  moneda,
+  intervalo,
+}: {
+  plan: Plan;
+  moneda: MonedaCobro;
+  intervalo: IntervaloCobro;
+}) {
   const nombre = plan.nombre as NombrePlan;
   const copy = PLANES_COPY[nombre];
   const esRecomendado = nombre === PLAN_RECOMENDADO;
-  const precio = precioDelPlan(plan, moneda);
+  const precio = precioDelPlan(plan, moneda, intervalo);
   const esGratis = precio === 0;
+  const ahorro = intervalo === "anual" ? porcentajeAhorroAnual(plan, moneda) : 0;
 
   const formatos = (plan.formatos_permitidos as FormatoMenu[])
     .map((f) => NOMBRE_FORMATO[f])
@@ -164,8 +174,15 @@ function TarjetaPlan({ plan, moneda }: { plan: Plan; moneda: MonedaCobro }) {
         <span className="vm-data text-4xl font-medium text-vm-ink">
           {esGratis ? formatearPrecio(0, moneda) : formatearPrecio(precio, moneda)}
         </span>
-        <span className="ml-1.5 text-sm text-vm-body">{esGratis ? "para siempre" : "/ mes"}</span>
+        <span className="ml-1.5 text-sm text-vm-body">
+          {esGratis ? "para siempre" : intervalo === "anual" ? "/ año" : "/ mes"}
+        </span>
       </p>
+      {ahorro > 0 && (
+        <p className="mt-1 text-xs font-medium text-vm-success">
+          {PRECIOS.notaAhorroAnual(ahorro)}
+        </p>
+      )}
 
       <p className="mt-4 min-h-[4.5rem] text-sm leading-relaxed text-vm-body">{copy.descripcion}</p>
 
@@ -193,6 +210,7 @@ function TarjetaPlan({ plan, moneda }: { plan: Plan; moneda: MonedaCobro }) {
 /** `planesIniciales` los trae el loader de la ruta, para que existan en el SSR. */
 export default function Precios({ planesIniciales }: { planesIniciales?: Plan[] }) {
   const [moneda, setMoneda] = useState<MonedaCobro>("mxn");
+  const [intervalo, setIntervalo] = useState<IntervaloCobro>("mensual");
   const { data: planes, isLoading, isError } = usePlanes(planesIniciales);
 
   return (
@@ -228,16 +246,25 @@ export default function Precios({ planesIniciales }: { planesIniciales?: Plan[] 
               ))}
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-lg border bg-vm-bg-soft p-1">
-              <span className="rounded-md bg-white px-4 py-1.5 text-sm font-medium text-vm-ink shadow-vm-1">
-                {PRECIOS.togglePeriodo}
-              </span>
-              <span
-                className="cursor-not-allowed px-3 py-1.5 text-sm text-vm-body/60"
-                title={PRECIOS.periodoAnualProximamente}
-              >
-                Anual
-              </span>
+            <div
+              role="group"
+              aria-label="Periodo de cobro"
+              className="inline-flex rounded-lg border bg-vm-bg-soft p-1"
+            >
+              {(["mensual", "anual"] as const).map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setIntervalo(i)}
+                  aria-pressed={intervalo === i}
+                  className={cn(
+                    "rounded-md px-4 py-1.5 text-sm font-medium capitalize transition-colors",
+                    intervalo === i ? "bg-white text-vm-ink shadow-vm-1" : "text-vm-body",
+                  )}
+                >
+                  {i}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -260,7 +287,7 @@ export default function Precios({ planesIniciales }: { planesIniciales?: Plan[] 
           <>
             <div className="mx-auto mt-14 grid max-w-7xl items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
               {planes.map((plan) => (
-                <TarjetaPlan key={plan.id} plan={plan} moneda={moneda} />
+                <TarjetaPlan key={plan.id} plan={plan} moneda={moneda} intervalo={intervalo} />
               ))}
             </div>
 

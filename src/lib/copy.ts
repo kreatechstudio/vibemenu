@@ -16,6 +16,10 @@ export const HERO = {
   ctaSecundario: "Ver demo en vivo",
 } as const;
 
+export const REGISTRO = {
+  nota: "Sin tarjeta de crédito. 14 días con todo Pro, luego Free para siempre.",
+} as const;
+
 export const NAVBAR = {
   links: ["Producto", "Formatos", "Precios", "Demo"],
   cta: "Empezar gratis",
@@ -107,8 +111,7 @@ export const PLANES_COPY = {
 export const PRECIOS = {
   notaPrecioCongelado:
     "Tu precio no sube mientras sigas activo, aunque lancemos nuevos precios más adelante.",
-  togglePeriodo: "Mensual",
-  periodoAnualProximamente: "Próximamente",
+  notaAhorroAnual: (porcentaje: number) => `Ahorra ${porcentaje}% pagando anual`,
 } as const;
 
 export const BOTONES = {

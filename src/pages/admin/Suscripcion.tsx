@@ -9,11 +9,12 @@ import { suscripcionActiva, useHistorialSuscripciones } from "@/hooks/useSuscrip
 import type { SuscripcionConPlan } from "@/hooks/useSuscripciones";
 import { usePagos } from "@/hooks/usePagos";
 import type { Pago } from "@/types/database";
-import { formatearPrecio, precioDelPlan, textoLimite } from "@/lib/plan";
+import { formatearPrecio, porcentajeAhorroAnual, precioDelPlan, textoLimite } from "@/lib/plan";
 import { PRECIOS } from "@/lib/copy";
 import {
   NOMBRE_PLAN,
   type EstadoSuscripcion,
+  type IntervaloCobro,
   type MonedaCobro,
   type MotivoCambio,
   type NombrePlan,
@@ -148,6 +149,7 @@ function Contenido() {
   const { data: pagos } = usePagos(ctx?.tenant.id, ctx?.esOwner ?? false);
   const checkout = useCheckout();
   const portal = usePortalStripe();
+  const [intervalo, setIntervalo] = useState<IntervaloCobro>("mensual");
   // Dos errores separados: el de la comparativa no debe pintarse junto al botón
   // del portal, que está en otra sección. Antes parecía que fallaba el equivocado.
   const [errorPortal, setErrorPortal] = useState<string | null>(null);
@@ -280,12 +282,43 @@ function Contenido() {
       )}
 
       {/* ── Comparativa ──────────────────────────────────── */}
-      <h2 className="mt-12 text-lg">Cambiar de plan</h2>
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg">Cambiar de plan</h2>
+        <div
+          role="group"
+          aria-label="Periodo de cobro"
+          className="inline-flex rounded-lg border bg-vm-bg-soft p-1"
+        >
+          {(["mensual", "anual"] as const).map((i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIntervalo(i)}
+              aria-pressed={intervalo === i}
+              className={cn(
+                "rounded-md px-4 py-1.5 text-sm font-medium capitalize transition-colors",
+                intervalo === i ? "bg-white text-vm-ink shadow-vm-1" : "text-vm-body",
+              )}
+            >
+              {i}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {planes?.map((p) => {
           const esActual = p.id === plan.id;
+          const idStripe =
+            intervalo === "anual"
+              ? moneda === "mxn"
+                ? p.stripe_price_id_mxn_anual
+                : p.stripe_price_id_usd_anual
+              : moneda === "mxn"
+                ? p.stripe_price_id_mxn
+                : p.stripe_price_id_usd;
           // Sin stripe_price_id no hay checkout posible. El estado sale de la base.
-          const sinStripe = !p.stripe_price_id_usd && !p.stripe_price_id_mxn && p.precio_usd > 0;
+          const sinStripe = !idStripe && p.precio_usd > 0;
+          const ahorro = intervalo === "anual" ? porcentajeAhorroAnual(p, moneda) : 0;
 
           return (
             <div
@@ -306,12 +339,17 @@ function Contenido() {
 
               <p className="mt-3">
                 <span className="vm-data text-2xl font-medium text-vm-ink">
-                  {formatearPrecio(precioDelPlan(p, moneda), moneda)}
+                  {formatearPrecio(precioDelPlan(p, moneda, intervalo), moneda)}
                 </span>
                 <span className="ml-1 text-xs text-vm-body">
-                  {p.precio_usd === 0 ? "" : "/ mes"}
+                  {p.precio_usd === 0 ? "" : intervalo === "anual" ? "/ año" : "/ mes"}
                 </span>
               </p>
+              {ahorro > 0 && (
+                <p className="mt-1 text-xs font-medium text-vm-success">
+                  {PRECIOS.notaAhorroAnual(ahorro)}
+                </p>
+              )}
 
               <ul className="mt-4 space-y-1 text-xs text-vm-body">
                 <li>{textoLimite(p.limite_sucursales)} sucursales</li>
@@ -325,7 +363,7 @@ function Contenido() {
                 onClick={() => {
                   setErrorCheckout(null);
                   checkout
-                    .mutateAsync({ tenantId: tenant.id, planId: p.id, moneda })
+                    .mutateAsync({ tenantId: tenant.id, planId: p.id, moneda, intervalo })
                     .catch((e: Error) => setErrorCheckout(e.message));
                 }}
                 title={sinStripe ? "Falta configurar Stripe para este plan." : undefined}

@@ -1,6 +1,6 @@
 import { CLAVES_FUENTE, type ClaveFuente } from "@/lib/fuentes";
 import type { ModoImagen } from "@/lib/tema";
-import type { FormatoMenu, MonedaCobro, Plan } from "@/types/database";
+import type { FormatoMenu, IntervaloCobro, MonedaCobro, Plan } from "@/types/database";
 import { FORMATOS } from "@/types/database";
 
 /**
@@ -107,8 +107,23 @@ export const permiteQrColor = (plan: Plan): boolean =>
 export const permiteQrAvanzado = (plan: Plan): boolean =>
   (plan.qr_avanzado as boolean | undefined) ?? false;
 
-export function precioDelPlan(plan: Plan, moneda: MonedaCobro): number {
+export function precioDelPlan(
+  plan: Plan,
+  moneda: MonedaCobro,
+  intervalo: IntervaloCobro = "mensual",
+): number {
+  if (intervalo === "anual") {
+    return (moneda === "mxn" ? plan.precio_mxn_anual : plan.precio_usd_anual) ?? 0;
+  }
   return moneda === "mxn" ? plan.precio_mxn : plan.precio_usd;
+}
+
+/** Ahorro del anual frente a 12 pagos mensuales, redondeado al entero. */
+export function porcentajeAhorroAnual(plan: Plan, moneda: MonedaCobro): number {
+  const mensual = precioDelPlan(plan, moneda, "mensual");
+  const anual = precioDelPlan(plan, moneda, "anual");
+  if (mensual === 0 || anual === 0) return 0;
+  return Math.round((1 - anual / (mensual * 12)) * 100);
 }
 
 const FORMATEADORES: Record<MonedaCobro, Intl.NumberFormat> = {

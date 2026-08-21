@@ -420,6 +420,75 @@ reutilizarlas aquí).
 Y correr `vibemenu_migracion_invitaciones.sql` en el SQL Editor **antes** de desplegar — las
 Edge Functions asumen que la tabla `invitaciones` y la función `invitacion_info` ya existen.
 
+## 5. Bienvenida
+
+Sale de `supabase/functions/enviar-bienvenida/index.ts`, disparado desde `crearTenant()`
+(`src/lib/registro.ts`) justo después de crear el negocio — cubre los tres caminos de alta
+(`Registro.tsx`, `Onboarding.tsx`, `asegurarTenantDelUsuario`) porque todos pasan por esa
+única función. Se llama "fire and forget": si el correo falla, el registro sigue — nunca debe
+tumbar el alta de un negocio por un problema de Resend.
+
+Es la única de las funciones de correo que **no necesita `service_role_key`**: manda el correo
+al propio usuario autenticado sobre su propio tenant, así que corre entera con su sesión,
+protegida por la misma RLS de siempre (`tenant_usuarios_select` exige `pertenece_a_tenant`).
+
+**Remitente:** `Vibemenu <hola@vibemenu.com.mx>`.
+
+**Desplegar:**
+
+```
+supabase functions deploy enviar-bienvenida --project-ref iaiiwtqqiaqxnzxjqcnt
+```
+
+Secretos: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `RESEND_API_KEY` (ya configurado a nivel de
+proyecto — los secretos de Edge Functions en Supabase son por proyecto, no por función, así
+que si `RESEND_API_KEY` ya está puesto para `invitar-encargado` ya lo puede leer esta función
+también, sin que haga falta repetirlo).
+
+## 6. Aviso de pago fallido
+
+Sale de `supabase/functions/stripe-webhook/index.ts` (función `avisarPagoFallido`), disparado
+en el evento `invoice.payment_failed` de Stripe — la señal más temprana de que un cobro no
+pasó, antes de que Stripe agote sus reintentos y la suscripción caiga a `past_due`/`unpaid`
+(momento en que `customer.subscription.updated` ya suspende el tenant). Este correo **no
+cambia ningún estado**, solo avisa: el negocio sigue activo mientras Stripe reintenta.
+
+A diferencia de las demás, corre con `service_role_key` (ya lo tenía la función) porque busca
+al owner del tenant en `tenant_usuarios` y su correo con `auth.admin.getUserById` — no hay
+sesión de usuario en un webhook de Stripe.
+
+**Remitente:** `Vibemenu <facturacion@vibemenu.com.mx>`.
+
+**No hace falta desplegar nada nuevo aparte** — es el mismo `stripe-webhook` de siempre, ya
+redesplegado con este evento agregado. Lo que sí hace falta es **registrar el evento
+`invoice.payment_failed` en el Dashboard de Stripe** (Developers → Webhooks → tu endpoint →
+Add events), igual que los otros — ver la tabla actualizada en `vibemenu_stripe.md`.
+
+## 7. Aviso de trial por vencer
+
+Sale de `supabase/functions/procesar-trials-vencidos/index.ts`, disparado por un cron diario
+(`.github/workflows/procesar-trials.yml`), no por una acción del usuario. Todo tenant nuevo
+nace en el plan Pro por 14 días sin pedir tarjeta (`vibemenu_migracion_trial_pro.sql`); este
+correo avisa una sola vez, entre 11 y 14 días después del alta, a quien sigue sin suscribirse.
+Pasados los 14 días completos, la misma función baja el tenant a Free automáticamente —sin
+correo aparte, ya quedó avisado.
+
+La idempotencia (nunca dos avisos al mismo tenant) la garantiza la columna
+`tenants.aviso_trial_enviado_at`: se marca justo después de mandar el correo, y la consulta del
+cron excluye a quien ya la tiene puesta.
+
+**Remitente:** `Vibemenu <hola@vibemenu.com.mx>`.
+
+**Desplegar:**
+
+```
+supabase functions deploy procesar-trials-vencidos --project-ref iaiiwtqqiaqxnzxjqcnt
+```
+
+Secretos: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, y **`CRON_SECRET`**
+(nuevo, propio de esta función — ver `vibemenu_stripe.md`, sección 6, para el porqué y los
+secretos equivalentes que hacen falta en GitHub).
+
 ## Antes de mandar el primer correo real
 
 **El SMTP por defecto de Supabase tiene un límite muy bajo** (unos pocos correos por hora) y

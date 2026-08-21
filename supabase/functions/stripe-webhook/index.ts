@@ -9,7 +9,8 @@
 //     --project-ref iaiiwtqqiaqxnzxjqcnt
 //
 // Secretos (Dashboard → Edge Functions → Secrets):
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+//   RESEND_API_KEY (correo de aviso de pago fallido)
 //
 // Contrato del historial (ver vibemenu_base-datos.md, seccion 7):
 //   - `suscripciones` guarda UNA FILA POR PERIODO, nunca se muta el historial.
@@ -37,6 +38,132 @@ function stripeClient(): Stripe {
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false },
 });
+
+const SITIO = "https://vibemenu.com.mx";
+
+/**
+ * Aviso de pago fallido. Se dispara en `invoice.payment_failed` -- la señal
+ * mas temprana, antes de que Stripe agote sus reintentos y la suscripcion
+ * pase a `past_due`/`unpaid` (eso lo maneja `cerrarPeriodo`, que ya suspende
+ * el tenant; este correo NO cambia estado, solo avisa).
+ */
+async function avisarPagoFallido(tenantId: string, negocioNombre: string) {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) {
+    console.error("falta_RESEND_API_KEY: no se pudo avisar pago fallido a", tenantId);
+    return;
+  }
+
+  const { data: owner } = await db
+    .from("tenant_usuarios")
+    .select("user_id")
+    .eq("tenant_id", tenantId)
+    .eq("rol", "owner")
+    .maybeSingle();
+  if (!owner) return;
+
+  const { data: usuario } = await db.auth.admin.getUserById(owner.user_id);
+  const email = usuario?.user?.email;
+  if (!email) return;
+
+  const urlSuscripcion = `${SITIO}/admin/suscripcion`;
+  const html = `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>No pudimos cobrar tu suscripción</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#F5F6F9;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
+      Actualiza tu método de pago para que ${negocioNombre} no pierda su plan.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="background-color:#F5F6F9; padding:40px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+                 style="max-width:600px; width:100%; background-color:#FFFFFF; border:1px solid #E4E6ED; border-radius:16px;">
+            <tr>
+              <td style="padding:32px 40px 0 40px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding-right:8px; vertical-align:middle;">
+                      <img src="${SITIO}/logo-email.png" width="22" height="22" alt=""
+                           style="display:block; width:22px; height:22px;" />
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:20px; font-weight:700; letter-spacing:-0.02em; color:#0B0B0F;">
+                        Vibemenu
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 0 40px;">
+                <h1 style="margin:0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:30px; line-height:1.2; letter-spacing:-0.03em; font-weight:700; color:#0B0B0F;">
+                  No pudimos cobrar tu suscripción.
+                </h1>
+                <p style="margin:18px 0 0 0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.6; color:#4B4E5A;">
+                  El cobro de <strong style="color:#0B0B0F;">${negocioNombre}</strong> no pasó.
+                  Vamos a reintentarlo en los próximos días, pero para no arriesgar tu plan,
+                  actualiza tu método de pago cuando puedas.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px 40px 0 40px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color:#2B4EFF; border-radius:12px;">
+                      <a href="${urlSuscripcion}"
+                         style="display:inline-block; padding:15px 28px; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; font-weight:600; color:#FFFFFF; text-decoration:none; border-radius:12px;">
+                        Actualizar método de pago
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px 40px 0 40px;">
+                <div style="height:1px; background-color:#E4E6ED; line-height:1px; font-size:0;">&nbsp;</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 40px 36px 40px;">
+                <p style="margin:0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:1.6; color:#4B4E5A;">
+                  Si ya lo resolviste, ignora este correo — el siguiente intento lo confirma solo.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:24px 0 0 0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#4B4E5A;">
+            Vibemenu · Menú digital con 4 formatos visuales
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "Vibemenu <facturacion@vibemenu.com.mx>",
+      to: [email],
+      subject: `No pudimos cobrar la suscripción de ${negocioNombre}`,
+      html,
+    }),
+  });
+
+  if (!resp.ok) {
+    console.error("resend_error al avisar pago fallido:", await resp.text());
+  }
+}
 
 type MotivoCambio = "alta" | "upgrade" | "downgrade" | "reactivacion";
 
@@ -256,6 +383,33 @@ Deno.serve(async (req) => {
           { onConflict: "stripe_invoice_id", ignoreDuplicates: true },
         );
         if (error) throw error;
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const factura = evento.data.object;
+        const suscripcionId =
+          typeof factura.subscription === "string"
+            ? factura.subscription
+            : factura.subscription?.id;
+        if (!suscripcionId) break;
+
+        // No cambia estado: eso lo decide customer.subscription.updated cuando
+        // Stripe agote sus reintentos y la suscripcion pase a past_due/unpaid.
+        // Aqui solo se avisa, con la fila mas reciente de ese subscription_id
+        // (activa o no -- un aviso tardio no hace daño, un aviso perdido si).
+        const { data: fila } = await db
+          .from("suscripciones")
+          .select("tenant_id, tenants(nombre_negocio)")
+          .eq("stripe_subscription_id", suscripcionId)
+          .order("fecha_inicio", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!fila) break;
+
+        const negocioNombre = (fila as { tenants: { nombre_negocio: string } | null }).tenants
+          ?.nombre_negocio;
+        if (negocioNombre) await avisarPagoFallido(fila.tenant_id, negocioNombre);
         break;
       }
     }

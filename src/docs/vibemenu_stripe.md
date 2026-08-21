@@ -10,11 +10,11 @@ el `service_role_key` y el `STRIPE_SECRET_KEY` solo viven en las funciones.
 Creados vía API el 2026-07-09 y verificados: monto correcto, recurrentes mensuales,
 activos, `livemode = false`.
 
-| Plan | Producto | USD/mes | MXN/mes |
-|---|---|---|---|
-| Basic | `prod_Ur3t2RdivMtBau` | $9 | $169 |
-| Pro | `prod_Ur3thZ5PDt8HuB` | $19 | $349 |
-| Enterprise | `prod_Ur3tjthLSaF4bO` | $39 | $699 |
+| Plan       | Producto              | USD/mes | MXN/mes |
+| ---------- | --------------------- | ------- | ------- |
+| Basic      | `prod_Ur3t2RdivMtBau` | $9      | $169    |
+| Pro        | `prod_Ur3thZ5PDt8HuB` | $19     | $349    |
+| Enterprise | `prod_Ur3tjthLSaF4bO` | $39     | $699    |
 
 Cada precio tiene un `lookup_key` (`vibemenu_pro_mxn`, etc.) para poder
 encontrarlo sin depender del id.
@@ -60,18 +60,22 @@ npx supabase secrets set STRIPE_SECRET_KEY=rk_test_...
 npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
+`stripe-webhook` también necesita `RESEND_API_KEY` desde que manda el aviso de pago fallido
+(ver `vibemenu_emails.md`, sección 6). Los secretos de Edge Functions son por **proyecto**, no
+por función — si ya lo configuraste para `invitar-encargado`, no hace falta repetirlo.
+
 ### Sobre la llave restringida (`rk_`)
 
 Se probaron los cinco permisos que el código necesita, y la llave de prueba los
 tiene todos:
 
-| Acción | Quién la usa |
-|---|---|
-| Crear checkout session | `crear-checkout` |
-| Crear customer | Stripe Checkout, al primer pago |
-| Crear billing portal session | `portal-stripe` |
-| Leer subscriptions | `stripe-webhook`, para la fecha de renovación |
-| Leer products y prices | `crear-checkout` |
+| Acción                       | Quién la usa                                  |
+| ---------------------------- | --------------------------------------------- |
+| Crear checkout session       | `crear-checkout`                              |
+| Crear customer               | Stripe Checkout, al primer pago               |
+| Crear billing portal session | `portal-stripe`                               |
+| Leer subscriptions           | `stripe-webhook`, para la fecha de renovación |
+| Leer products y prices       | `crear-checkout`                              |
 
 Si al pasar a producción creas otra llave restringida, dale esos mismos permisos
 o el checkout devolverá 403.
@@ -95,13 +99,20 @@ Dashboard de Stripe → **Developers → Webhooks → Add endpoint**.
 https://iaiiwtqqiaqxnzxjqcnt.supabase.co/functions/v1/stripe-webhook
 ```
 
-**Eventos a escuchar** — exactamente estos tres, ninguno más:
+**Eventos a escuchar** — exactamente estos cinco, ninguno más:
 
-| Evento | Qué hace |
-|---|---|
-| `checkout.session.completed` | Congela el precio y abre el periodo nuevo |
+| Evento                          | Qué hace                                                      |
+| ------------------------------- | ------------------------------------------------------------- |
+| `checkout.session.completed`    | Congela el precio y abre el periodo nuevo                     |
 | `customer.subscription.updated` | Sincroniza la fecha de renovación; marca `vencida` si no paga |
-| `customer.subscription.deleted` | Marca `cancelada` y suspende el tenant |
+| `customer.subscription.deleted` | Marca `cancelada` y suspende el tenant                        |
+| `invoice.paid`                  | Guarda el recibo en `pagos`                                   |
+| `invoice.payment_failed`        | Manda el correo de aviso de pago fallido (no cambia estado)   |
+
+⚠️ **Confirmado el 2026-08-21: en modo LIVE no hay ningún webhook endpoint registrado todavía**
+(`GET /v1/webhook_endpoints` devuelve vacío). Si ya hay tenants pagando de verdad en live, hoy
+Vibemenu no se entera de nada — ni de pagos, ni de cancelaciones, ni de pagos fallidos. Este es
+el paso que falta hacer, con los cinco eventos de arriba.
 
 **Versión de la API:** deja la de tu cuenta. El código fija
 `apiVersion: "2024-12-18.acacia"` en el cliente de Stripe.
@@ -110,10 +121,28 @@ Al guardar, Stripe te muestra el **Signing secret** (`whsec_…`). Ese valor es 
 `STRIPE_WEBHOOK_SECRET` del paso 4. Sin él, la función rechaza todo con
 `firma invalida`, que es justo lo que debe hacer.
 
-### Por qué solo esos tres eventos
+### Por qué solo esos cinco eventos
 
 Suscribirse a más no rompe nada, pero cada evento extra es una llamada a tu Edge
 Function que el `switch` ignora. Con miles de tenants eso cuesta.
+
+---
+
+## 6. Cron del trial — secretos aparte
+
+`procesar-trials-vencidos` no la llama el frontend ni Stripe: la dispara
+`.github/workflows/procesar-trials.yml` una vez al día. Necesita dos secretos que no comparte
+con nada más:
+
+- **Supabase → Edge Functions → Secrets:** `CRON_SECRET` (candado propio de la función — sin
+  él, cualquiera podría dispararla a mano y forzar el vencimiento de trials).
+- **GitHub → Settings → Secrets and variables → Actions:**
+  - `TRIALS_CRON_SECRET` — el mismo valor que `CRON_SECRET` arriba, exacto.
+  - `SUPABASE_SERVICE_ROLE_KEY` — el mismo que ya usan las Edge Functions (el workflow lo manda
+    como `Authorization: Bearer` para pasar `verify_jwt=true`).
+
+Sin estos dos, el workflow corre pero la función devuelve 401 — revisa la pestaña Actions del
+repo si el trial nunca avisa ni vence a nadie.
 
 ---
 
@@ -160,11 +189,38 @@ Debe haber **una sola fila `activa`**. Si hay dos, el índice único parcial
 
 ---
 
+## Lo que ya existe (esta sección estaba desactualizada)
+
+**Recibos y facturación: ✅ ya existe**, contrario a lo que decía esta sección antes. La tabla
+`pagos` está creada (`vibemenu_migracion_pagos.sql`), cuelga de `suscripciones.id`, y el
+webhook ya la alimenta en el evento `invoice.paid`. `src/hooks/usePagos.ts` y
+`/admin/suscripcion` ya la consumen.
+
+**Precios anuales: ✅ ya existe** (2026-08-21, `vibemenu_migracion_precios_anuales.sql`). 6
+`Price` nuevos en Stripe (`interval: "year"`, 10 meses por 12 — ~17% de descuento), sus ids en
+`planes.stripe_price_id_{usd,mxn}_anual`, y `/precios` + `/admin/suscripcion` ya dejan elegir
+mensual/anual. `crear-checkout` recibe `intervalo` (`"mensual"` por default) y elige el price
+correcto. El precio congelado (`suscripciones.precio_congelado_*`) sigue siendo el mensual de
+referencia sin importar el intervalo — Stripe ya protege el monto real de la suscripción
+existente por su cuenta, cambiar un `Price` nunca altera retroactivamente una suscripción ya
+creada.
+
+**Trial de 14 días con Pro: ✅ ya existe** (2026-08-21, `vibemenu_migracion_trial_pro.sql`). Todo
+tenant nuevo nace en el plan Pro (antes nacía directo en Free) sin pedir tarjeta.
+`procesar-trials-vencidos` (Edge Function con cron diario, ver
+`.github/workflows/procesar-trials.yml`) avisa 3 días antes y baja a Free automáticamente a
+quien no se suscribió — reutiliza los mismos triggers de downgrade que ya existían. Ver
+`vibemenu_emails.md` para el correo.
+
 ## Lo que NO existe todavía
 
-**Recibos y facturación.** El historial ya guarda todo lo necesario, pero no hay
-tabla `pagos`. Cuando toque, cuelga de `suscripciones.id` y se alimenta del evento
-`invoice.paid`. La columna "Recibo" de `/admin/suscripcion` ya está reservada.
+**Un producto suelto sin relación con Vibemenu.** El account de Stripe tiene un producto
+`prod_UCvck2gbDgTkPy` ("Monthly Vibe Menu") con dos precios en MXN ($250 y $450/mes) que no
+aparecen en `planes` ni en `vibemenu_stripe_price_ids.sql` — parece un borrador de una prueba
+anterior. No se toca sin confirmar con el dueño de la cuenta que es basura segura de borrar.
+
+**Webhook registrado en modo live.** Ver la sección de arriba — es el bloqueador real antes de
+cobrar de verdad: sin el endpoint registrado en Stripe Dashboard, ningún evento llega.
 
 **Cobro por moneda automático.** El tenant elige USD o MXN en el checkout, y esa
 elección se guarda en `suscripciones.moneda_cobro`. No hay detección por IP.

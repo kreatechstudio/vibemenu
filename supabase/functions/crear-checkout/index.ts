@@ -51,9 +51,18 @@ Deno.serve(async (req) => {
   const autorizacion = req.headers.get("Authorization");
   if (!autorizacion) return json({ error: "sin_sesion" }, 401);
 
-  const { tenant_id, plan_id, moneda, url_retorno } = await req.json().catch(() => ({}));
+  const {
+    tenant_id,
+    plan_id,
+    moneda,
+    intervalo = "mensual",
+    url_retorno,
+  } = await req.json().catch(() => ({}));
   if (!tenant_id || !plan_id) return json({ error: "faltan_datos" }, 400);
   if (moneda !== "usd" && moneda !== "mxn") return json({ error: "moneda_invalida" }, 400);
+  if (intervalo !== "mensual" && intervalo !== "anual") {
+    return json({ error: "intervalo_invalido" }, 400);
+  }
 
   // Solo el dueño paga. Se valida con la sesión de quien llama, no con el body.
   const comoUsuario = createClient(
@@ -77,14 +86,23 @@ Deno.serve(async (req) => {
 
   const { data: plan, error: errorPlan } = await db
     .from("planes")
-    .select("nombre, stripe_price_id_usd, stripe_price_id_mxn, precio_usd")
+    .select(
+      "nombre, stripe_price_id_usd, stripe_price_id_mxn, stripe_price_id_usd_anual, stripe_price_id_mxn_anual, precio_usd",
+    )
     .eq("id", plan_id)
     .single();
   if (errorPlan) return json({ error: errorPlan.message }, 400);
 
   if (plan.precio_usd === 0) return json({ error: "el_plan_free_no_se_cobra" }, 400);
 
-  const priceId = moneda === "mxn" ? plan.stripe_price_id_mxn : plan.stripe_price_id_usd;
+  const priceId =
+    intervalo === "anual"
+      ? moneda === "mxn"
+        ? plan.stripe_price_id_mxn_anual
+        : plan.stripe_price_id_usd_anual
+      : moneda === "mxn"
+        ? plan.stripe_price_id_mxn
+        : plan.stripe_price_id_usd;
   if (!priceId) return json({ error: "falta_stripe_price_id" }, 400);
 
   const { data: tenant } = await db
@@ -99,8 +117,11 @@ Deno.serve(async (req) => {
     customer: tenant?.stripe_customer_id ?? undefined,
     client_reference_id: tenant_id,
     // El webhook lee esto para saber a quién y a qué plan pertenece el pago.
-    metadata: { tenant_id, plan_id, moneda },
-    subscription_data: { metadata: { tenant_id, plan_id, moneda } },
+    // `intervalo` es solo trazabilidad -- abrirPeriodo() sigue congelando el
+    // precio de lista MENSUAL sin importar como se cobre, porque Stripe ya
+    // protege el monto real de la suscripcion por su cuenta.
+    metadata: { tenant_id, plan_id, moneda, intervalo },
+    subscription_data: { metadata: { tenant_id, plan_id, moneda, intervalo } },
     success_url: `${url_retorno}?checkout=ok`,
     cancel_url: `${url_retorno}?checkout=cancelado`,
   });

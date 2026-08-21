@@ -1,0 +1,26 @@
+name: Procesar trials vencidos
+
+# Diario, hora baja de trafico. Manda el aviso de "tu trial vence pronto" y
+# baja a Free a quien ya paso los 14 dias sin suscribirse -- ver
+# supabase/functions/procesar-trials-vencidos.
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
+
+jobs:
+  procesar:
+    runs-on: ubuntu-latest
+    steps:
+      # SUPABASE_SERVICE_ROLE_KEY autentica contra Supabase (verify_jwt=true
+      # en la funcion); CRON_SECRET es el candado propio de la funcion, para
+      # que nadie mas que este workflow pueda dispararla.
+      - name: Llamar a procesar-trials-vencidos
+        run: |
+          curl --fail-with-body -sS -X POST \
+            "https://iaiiwtqqiaqxnzxjqcnt.supabase.co/functions/v1/procesar-trials-vencidos" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "x-cron-secret: ${{ secrets.TRIALS_CRON_SECRET }}"
+
+# Si este job falla, GitHub le manda un correo solo al dueño del repo — no hace
+# falta configurar una alerta aparte (mismo criterio que backup-db.yml).
