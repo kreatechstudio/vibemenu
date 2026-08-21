@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /superadmin
+Disallow: /onboarding
+Disallow: /auth/completar
+
+Sitemap: https://vibemenu.com.mx/sitemap.xml
