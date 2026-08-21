@@ -68,10 +68,11 @@
 
 ### Footer
 
-| Elemento          | Texto                                                                                                     |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| Tagline corto     | Tu menú, tu formato.                                                                                      |
-| Descripción breve | Vibemenu es la plataforma de menú digital que se adapta a cómo tu negocio quiere mostrarse — no al revés. |
+| Elemento             | Texto                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| Tagline corto        | Tu menú, tu formato.                                                                                      |
+| Descripción breve    | Vibemenu es la plataforma de menú digital que se adapta a cómo tu negocio quiere mostrarse — no al revés. |
+| Link (columna Legal) | Estado del servicio → `https://vibemenu.instatus.com` (Instatus, plan gratuito, abre en pestaña nueva)    |
 
 ### Navbar
 

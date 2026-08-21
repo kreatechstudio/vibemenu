@@ -80,6 +80,10 @@ export const FOOTER = {
   tagline: "Tu menú, tu formato.",
   descripcion:
     "Vibemenu es la plataforma de menú digital que se adapta a cómo tu negocio quiere mostrarse — no al revés.",
+  estadoLabel: "Estado del servicio",
+  // Instatus (plan gratuito). Fuera de src/docs: no hay cuenta ni secreto que
+  // documentar, es una pagina publica de terceros que solo lee vibemenu.com.mx.
+  estadoUrl: "https://vibemenu.instatus.com",
 } as const;
 
 export const PLANES_COPY = {
