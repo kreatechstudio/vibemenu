@@ -15,8 +15,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       # --format=custom: comprimido y restaurable con pg_restore, no un .sql plano.
-      # Se conecta a la cadena DIRECTA (puerto 5432), no al pooler (6543): pgbouncer
-      # en modo transaccion no soporta bien una sesion larga como pg_dump.
+      # SUPABASE_DB_URL debe ser el Session pooler (aws-0-<region>.pooler.supabase.com:5432),
+      # NO la conexion directa: GitHub Actions no tiene salida IPv6, y la conexion
+      # directa de Supabase solo es IPv4 con el add-on de pago. El pooler en modo
+      # sesion si es IPv4 en todos los planes, y Supabase lo recomienda para pg_dump.
       - name: Volcar la base de datos
         run: |
           FECHA=$(date +%Y-%m-%d)

@@ -58,16 +58,27 @@ en la pestaña **Actions** del repo.
 
 ### 1. Cadena de conexión de Supabase
 
-**Dashboard de Supabase → Project Settings → Database → Connection string.**
-Copia la **conexión directa** (puerto `5432`), no la del *connection pooler*
-(puerto `6543`, empieza con `postgres.` en el usuario) — `pgbouncer` en modo
-transacción corta las sesiones largas que `pg_dump` necesita.
+**Dashboard de Supabase → botón "Connect" (arriba del dashboard) → pestaña
+"Session pooler".** Copia esa cadena, no la de "Direct connection".
+
+La conexión directa (`db.<project-ref>.supabase.co`) solo existe por IPv6 a
+menos que pagues el add-on de IPv4 — y GitHub Actions no tiene salida IPv6, así
+que `pg_dump` truena con `Network is unreachable`. El **Session pooler**
+(Supavisor) sí es IPv4 en todos los planes, y Supabase lo recomienda
+explícitamente para `pg_dump`/backups en redes IPv4-only — que es exactamente
+el caso de GitHub Actions.
+
+Nota el usuario: en el pooler es `postgres.<project-ref>`, no solo `postgres`.
 
 ```
 GitHub → Settings → Secrets and variables → Actions → New repository secret
   Nombre:  SUPABASE_DB_URL
-  Valor:   postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres
+  Valor:   postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
 ```
+
+El host exacto (la parte `aws-0-<region>`) cópialo tal cual te lo da el
+dashboard en la pestaña Session pooler — no lo armes a mano, varía por región
+y por cómo Supabase lo provisionó para tu proyecto.
 
 ### 2. Bucket de Cloudflare R2
 
@@ -108,8 +119,9 @@ aws s3 cp s3://vibemenu-backups/vibemenu-2026-08-20.dump . \
   --endpoint-url https://<account-id>.r2.cloudflarestorage.com
 
 # Restaurar contra un proyecto de Supabase (nuevo o el mismo, vacio)
+# Mismo pooler que el respaldo: funciona sin importar si tu red tiene IPv6.
 pg_restore --no-owner --no-acl \
-  -d "postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres" \
+  -d "postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres" \
   vibemenu-2026-08-20.dump
 ```
 
