@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { MonedaCobro } from "@/types/database";
+import type { IntervaloCobro, MonedaCobro } from "@/types/database";
 
 /**
  * Checkout y portal de facturacion.
@@ -73,11 +73,17 @@ async function invocar(nombre: string, cuerpo: Record<string, unknown>): Promise
 
 export function useCheckout() {
   return useMutation({
-    mutationFn: async (args: { tenantId: string; planId: string; moneda: MonedaCobro }) => {
+    mutationFn: async (args: {
+      tenantId: string;
+      planId: string;
+      moneda: MonedaCobro;
+      intervalo: IntervaloCobro;
+    }) => {
       const url = await invocar("crear-checkout", {
         tenant_id: args.tenantId,
         plan_id: args.planId,
         moneda: args.moneda,
+        intervalo: args.intervalo,
       });
       window.location.href = url;
     },

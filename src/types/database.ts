@@ -257,6 +257,11 @@ export type Database = {
           /* Migración 005 — QR imprimible escalonado. */
           qr_color: boolean;
           qr_avanzado: boolean;
+          /* Migración 015 — precios anuales (2 meses gratis). */
+          precio_usd_anual: number | null;
+          precio_mxn_anual: number | null;
+          stripe_price_id_usd_anual: string | null;
+          stripe_price_id_mxn_anual: string | null;
         };
         Insert: {
           formatos_permitidos?: string[];
@@ -281,6 +286,10 @@ export type Database = {
           permite_desenfoque?: boolean;
           qr_color?: boolean;
           qr_avanzado?: boolean;
+          precio_usd_anual?: number | null;
+          precio_mxn_anual?: number | null;
+          stripe_price_id_usd_anual?: string | null;
+          stripe_price_id_mxn_anual?: string | null;
         };
         Update: {
           formatos_permitidos?: string[];
@@ -303,6 +312,10 @@ export type Database = {
           permite_color_modificadores?: boolean;
           modos_imagen_permitidos?: string[];
           permite_desenfoque?: boolean;
+          precio_usd_anual?: number | null;
+          precio_mxn_anual?: number | null;
+          stripe_price_id_usd_anual?: string | null;
+          stripe_price_id_mxn_anual?: string | null;
         };
         Relationships: [];
       };
@@ -534,6 +547,8 @@ export type Database = {
           google_reviews_url: string | null;
           /* Migración 013 — dominio personalizado (plan Pro). */
           dominio_personalizado: string | null;
+          /* Migración 016 — trial de 14 días con Pro. */
+          aviso_trial_enviado_at: string | null;
         };
         Insert: {
           created_at?: string;
@@ -558,6 +573,7 @@ export type Database = {
           tiktok_url?: string | null;
           google_reviews_url?: string | null;
           dominio_personalizado?: string | null;
+          aviso_trial_enviado_at?: string | null;
         };
         Update: {
           created_at?: string;
@@ -582,6 +598,7 @@ export type Database = {
           tiktok_url?: string | null;
           google_reviews_url?: string | null;
           dominio_personalizado?: string | null;
+          aviso_trial_enviado_at?: string | null;
         };
         Relationships: [Rel<"tenants_plan_id_fkey", "plan_id", "planes">];
       };
@@ -699,6 +716,7 @@ export type RolUsuario = "owner" | "encargado";
 export type EstadoInvitacion = "pendiente" | "aceptada" | "cancelada";
 export type NombrePlan = "free" | "basic" | "pro" | "enterprise";
 export type MonedaCobro = "usd" | "mxn";
+export type IntervaloCobro = "mensual" | "anual";
 export type EstadoSuscripcion = "activa" | "cancelada" | "vencida" | "reemplazada";
 export type MotivoCambio =
   | "alta"
