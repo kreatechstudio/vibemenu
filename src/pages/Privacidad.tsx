@@ -94,9 +94,10 @@ const SECCIONES: SeccionLegal[] = [
         </p>
         <TablaProveedores />
         <p className="text-sm">
-          Cloudflare aparece como "en migración": estamos moviendo el almacenamiento de imágenes de
-          Supabase a Cloudflare R2, y activando Cloudflare Turnstile como verificación anti-bots en
-          el registro. Este aviso se actualiza cuando el cambio esté en producción.
+          Cloudflare aparece como "en migración": estamos por activar Cloudflare Turnstile como
+          verificación anti-bots en el registro. Las imágenes de producto se quedan en Supabase
+          Storage — con la compresión que ya aplicamos antes de subir cada foto, no hay necesidad de
+          moverlas a otro proveedor. Este aviso se actualiza cuando Turnstile esté en producción.
         </p>
       </>
     ),
@@ -156,8 +157,8 @@ const SECCIONES: SeccionLegal[] = [
     contenido: (
       <p>
         Si cambiamos de manera importante qué datos recabamos o con quién los compartimos —como al
-        terminar la migración a Cloudflare— actualizaremos este aviso y avisaremos a los dueños de
-        cuenta por correo.
+        activar Cloudflare Turnstile— actualizaremos este aviso y avisaremos a los dueños de cuenta
+        por correo.
       </p>
     ),
   },
