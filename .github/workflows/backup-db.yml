@@ -11,18 +11,31 @@ jobs:
   respaldo:
     runs-on: ubuntu-latest
     steps:
-      - name: Instalar cliente de Postgres
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      # postgresql-client "a secas" instala la version que trae Ubuntu por
+      # defecto (16), mas vieja que Postgres 17 de Supabase — y pg_dump se
+      # niega a volcar un servidor mas nuevo que el mismo. El script oficial
+      # de postgresql-common agrega el repo de PGDG para poder pedir la
+      # version exacta. Si Supabase sube de major version, cambiar el 17 aqui.
+      - name: Instalar cliente de Postgres 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
 
       # --format=custom: comprimido y restaurable con pg_restore, no un .sql plano.
       # SUPABASE_DB_URL debe ser el Session pooler (aws-0-<region>.pooler.supabase.com:5432),
       # NO la conexion directa: GitHub Actions no tiene salida IPv6, y la conexion
       # directa de Supabase solo es IPv4 con el add-on de pago. El pooler en modo
       # sesion si es IPv4 en todos los planes, y Supabase lo recomienda para pg_dump.
+      #
+      # Ruta completa al binario, no "pg_dump" a secas: el runner de GitHub ya
+      # trae una version mas vieja instalada en el PATH desde antes, y esa gana
+      # si se deja que el sistema elija sola.
       - name: Volcar la base de datos
         run: |
           FECHA=$(date +%Y-%m-%d)
-          pg_dump "${{ secrets.SUPABASE_DB_URL }}" \
+          /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL }}" \
             --format=custom --no-owner --no-acl \
             --file="vibemenu-$FECHA.dump"
           echo "ARCHIVO=vibemenu-$FECHA.dump" >> "$GITHUB_ENV"
