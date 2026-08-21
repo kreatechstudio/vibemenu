@@ -1,4 +1,5 @@
-import type { ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
+import { Loader2 } from "lucide-react";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import MarcaAgua from "@/components/menu/MarcaAgua";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
@@ -15,7 +16,7 @@ import { useRegistrarVisita } from "@/hooks/useVisitas";
 import { resolverTema, variablesDeTema } from "@/lib/tema";
 import { ESTADOS } from "@/lib/copy";
 import { cn } from "@/lib/utils";
-import type { FormatoMenu } from "@/types/database";
+import type { FormatoMenu, Tenant } from "@/types/database";
 
 interface MenuPublicoProps {
   slug: string;
@@ -39,6 +40,54 @@ const FORMATOS: Record<FormatoMenu, (p: PropsFormato) => ReactElement> = {
 };
 
 /**
+ * Se ve mientras carga el menú — con el logo y el color de fondo del negocio,
+ * no con el esqueleto gris de la plataforma. Solo se puede pintar así cuando
+ * ya se conoce al tenant (por ejemplo, al cambiar de sucursal, donde el
+ * anterior sigue siendo el mismo negocio); sin eso no hay de quién tomar el
+ * logo o el color, y se cae al esqueleto neutro de siempre.
+ */
+function SplashCarga({ conocido }: { conocido: { tenant: Tenant; formato: FormatoMenu } | null }) {
+  if (!conocido) {
+    return (
+      <main
+        className="min-h-screen animate-pulse bg-vm-bg-soft"
+        aria-busy="true"
+        aria-label="Cargando menú"
+      />
+    );
+  }
+
+  const { tenant, formato } = conocido;
+  const tema = resolverTema(tenant.tema, formato);
+
+  return (
+    <main
+      className="flex min-h-screen flex-col items-center justify-center gap-5"
+      style={{ background: tema.color_fondo }}
+      aria-busy="true"
+      aria-label={`Cargando el menú de ${tenant.nombre_negocio}`}
+    >
+      {tenant.logo_url ? (
+        <img
+          src={tenant.logo_url}
+          alt=""
+          className="size-20 animate-pulse rounded-full object-cover shadow-vm-2"
+        />
+      ) : (
+        <div
+          className="grid size-20 animate-pulse place-items-center rounded-full text-2xl font-bold text-white shadow-vm-2"
+          style={{ background: tema.color_primario }}
+          aria-hidden
+        >
+          {tenant.nombre_negocio.slice(0, 1).toUpperCase()}
+        </div>
+      )}
+      <Loader2 className="size-6 animate-spin" style={{ color: tema.color_primario }} aria-hidden />
+    </main>
+  );
+}
+
+/**
  * Menu publico del tenant, en `/:slug` y `/:slug/sucursal/:sucursalSlug`.
  *
  * NO usa <Layout>: ese es el cascaron de marketing con la navbar y el footer de
@@ -50,18 +99,21 @@ const FORMATOS: Record<FormatoMenu, (p: PropsFormato) => ReactElement> = {
 export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublicoProps) {
   const { data, isLoading, isError } = useMenuPublico(slug, sucursalSlug, inicial);
 
+  // Para el splash de carga: si el tenant cambia de sucursal (o vuelve a
+  // cargar), esto sigue teniendo su logo y color mientras llega el nuevo dato.
+  const [ultimoConocido, setUltimoConocido] = useState(
+    inicial ? { tenant: inicial.tenant, formato: inicial.formato } : null,
+  );
+  useEffect(() => {
+    if (data) setUltimoConocido({ tenant: data.tenant, formato: data.formato });
+  }, [data]);
+
   // Desde el navegador, nunca desde el loader: ahí contaríamos los prefetch del
   // router y cada rastreador que pase por la ruta.
   useRegistrarVisita(data?.tenant.id, data?.sucursalActiva?.id ?? null);
 
   if (isLoading) {
-    return (
-      <main
-        className="min-h-screen animate-pulse bg-vm-bg-soft"
-        aria-busy="true"
-        aria-label="Cargando menú"
-      />
-    );
+    return <SplashCarga conocido={ultimoConocido} />;
   }
 
   // El loader de la ruta ya garantizó que el menú existe (y respondió 404 si no).
