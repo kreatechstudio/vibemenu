@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHost } from "@tanstack/react-start/server";
 import Index from "@/pages/Index";
 import MenuPublico from "@/pages/MenuPublico";
@@ -24,15 +25,18 @@ function esDominioPrincipal(host: string): boolean {
   );
 }
 
+// El loader tambien puede re-ejecutar en el navegador (navegacion cliente,
+// p.ej. volver a "/" desde otra pagina). `getRequestHost` solo existe en el
+// servidor, y ademas TanStack Start prohibe importar `.../server` en codigo
+// que se empaqueta para el cliente — de ahi `createIsomorphicFn`, que separa
+// las dos implementaciones por build en vez de una rama `typeof window`.
+const obtenerHost = createIsomorphicFn()
+  .server(() => getRequestHost() ?? "")
+  .client(() => window.location.hostname);
+
 export const Route = createFileRoute("/")({
-  // El loader tambien puede re-ejecutar en el navegador (navegacion cliente,
-  // p.ej. volver a "/" desde otra pagina) — `getRequestHost` revienta ahi
-  // porque no hay AsyncLocalStorage de request fuera del servidor. En el
-  // cliente el host real ya esta en `window.location`, sin falta de llamarlo.
   loader: async (): Promise<DatosMenu | null> => {
-    const hostCrudo =
-      typeof window === "undefined" ? (getRequestHost() ?? "") : window.location.hostname;
-    const host = hostCrudo.replace(/:\d+$/, "").toLowerCase();
+    const host = obtenerHost().replace(/:\d+$/, "").toLowerCase();
     if (esDominioPrincipal(host)) return null;
     return obtenerMenuPublicoPorDominio(host);
   },

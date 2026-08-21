@@ -149,6 +149,31 @@ export type Database = {
         };
         Relationships: [Rel<"invitaciones_tenant_id_fkey", "tenant_id", "tenants">];
       };
+      /* Migración 014 — bitácora de soporte del panel de super-admin. */
+      notas_internas: {
+        Row: {
+          autor_id: string;
+          created_at: string;
+          id: string;
+          tenant_id: string;
+          texto: string;
+        };
+        Insert: {
+          autor_id: string;
+          created_at?: string;
+          id?: string;
+          tenant_id: string;
+          texto: string;
+        };
+        Update: {
+          autor_id?: string;
+          created_at?: string;
+          id?: string;
+          tenant_id?: string;
+          texto?: string;
+        };
+        Relationships: [Rel<"notas_internas_tenant_id_fkey", "tenant_id", "tenants">];
+      };
       opciones_modificador: {
         Row: { grupo_id: string; id: string; nombre: string; orden: number; precio_extra: number };
         Insert: {
@@ -619,6 +644,23 @@ export type Database = {
         Returns: undefined;
       };
       sucursal_esta_abierta: { Args: { p_sucursal_id: string }; Returns: boolean };
+      /* Migración 014. SECURITY DEFINER: solo responde si quien llama es super-admin. */
+      super_admin_equipo: {
+        Args: { p_tenant_id: string };
+        Returns: {
+          user_id: string;
+          email: string;
+          nombre: string | null;
+          avatar_url: string | null;
+          rol: string;
+          created_at: string;
+        }[];
+      };
+      /* Migración 014. SECURITY DEFINER: idem. */
+      cambiar_estado_tenant: {
+        Args: { p_tenant_id: string; p_estado: string };
+        Returns: undefined;
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -648,6 +690,7 @@ export type Suscripcion = Tables<"suscripciones">;
 export type Pago = Tables<"pagos">;
 export type SuperAdmin = Tables<"super_admins">;
 export type Invitacion = Tables<"invitaciones">;
+export type NotaInterna = Tables<"notas_internas">;
 
 /* Uniones cerradas: el schema las guarda como text con CHECK. */
 export type FormatoMenu = "clasico" | "pinterest" | "instagram" | "tiktok";
