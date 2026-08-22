@@ -1,783 +1,1100 @@
-/**
- * Tipos generados desde el schema real de Supabase (proyecto iaiiwtqqiaqxnzxjqcnt).
- * No editar a mano. Regenerar con:
- *   npx supabase gen types typescript --project-id iaiiwtqqiaqxnzxjqcnt > src/types/database.ts
- *
- * Los bloques `Relationships` no son decorativos: supabase-js los usa para tipar
- * los select anidados, p.ej. select("*, plan:planes(*)"). Si se borran, todo embed
- * pasa a ser SelectQueryError.
- */
-
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
-
-type Rel<N extends string, C extends string, R extends string> = {
-  foreignKeyName: N;
-  columns: [C];
-  isOneToOne: false;
-  referencedRelation: R;
-  referencedColumns: ["id"];
-};
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
-  __InternalSupabase: { PostgrestVersion: "14.5" };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       categorias: {
         Row: {
-          created_at: string;
-          id: string;
-          nombre: string;
-          orden: number;
-          sucursal_id: string | null;
-          tenant_id: string;
-        };
+          created_at: string
+          id: string
+          nombre: string
+          orden: number
+          sucursal_id: string | null
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          nombre: string;
-          orden?: number;
-          sucursal_id?: string | null;
-          tenant_id: string;
-        };
+          created_at?: string
+          id?: string
+          nombre: string
+          orden?: number
+          sucursal_id?: string | null
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          nombre?: string;
-          orden?: number;
-          sucursal_id?: string | null;
-          tenant_id?: string;
-        };
+          created_at?: string
+          id?: string
+          nombre?: string
+          orden?: number
+          sucursal_id?: string | null
+          tenant_id?: string
+        }
         Relationships: [
-          Rel<"categorias_sucursal_id_fkey", "sucursal_id", "sucursales">,
-          Rel<"categorias_tenant_id_fkey", "tenant_id", "tenants">,
-        ];
-      };
-      /* Migración 017 — datos fiscales del receptor, preparación para CFDI. */
+          {
+            foreignKeyName: "categorias_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categorias_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       datos_fiscales: {
         Row: {
-          codigo_postal: string | null;
-          email: string | null;
-          razon_social: string | null;
-          regimen_fiscal: string | null;
-          rfc: string | null;
-          tenant_id: string;
-          updated_at: string;
-          uso_cfdi: string | null;
-        };
+          codigo_postal: string | null
+          email: string | null
+          razon_social: string | null
+          regimen_fiscal: string | null
+          rfc: string | null
+          tenant_id: string
+          updated_at: string
+          uso_cfdi: string | null
+        }
         Insert: {
-          codigo_postal?: string | null;
-          email?: string | null;
-          razon_social?: string | null;
-          regimen_fiscal?: string | null;
-          rfc?: string | null;
-          tenant_id: string;
-          updated_at?: string;
-          uso_cfdi?: string | null;
-        };
+          codigo_postal?: string | null
+          email?: string | null
+          razon_social?: string | null
+          regimen_fiscal?: string | null
+          rfc?: string | null
+          tenant_id: string
+          updated_at?: string
+          uso_cfdi?: string | null
+        }
         Update: {
-          codigo_postal?: string | null;
-          email?: string | null;
-          razon_social?: string | null;
-          regimen_fiscal?: string | null;
-          rfc?: string | null;
-          tenant_id?: string;
-          updated_at?: string;
-          uso_cfdi?: string | null;
-        };
-        Relationships: [Rel<"datos_fiscales_tenant_id_fkey", "tenant_id", "tenants">];
-      };
+          codigo_postal?: string | null
+          email?: string | null
+          razon_social?: string | null
+          regimen_fiscal?: string | null
+          rfc?: string | null
+          tenant_id?: string
+          updated_at?: string
+          uso_cfdi?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "datos_fiscales_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grupos_modificadores: {
         Row: {
-          id: string;
-          max_selecciones: number | null;
-          min_selecciones: number;
-          nombre: string;
-          obligatorio: boolean;
-          orden: number;
-          tenant_id: string;
-          tipo_seleccion: string;
-        };
+          id: string
+          max_selecciones: number | null
+          min_selecciones: number
+          nombre: string
+          obligatorio: boolean
+          orden: number
+          tenant_id: string
+          tipo_seleccion: string
+        }
         Insert: {
-          id?: string;
-          max_selecciones?: number | null;
-          min_selecciones?: number;
-          nombre: string;
-          obligatorio?: boolean;
-          orden?: number;
-          tenant_id: string;
-          tipo_seleccion?: string;
-        };
+          id?: string
+          max_selecciones?: number | null
+          min_selecciones?: number
+          nombre: string
+          obligatorio?: boolean
+          orden?: number
+          tenant_id: string
+          tipo_seleccion?: string
+        }
         Update: {
-          id?: string;
-          max_selecciones?: number | null;
-          min_selecciones?: number;
-          nombre?: string;
-          obligatorio?: boolean;
-          orden?: number;
-          tenant_id?: string;
-          tipo_seleccion?: string;
-        };
-        Relationships: [Rel<"grupos_modificadores_tenant_id_fkey", "tenant_id", "tenants">];
-      };
+          id?: string
+          max_selecciones?: number | null
+          min_selecciones?: number
+          nombre?: string
+          obligatorio?: boolean
+          orden?: number
+          tenant_id?: string
+          tipo_seleccion?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_modificadores_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       horarios: {
         Row: {
-          cerrado: boolean;
-          dia_semana: number;
-          hora_apertura: string | null;
-          hora_cierre: string | null;
-          id: string;
-          sucursal_id: string;
-        };
+          cerrado: boolean
+          dia_semana: number
+          hora_apertura: string | null
+          hora_cierre: string | null
+          id: string
+          sucursal_id: string
+        }
         Insert: {
-          cerrado?: boolean;
-          dia_semana: number;
-          hora_apertura?: string | null;
-          hora_cierre?: string | null;
-          id?: string;
-          sucursal_id: string;
-        };
+          cerrado?: boolean
+          dia_semana: number
+          hora_apertura?: string | null
+          hora_cierre?: string | null
+          id?: string
+          sucursal_id: string
+        }
         Update: {
-          cerrado?: boolean;
-          dia_semana?: number;
-          hora_apertura?: string | null;
-          hora_cierre?: string | null;
-          id?: string;
-          sucursal_id?: string;
-        };
-        Relationships: [Rel<"horarios_sucursal_id_fkey", "sucursal_id", "sucursales">];
-      };
-      /* Migración 012: invitaciones de equipo por correo. */
+          cerrado?: boolean
+          dia_semana?: number
+          hora_apertura?: string | null
+          hora_cierre?: string | null
+          id?: string
+          sucursal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horarios_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitaciones: {
         Row: {
-          aceptada_at: string | null;
-          created_at: string;
-          email: string;
-          estado: string;
-          expira_at: string;
-          id: string;
-          invitado_por: string;
-          tenant_id: string;
-          token: string;
-        };
+          aceptada_at: string | null
+          created_at: string
+          email: string
+          estado: string
+          expira_at: string
+          id: string
+          invitado_por: string
+          tenant_id: string
+          token: string
+        }
         Insert: {
-          aceptada_at?: string | null;
-          created_at?: string;
-          email: string;
-          estado?: string;
-          expira_at?: string;
-          id?: string;
-          invitado_por: string;
-          tenant_id: string;
-          token?: string;
-        };
+          aceptada_at?: string | null
+          created_at?: string
+          email: string
+          estado?: string
+          expira_at?: string
+          id?: string
+          invitado_por: string
+          tenant_id: string
+          token?: string
+        }
         Update: {
-          aceptada_at?: string | null;
-          created_at?: string;
-          email?: string;
-          estado?: string;
-          expira_at?: string;
-          id?: string;
-          invitado_por?: string;
-          tenant_id?: string;
-          token?: string;
-        };
-        Relationships: [Rel<"invitaciones_tenant_id_fkey", "tenant_id", "tenants">];
-      };
-      /* Migración 014 — bitácora de soporte del panel de super-admin. */
+          aceptada_at?: string | null
+          created_at?: string
+          email?: string
+          estado?: string
+          expira_at?: string
+          id?: string
+          invitado_por?: string
+          tenant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitaciones_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_internas: {
         Row: {
-          autor_id: string;
-          created_at: string;
-          id: string;
-          tenant_id: string;
-          texto: string;
-        };
+          autor_id: string
+          created_at: string
+          id: string
+          tenant_id: string
+          texto: string
+        }
         Insert: {
-          autor_id: string;
-          created_at?: string;
-          id?: string;
-          tenant_id: string;
-          texto: string;
-        };
+          autor_id: string
+          created_at?: string
+          id?: string
+          tenant_id: string
+          texto: string
+        }
         Update: {
-          autor_id?: string;
-          created_at?: string;
-          id?: string;
-          tenant_id?: string;
-          texto?: string;
-        };
-        Relationships: [Rel<"notas_internas_tenant_id_fkey", "tenant_id", "tenants">];
-      };
-      opciones_modificador: {
-        Row: { grupo_id: string; id: string; nombre: string; orden: number; precio_extra: number };
-        Insert: {
-          grupo_id: string;
-          id?: string;
-          nombre: string;
-          orden?: number;
-          precio_extra?: number;
-        };
-        Update: {
-          grupo_id?: string;
-          id?: string;
-          nombre?: string;
-          orden?: number;
-          precio_extra?: number;
-        };
+          autor_id?: string
+          created_at?: string
+          id?: string
+          tenant_id?: string
+          texto?: string
+        }
         Relationships: [
-          Rel<"opciones_modificador_grupo_id_fkey", "grupo_id", "grupos_modificadores">,
-        ];
-      };
-      /* Migración 010 — verificada contra el schema real via MCP de Supabase. */
+          {
+            foreignKeyName: "notas_internas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opciones_modificador: {
+        Row: {
+          grupo_id: string
+          id: string
+          nombre: string
+          orden: number
+          precio_extra: number
+        }
+        Insert: {
+          grupo_id: string
+          id?: string
+          nombre: string
+          orden?: number
+          precio_extra?: number
+        }
+        Update: {
+          grupo_id?: string
+          id?: string
+          nombre?: string
+          orden?: number
+          precio_extra?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opciones_modificador_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_modificadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagos: {
         Row: {
-          fecha_pago: string;
-          id: string;
-          moneda: string;
-          monto: number;
-          stripe_hosted_invoice_url: string | null;
-          stripe_invoice_id: string;
-          suscripcion_id: string | null;
-          tenant_id: string;
-        };
+          fecha_pago: string
+          id: string
+          moneda: string
+          monto: number
+          stripe_hosted_invoice_url: string | null
+          stripe_invoice_id: string
+          suscripcion_id: string | null
+          tenant_id: string
+        }
         Insert: {
-          fecha_pago?: string;
-          id?: string;
-          moneda: string;
-          monto: number;
-          stripe_hosted_invoice_url?: string | null;
-          stripe_invoice_id: string;
-          suscripcion_id?: string | null;
-          tenant_id: string;
-        };
+          fecha_pago?: string
+          id?: string
+          moneda: string
+          monto: number
+          stripe_hosted_invoice_url?: string | null
+          stripe_invoice_id: string
+          suscripcion_id?: string | null
+          tenant_id: string
+        }
         Update: {
-          fecha_pago?: string;
-          id?: string;
-          moneda?: string;
-          monto?: number;
-          stripe_hosted_invoice_url?: string | null;
-          stripe_invoice_id?: string;
-          suscripcion_id?: string | null;
-          tenant_id?: string;
-        };
+          fecha_pago?: string
+          id?: string
+          moneda?: string
+          monto?: number
+          stripe_hosted_invoice_url?: string | null
+          stripe_invoice_id?: string
+          suscripcion_id?: string | null
+          tenant_id?: string
+        }
         Relationships: [
-          Rel<"pagos_suscripcion_id_fkey", "suscripcion_id", "suscripciones">,
-          Rel<"pagos_tenant_id_fkey", "tenant_id", "tenants">,
-        ];
-      };
+          {
+            foreignKeyName: "pagos_suscripcion_id_fkey"
+            columns: ["suscripcion_id"]
+            isOneToOne: false
+            referencedRelation: "suscripciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planes: {
         Row: {
-          formatos_permitidos: string[];
-          id: string;
-          limite_formatos: number | null;
-          limite_grupos_modificadores: number | null;
-          limite_productos: number | null;
-          limite_sucursales: number | null;
-          limite_usuarios: number | null;
-          marca_agua: boolean;
-          menu_independiente_por_sucursal: boolean;
-          nombre: string;
-          permite_dominio_propio: boolean;
-          permite_multiusuario: boolean;
-          precio_mxn: number;
-          precio_usd: number;
-          stripe_price_id_mxn: string | null;
-          stripe_price_id_usd: string | null;
-          /* Migración 002 — personalización de tema por plan. */
-          fuentes_permitidas: string[];
-          permite_color_modificadores: boolean;
-          modos_imagen_permitidos: string[];
-          permite_desenfoque: boolean;
-          /* Migración 005 — QR imprimible escalonado. */
-          qr_color: boolean;
-          qr_avanzado: boolean;
-          /* Migración 015 — precios anuales (2 meses gratis). */
-          precio_usd_anual: number | null;
-          precio_mxn_anual: number | null;
-          stripe_price_id_usd_anual: string | null;
-          stripe_price_id_mxn_anual: string | null;
-        };
+          formatos_permitidos: string[]
+          fuentes_permitidas: string[]
+          id: string
+          limite_formatos: number | null
+          limite_grupos_modificadores: number | null
+          limite_productos: number | null
+          limite_sucursales: number | null
+          limite_usuarios: number | null
+          marca_agua: boolean
+          menu_independiente_por_sucursal: boolean
+          modos_imagen_permitidos: string[]
+          nombre: string
+          permite_color_modificadores: boolean
+          permite_desenfoque: boolean
+          permite_dominio_propio: boolean
+          permite_multiusuario: boolean
+          precio_mxn: number
+          precio_mxn_anual: number | null
+          precio_usd: number
+          precio_usd_anual: number | null
+          qr_avanzado: boolean
+          qr_color: boolean
+          stripe_price_id_mxn: string | null
+          stripe_price_id_mxn_anual: string | null
+          stripe_price_id_usd: string | null
+          stripe_price_id_usd_anual: string | null
+        }
         Insert: {
-          formatos_permitidos?: string[];
-          id?: string;
-          limite_formatos?: number | null;
-          limite_grupos_modificadores?: number | null;
-          limite_productos?: number | null;
-          limite_sucursales?: number | null;
-          limite_usuarios?: number | null;
-          marca_agua?: boolean;
-          menu_independiente_por_sucursal?: boolean;
-          nombre: string;
-          permite_dominio_propio?: boolean;
-          permite_multiusuario?: boolean;
-          precio_mxn: number;
-          precio_usd: number;
-          stripe_price_id_mxn?: string | null;
-          stripe_price_id_usd?: string | null;
-          fuentes_permitidas?: string[];
-          permite_color_modificadores?: boolean;
-          modos_imagen_permitidos?: string[];
-          permite_desenfoque?: boolean;
-          qr_color?: boolean;
-          qr_avanzado?: boolean;
-          precio_usd_anual?: number | null;
-          precio_mxn_anual?: number | null;
-          stripe_price_id_usd_anual?: string | null;
-          stripe_price_id_mxn_anual?: string | null;
-        };
+          formatos_permitidos?: string[]
+          fuentes_permitidas?: string[]
+          id?: string
+          limite_formatos?: number | null
+          limite_grupos_modificadores?: number | null
+          limite_productos?: number | null
+          limite_sucursales?: number | null
+          limite_usuarios?: number | null
+          marca_agua?: boolean
+          menu_independiente_por_sucursal?: boolean
+          modos_imagen_permitidos?: string[]
+          nombre: string
+          permite_color_modificadores?: boolean
+          permite_desenfoque?: boolean
+          permite_dominio_propio?: boolean
+          permite_multiusuario?: boolean
+          precio_mxn: number
+          precio_mxn_anual?: number | null
+          precio_usd: number
+          precio_usd_anual?: number | null
+          qr_avanzado?: boolean
+          qr_color?: boolean
+          stripe_price_id_mxn?: string | null
+          stripe_price_id_mxn_anual?: string | null
+          stripe_price_id_usd?: string | null
+          stripe_price_id_usd_anual?: string | null
+        }
         Update: {
-          formatos_permitidos?: string[];
-          id?: string;
-          limite_formatos?: number | null;
-          limite_grupos_modificadores?: number | null;
-          limite_productos?: number | null;
-          limite_sucursales?: number | null;
-          limite_usuarios?: number | null;
-          marca_agua?: boolean;
-          menu_independiente_por_sucursal?: boolean;
-          nombre?: string;
-          permite_dominio_propio?: boolean;
-          permite_multiusuario?: boolean;
-          precio_mxn?: number;
-          precio_usd?: number;
-          stripe_price_id_mxn?: string | null;
-          stripe_price_id_usd?: string | null;
-          fuentes_permitidas?: string[];
-          permite_color_modificadores?: boolean;
-          modos_imagen_permitidos?: string[];
-          permite_desenfoque?: boolean;
-          precio_usd_anual?: number | null;
-          precio_mxn_anual?: number | null;
-          stripe_price_id_usd_anual?: string | null;
-          stripe_price_id_mxn_anual?: string | null;
-        };
-        Relationships: [];
-      };
-      /* Migración 005. Sin tenant_id: se deriva de `productos`. */
+          formatos_permitidos?: string[]
+          fuentes_permitidas?: string[]
+          id?: string
+          limite_formatos?: number | null
+          limite_grupos_modificadores?: number | null
+          limite_productos?: number | null
+          limite_sucursales?: number | null
+          limite_usuarios?: number | null
+          marca_agua?: boolean
+          menu_independiente_por_sucursal?: boolean
+          modos_imagen_permitidos?: string[]
+          nombre?: string
+          permite_color_modificadores?: boolean
+          permite_desenfoque?: boolean
+          permite_dominio_propio?: boolean
+          permite_multiusuario?: boolean
+          precio_mxn?: number
+          precio_mxn_anual?: number | null
+          precio_usd?: number
+          precio_usd_anual?: number | null
+          qr_avanzado?: boolean
+          qr_color?: boolean
+          stripe_price_id_mxn?: string | null
+          stripe_price_id_mxn_anual?: string | null
+          stripe_price_id_usd?: string | null
+          stripe_price_id_usd_anual?: string | null
+        }
+        Relationships: []
+      }
       precios_sucursal: {
-        Row: { created_at: string; precio: number; producto_id: string; sucursal_id: string };
-        Insert: { created_at?: string; precio: number; producto_id: string; sucursal_id: string };
+        Row: {
+          created_at: string
+          precio: number
+          producto_id: string
+          sucursal_id: string
+        }
+        Insert: {
+          created_at?: string
+          precio: number
+          producto_id: string
+          sucursal_id: string
+        }
         Update: {
-          created_at?: string;
-          precio?: number;
-          producto_id?: string;
-          sucursal_id?: string;
-        };
+          created_at?: string
+          precio?: number
+          producto_id?: string
+          sucursal_id?: string
+        }
         Relationships: [
-          Rel<"precios_sucursal_producto_id_fkey", "producto_id", "productos">,
-          Rel<"precios_sucursal_sucursal_id_fkey", "sucursal_id", "sucursales">,
-        ];
-      };
+          {
+            foreignKeyName: "precios_sucursal_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_sucursal_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       producto_modificadores: {
-        Row: { grupo_id: string; producto_id: string };
-        Insert: { grupo_id: string; producto_id: string };
-        Update: { grupo_id?: string; producto_id?: string };
+        Row: {
+          grupo_id: string
+          producto_id: string
+        }
+        Insert: {
+          grupo_id: string
+          producto_id: string
+        }
+        Update: {
+          grupo_id?: string
+          producto_id?: string
+        }
         Relationships: [
-          Rel<"producto_modificadores_grupo_id_fkey", "grupo_id", "grupos_modificadores">,
-          Rel<"producto_modificadores_producto_id_fkey", "producto_id", "productos">,
-        ];
-      };
+          {
+            foreignKeyName: "producto_modificadores_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_modificadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "producto_modificadores_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       productos: {
         Row: {
-          activo: boolean;
-          categoria_id: string;
-          created_at: string;
-          descripcion: string | null;
-          id: string;
-          imagen_url: string | null;
-          nombre: string;
-          orden: number;
-          precio: number;
-          sucursal_id: string | null;
-          tenant_id: string;
-          updated_at: string;
-          video_url: string | null;
-        };
+          activo: boolean
+          categoria_id: string
+          created_at: string
+          descripcion: string | null
+          id: string
+          imagen_url: string | null
+          nombre: string
+          orden: number
+          precio: number
+          sucursal_id: string | null
+          tenant_id: string
+          updated_at: string
+          video_url: string | null
+        }
         Insert: {
-          activo?: boolean;
-          categoria_id: string;
-          created_at?: string;
-          descripcion?: string | null;
-          id?: string;
-          imagen_url?: string | null;
-          nombre: string;
-          orden?: number;
-          precio?: number;
-          sucursal_id?: string | null;
-          tenant_id: string;
-          updated_at?: string;
-          video_url?: string | null;
-        };
+          activo?: boolean
+          categoria_id: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          imagen_url?: string | null
+          nombre: string
+          orden?: number
+          precio?: number
+          sucursal_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          video_url?: string | null
+        }
         Update: {
-          activo?: boolean;
-          categoria_id?: string;
-          created_at?: string;
-          descripcion?: string | null;
-          id?: string;
-          imagen_url?: string | null;
-          nombre?: string;
-          orden?: number;
-          precio?: number;
-          sucursal_id?: string | null;
-          tenant_id?: string;
-          updated_at?: string;
-          video_url?: string | null;
-        };
+          activo?: boolean
+          categoria_id?: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          imagen_url?: string | null
+          nombre?: string
+          orden?: number
+          precio?: number
+          sucursal_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          video_url?: string | null
+        }
         Relationships: [
-          Rel<"productos_categoria_id_fkey", "categoria_id", "categorias">,
-          Rel<"productos_sucursal_id_fkey", "sucursal_id", "sucursales">,
-          Rel<"productos_tenant_id_fkey", "tenant_id", "tenants">,
-        ];
-      };
+          {
+            foreignKeyName: "productos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productos_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       slugs_reservados: {
-        Row: { slug: string };
-        Insert: { slug: string };
-        Update: { slug?: string };
-        Relationships: [];
-      };
+        Row: {
+          slug: string
+        }
+        Insert: {
+          slug: string
+        }
+        Update: {
+          slug?: string
+        }
+        Relationships: []
+      }
       sucursales: {
         Row: {
-          activa: boolean;
-          created_at: string;
-          direccion: string | null;
-          id: string;
-          /* Migración 004 */
-          maps_url: string | null;
-          nombre: string;
-          slug: string;
-          telefono: string | null;
-          tenant_id: string;
-          timezone: string;
-          whatsapp: string | null;
-        };
+          activa: boolean
+          created_at: string
+          direccion: string | null
+          id: string
+          maps_url: string | null
+          nombre: string
+          slug: string
+          telefono: string | null
+          tenant_id: string
+          timezone: string
+          whatsapp: string | null
+        }
         Insert: {
-          activa?: boolean;
-          created_at?: string;
-          direccion?: string | null;
-          id?: string;
-          maps_url?: string | null;
-          nombre: string;
-          slug: string;
-          telefono?: string | null;
-          tenant_id: string;
-          timezone?: string;
-          whatsapp?: string | null;
-        };
+          activa?: boolean
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          maps_url?: string | null
+          nombre: string
+          slug: string
+          telefono?: string | null
+          tenant_id: string
+          timezone?: string
+          whatsapp?: string | null
+        }
         Update: {
-          activa?: boolean;
-          created_at?: string;
-          direccion?: string | null;
-          id?: string;
-          maps_url?: string | null;
-          nombre?: string;
-          slug?: string;
-          telefono?: string | null;
-          tenant_id?: string;
-          timezone?: string;
-          whatsapp?: string | null;
-        };
-        Relationships: [Rel<"sucursales_tenant_id_fkey", "tenant_id", "tenants">];
-      };
-      /* Migración 009 — verificada contra el schema real via MCP de Supabase. */
+          activa?: boolean
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          maps_url?: string | null
+          nombre?: string
+          slug?: string
+          telefono?: string | null
+          tenant_id?: string
+          timezone?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sucursales_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       super_admins: {
-        Row: { created_at: string; user_id: string };
-        Insert: { created_at?: string; user_id: string };
-        Update: { created_at?: string; user_id?: string };
-        Relationships: [];
-      };
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suscripciones: {
         Row: {
-          created_at: string;
-          estado: string;
-          fecha_fin: string | null;
-          fecha_inicio: string;
-          fecha_renovacion: string | null;
-          id: string;
-          moneda_cobro: string;
-          motivo_cambio: string;
-          plan_id: string;
-          precio_congelado_mxn: number;
-          precio_congelado_usd: number;
-          stripe_subscription_id: string | null;
-          tenant_id: string;
-        };
+          created_at: string
+          estado: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          fecha_renovacion: string | null
+          id: string
+          moneda_cobro: string
+          motivo_cambio: string
+          plan_id: string
+          precio_congelado_mxn: number
+          precio_congelado_usd: number
+          stripe_subscription_id: string | null
+          tenant_id: string
+        }
         Insert: {
-          created_at?: string;
-          estado?: string;
-          fecha_fin?: string | null;
-          fecha_inicio?: string;
-          fecha_renovacion?: string | null;
-          id?: string;
-          moneda_cobro?: string;
-          motivo_cambio?: string;
-          plan_id: string;
-          precio_congelado_mxn: number;
-          precio_congelado_usd: number;
-          stripe_subscription_id?: string | null;
-          tenant_id: string;
-        };
+          created_at?: string
+          estado?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          fecha_renovacion?: string | null
+          id?: string
+          moneda_cobro?: string
+          motivo_cambio?: string
+          plan_id: string
+          precio_congelado_mxn: number
+          precio_congelado_usd: number
+          stripe_subscription_id?: string | null
+          tenant_id: string
+        }
         Update: {
-          created_at?: string;
-          estado?: string;
-          fecha_fin?: string | null;
-          fecha_inicio?: string;
-          fecha_renovacion?: string | null;
-          id?: string;
-          moneda_cobro?: string;
-          motivo_cambio?: string;
-          plan_id?: string;
-          precio_congelado_mxn?: number;
-          precio_congelado_usd?: number;
-          stripe_subscription_id?: string | null;
-          tenant_id?: string;
-        };
+          created_at?: string
+          estado?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          fecha_renovacion?: string | null
+          id?: string
+          moneda_cobro?: string
+          motivo_cambio?: string
+          plan_id?: string
+          precio_congelado_mxn?: number
+          precio_congelado_usd?: number
+          stripe_subscription_id?: string | null
+          tenant_id?: string
+        }
         Relationships: [
-          Rel<"suscripciones_plan_id_fkey", "plan_id", "planes">,
-          Rel<"suscripciones_tenant_id_fkey", "tenant_id", "tenants">,
-        ];
-      };
+          {
+            foreignKeyName: "suscripciones_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suscripciones_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_usuarios: {
-        Row: { created_at: string; id: string; rol: string; tenant_id: string; user_id: string };
+        Row: {
+          created_at: string
+          id: string
+          rol: string
+          tenant_id: string
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          rol?: string;
-          tenant_id: string;
-          user_id: string;
-        };
+          created_at?: string
+          id?: string
+          rol?: string
+          tenant_id: string
+          user_id: string
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          rol?: string;
-          tenant_id?: string;
-          user_id?: string;
-        };
-        Relationships: [Rel<"tenant_usuarios_tenant_id_fkey", "tenant_id", "tenants">];
-      };
+          created_at?: string
+          id?: string
+          rol?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_usuarios_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
-          created_at: string;
-          /* Migración 004 */
-          descripcion: string | null;
-          estado: string;
-          formato_activo: string;
-          formatos_desbloqueados: string[];
-          giro: string | null;
-          id: string;
-          logo_url: string | null;
-          nombre_negocio: string;
-          plan_id: string | null;
-          slug: string;
-          stripe_customer_id: string | null;
-          telefono: string | null;
-          tema: Json;
-          trial_iniciado_at: string;
-          updated_at: string;
-          whatsapp: string | null;
-          /* Migración 007 — redes sociales del negocio. */
-          facebook_url: string | null;
-          instagram_url: string | null;
-          tiktok_url: string | null;
-          google_reviews_url: string | null;
-          /* Migración 013 — dominio personalizado (plan Pro). */
-          dominio_personalizado: string | null;
-          /* Migración 018 — estado del dominio (verificado, pendiente, etc). */
-          dominio_estado: string | null;
-          /* Migración 016 — trial de 14 días con Pro. */
-          aviso_trial_enviado_at: string | null;
-        };
+          aviso_trial_enviado_at: string | null
+          created_at: string
+          descripcion: string | null
+          dominio_estado: string | null
+          dominio_personalizado: string | null
+          estado: string
+          facebook_url: string | null
+          formato_activo: string
+          formatos_desbloqueados: string[]
+          giro: string | null
+          google_reviews_url: string | null
+          id: string
+          instagram_url: string | null
+          logo_url: string | null
+          nombre_negocio: string
+          plan_id: string | null
+          slug: string
+          stripe_customer_id: string | null
+          telefono: string | null
+          tema: Json
+          tiktok_url: string | null
+          trial_iniciado_at: string
+          updated_at: string
+          whatsapp: string | null
+        }
         Insert: {
-          created_at?: string;
-          descripcion?: string | null;
-          estado?: string;
-          formato_activo?: string;
-          formatos_desbloqueados?: string[];
-          giro?: string | null;
-          id?: string;
-          logo_url?: string | null;
-          nombre_negocio: string;
-          plan_id?: string | null;
-          slug: string;
-          stripe_customer_id?: string | null;
-          telefono?: string | null;
-          tema?: Json;
-          trial_iniciado_at?: string;
-          updated_at?: string;
-          whatsapp?: string | null;
-          facebook_url?: string | null;
-          instagram_url?: string | null;
-          tiktok_url?: string | null;
-          google_reviews_url?: string | null;
-          dominio_personalizado?: string | null;
-          dominio_estado?: string | null;
-          aviso_trial_enviado_at?: string | null;
-        };
+          aviso_trial_enviado_at?: string | null
+          created_at?: string
+          descripcion?: string | null
+          dominio_estado?: string | null
+          dominio_personalizado?: string | null
+          estado?: string
+          facebook_url?: string | null
+          formato_activo?: string
+          formatos_desbloqueados?: string[]
+          giro?: string | null
+          google_reviews_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          logo_url?: string | null
+          nombre_negocio: string
+          plan_id?: string | null
+          slug: string
+          stripe_customer_id?: string | null
+          telefono?: string | null
+          tema?: Json
+          tiktok_url?: string | null
+          trial_iniciado_at?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
         Update: {
-          created_at?: string;
-          descripcion?: string | null;
-          estado?: string;
-          formato_activo?: string;
-          formatos_desbloqueados?: string[];
-          giro?: string | null;
-          id?: string;
-          logo_url?: string | null;
-          nombre_negocio?: string;
-          plan_id?: string | null;
-          slug?: string;
-          stripe_customer_id?: string | null;
-          telefono?: string | null;
-          tema?: Json;
-          trial_iniciado_at?: string;
-          updated_at?: string;
-          whatsapp?: string | null;
-          facebook_url?: string | null;
-          instagram_url?: string | null;
-          tiktok_url?: string | null;
-          google_reviews_url?: string | null;
-          dominio_personalizado?: string | null;
-          dominio_estado?: string | null;
-          aviso_trial_enviado_at?: string | null;
-        };
-        Relationships: [Rel<"tenants_plan_id_fkey", "plan_id", "planes">];
-      };
-      /* Migración 007. Un contador por (tenant, sucursal, día); `sucursal_id` null = menú general. */
+          aviso_trial_enviado_at?: string | null
+          created_at?: string
+          descripcion?: string | null
+          dominio_estado?: string | null
+          dominio_personalizado?: string | null
+          estado?: string
+          facebook_url?: string | null
+          formato_activo?: string
+          formatos_desbloqueados?: string[]
+          giro?: string | null
+          google_reviews_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          logo_url?: string | null
+          nombre_negocio?: string
+          plan_id?: string | null
+          slug?: string
+          stripe_customer_id?: string | null
+          telefono?: string | null
+          tema?: Json
+          tiktok_url?: string | null
+          trial_iniciado_at?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitas_menu: {
         Row: {
-          id: number;
-          tenant_id: string;
-          sucursal_id: string | null;
-          dia: string;
-          visitas: number;
-        };
+          dia: string
+          id: number
+          sucursal_id: string | null
+          tenant_id: string
+          visitas: number
+        }
         Insert: {
-          id?: number;
-          tenant_id: string;
-          sucursal_id?: string | null;
-          dia: string;
-          visitas?: number;
-        };
+          dia: string
+          id?: never
+          sucursal_id?: string | null
+          tenant_id: string
+          visitas?: number
+        }
         Update: {
-          id?: number;
-          tenant_id?: string;
-          sucursal_id?: string | null;
-          dia?: string;
-          visitas?: number;
-        };
+          dia?: string
+          id?: never
+          sucursal_id?: string | null
+          tenant_id?: string
+          visitas?: number
+        }
         Relationships: [
-          Rel<"visitas_menu_tenant_id_fkey", "tenant_id", "tenants">,
-          Rel<"visitas_menu_sucursal_id_fkey", "sucursal_id", "sucursales">,
-        ];
-      };
-    };
-    Views: Record<never, never>;
+          {
+            foreignKeyName: "visitas_menu_sucursal_id_fkey"
+            columns: ["sucursal_id"]
+            isOneToOne: false
+            referencedRelation: "sucursales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitas_menu_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
-      es_owner_de_tenant: { Args: { check_tenant_id: string }; Returns: boolean };
-      /* Migración 012. SECURITY DEFINER, ejecutable por anon: el invitado aun puede no tener sesion. */
-      invitacion_info: {
-        Args: { p_token: string };
-        Returns: {
-          tenant_nombre: string;
-          email: string;
-          estado: string;
-          expira_at: string;
-          cuenta_existente: boolean;
-        }[];
-      };
-      /* Migración 003. SECURITY DEFINER: solo devuelve el equipo del tenant de quien llama. */
-      equipo_del_tenant: {
-        Args: { p_tenant_id: string };
-        Returns: { user_id: string; email: string; rol: string; created_at: string }[];
-      };
-      normalizar_formatos: {
-        Args: { p_formatos: string[]; p_limite: number; p_pool: string[] };
-        Returns: string[];
-      };
-      pertenece_a_tenant: { Args: { check_tenant_id: string }; Returns: boolean };
-      /* Migración 007. La llama el menú público, sin sesión. */
-      registrar_visita: {
-        Args: { p_tenant_id: string; p_sucursal_id?: string | null };
-        Returns: undefined;
-      };
-      sucursal_esta_abierta: { Args: { p_sucursal_id: string }; Returns: boolean };
-      /* Migración 014. SECURITY DEFINER: solo responde si quien llama es super-admin. */
-      super_admin_equipo: {
-        Args: { p_tenant_id: string };
-        Returns: {
-          user_id: string;
-          email: string;
-          nombre: string | null;
-          avatar_url: string | null;
-          rol: string;
-          created_at: string;
-        }[];
-      };
-      /* Migración 014. SECURITY DEFINER: idem. */
       cambiar_estado_tenant: {
-        Args: { p_tenant_id: string; p_estado: string };
-        Returns: undefined;
-      };
-    };
-    Enums: Record<never, never>;
-    CompositeTypes: Record<never, never>;
-  };
-};
+        Args: { p_estado: string; p_tenant_id: string }
+        Returns: undefined
+      }
+      equipo_del_tenant: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          nombre: string
+          rol: string
+          user_id: string
+        }[]
+      }
+      es_owner_de_tenant: {
+        Args: { check_tenant_id: string }
+        Returns: boolean
+      }
+      es_super_admin: { Args: never; Returns: boolean }
+      invitacion_info: {
+        Args: { p_token: string }
+        Returns: {
+          cuenta_existente: boolean
+          email: string
+          estado: string
+          expira_at: string
+          tenant_nombre: string
+        }[]
+      }
+      normalizar_formatos: {
+        Args: { p_formatos: string[]; p_limite: number; p_pool: string[] }
+        Returns: string[]
+      }
+      pertenece_a_tenant: {
+        Args: { check_tenant_id: string }
+        Returns: boolean
+      }
+      registrar_visita: {
+        Args: { p_sucursal_id?: string; p_tenant_id: string }
+        Returns: undefined
+      }
+      sucursal_esta_abierta: {
+        Args: { p_sucursal_id: string }
+        Returns: boolean
+      }
+      super_admin_equipo: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          nombre: string
+          rol: string
+          user_id: string
+        }[]
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
 
-type PublicSchema = Database["public"];
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-export type Tables<T extends keyof PublicSchema["Tables"]> = PublicSchema["Tables"][T]["Row"];
-export type TablesInsert<T extends keyof PublicSchema["Tables"]> =
-  PublicSchema["Tables"][T]["Insert"];
-export type TablesUpdate<T extends keyof PublicSchema["Tables"]> =
-  PublicSchema["Tables"][T]["Update"];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
-/* Aliases de dominio, para no escribir Tables<"..."> por todos lados. */
-export type Plan = Tables<"planes">;
-export type Tenant = Tables<"tenants">;
-export type TenantUsuario = Tables<"tenant_usuarios">;
-export type Sucursal = Tables<"sucursales">;
-export type Horario = Tables<"horarios">;
-export type Categoria = Tables<"categorias">;
-export type Producto = Tables<"productos">;
-export type PrecioSucursal = Tables<"precios_sucursal">;
-export type GrupoModificador = Tables<"grupos_modificadores">;
-export type OpcionModificador = Tables<"opciones_modificador">;
-export type Suscripcion = Tables<"suscripciones">;
-export type Pago = Tables<"pagos">;
-export type DatosFiscales = Tables<"datos_fiscales">;
-export type SuperAdmin = Tables<"super_admins">;
-export type Invitacion = Tables<"invitaciones">;
-export type NotaInterna = Tables<"notas_internas">;
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
+
+/* Aliases de dominio — tipos comunes para no escribir Tables<"..."> por todos lados. */
+export type Plan = Tables<"planes">
+export type Tenant = Tables<"tenants">
+export type TenantUsuario = Tables<"tenant_usuarios">
+export type Sucursal = Tables<"sucursales">
+export type Horario = Tables<"horarios">
+export type Categoria = Tables<"categorias">
+export type Producto = Tables<"productos">
+export type PrecioSucursal = Tables<"precios_sucursal">
+export type GrupoModificador = Tables<"grupos_modificadores">
+export type OpcionModificador = Tables<"opciones_modificador">
+export type Suscripcion = Tables<"suscripciones">
+export type Pago = Tables<"pagos">
+export type DatosFiscales = Tables<"datos_fiscales">
+export type SuperAdmin = Tables<"super_admins">
+export type Invitacion = Tables<"invitaciones">
+export type NotaInterna = Tables<"notas_internas">
 
 /* Uniones cerradas: el schema las guarda como text con CHECK. */
-export type FormatoMenu = "clasico" | "pinterest" | "instagram" | "tiktok";
-export type EstadoTenant = "trial" | "activo" | "suspendido" | "cancelado";
-export type RolUsuario = "owner" | "encargado";
-export type EstadoInvitacion = "pendiente" | "aceptada" | "cancelada";
-export type NombrePlan = "free" | "basic" | "pro" | "enterprise";
-export type MonedaCobro = "usd" | "mxn";
-export type IntervaloCobro = "mensual" | "anual";
-export type EstadoSuscripcion = "activa" | "cancelada" | "vencida" | "reemplazada";
+export type FormatoMenu = "clasico" | "pinterest" | "instagram" | "tiktok"
+export type EstadoTenant = "trial" | "activo" | "suspendido" | "cancelado"
+export type RolUsuario = "owner" | "encargado"
+export type EstadoInvitacion = "pendiente" | "aceptada" | "cancelada"
+export type NombrePlan = "free" | "basic" | "pro" | "enterprise"
+export type MonedaCobro = "usd" | "mxn"
+export type IntervaloCobro = "mensual" | "anual"
+export type EstadoSuscripcion = "activa" | "cancelada" | "vencida" | "reemplazada"
 export type MotivoCambio =
   | "alta"
   | "upgrade"
   | "downgrade"
   | "reactivacion"
   | "cancelacion"
-  | "vencimiento";
-export type TipoSeleccion = "unica" | "multiple";
+  | "vencimiento"
+export type TipoSeleccion = "unica" | "multiple"
 
-export const FORMATOS: readonly FormatoMenu[] = ["clasico", "pinterest", "instagram", "tiktok"];
+export const FORMATOS: readonly FormatoMenu[] = ["clasico", "pinterest", "instagram", "tiktok"]
 
 export const NOMBRE_FORMATO: Record<FormatoMenu, string> = {
   clasico: "Clásico",
   pinterest: "Pinterest",
   instagram: "Instagram",
   tiktok: "TikTok",
-};
+}
 
 export const NOMBRE_PLAN: Record<NombrePlan, string> = {
   free: "Free",
   basic: "Basic",
   pro: "Pro",
   enterprise: "Enterprise",
-};
+}
