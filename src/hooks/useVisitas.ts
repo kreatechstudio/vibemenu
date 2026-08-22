@@ -109,7 +109,7 @@ export function useRegistrarVisita(tenantId: string | undefined, sucursalId: str
 
     void supabase.rpc("registrar_visita", {
       p_tenant_id: tenantId,
-      p_sucursal_id: sucursalId,
+      p_sucursal_id: sucursalId ?? undefined,
     });
   }, [tenantId, sucursalId]);
 }
