@@ -581,6 +581,8 @@ export type Database = {
           google_reviews_url: string | null;
           /* Migración 013 — dominio personalizado (plan Pro). */
           dominio_personalizado: string | null;
+          /* Migración 018 — estado del dominio (verificado, pendiente, etc). */
+          dominio_estado: string | null;
           /* Migración 016 — trial de 14 días con Pro. */
           aviso_trial_enviado_at: string | null;
         };
@@ -607,6 +609,7 @@ export type Database = {
           tiktok_url?: string | null;
           google_reviews_url?: string | null;
           dominio_personalizado?: string | null;
+          dominio_estado?: string | null;
           aviso_trial_enviado_at?: string | null;
         };
         Update: {
@@ -632,6 +635,7 @@ export type Database = {
           tiktok_url?: string | null;
           google_reviews_url?: string | null;
           dominio_personalizado?: string | null;
+          dominio_estado?: string | null;
           aviso_trial_enviado_at?: string | null;
         };
         Relationships: [Rel<"tenants_plan_id_fkey", "plan_id", "planes">];
