@@ -11,6 +11,7 @@ import { useDominioDisponible } from "@/hooks/useDominioDisponible";
 import { traducirError } from "@/lib/errores";
 import { esUrlValida } from "@/lib/url";
 import { avisarGuardado } from "@/lib/avisos";
+import { supabase } from "@/lib/supabase";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { MENSAJE_ERROR_DOMINIO, normalizarDominio } from "@/lib/dominio";
 import { BOTONES, ESTADOS } from "@/lib/copy";
@@ -159,6 +160,15 @@ function Contenido() {
       if (logoOriginal && logoOriginal !== logoUrl) await borrarImagen(logoOriginal);
 
       avisarGuardado();
+
+      // Fire and forget: si guardar el dominio en tenants ya tuvo exito, no
+      // debe fallar el formulario porque Vercel este lento o caido. El cron
+      // de verificar-dominios-pendientes reintenta solo despues.
+      if (permiteDominio && cambioDominio && dominio.trim()) {
+        void supabase.functions
+          .invoke("agregar-dominio-vercel", { body: { tenant_id: tenantId } })
+          .catch(() => {});
+      }
     } catch (err) {
       setError(traducirError(err as Error).mensaje);
     }
