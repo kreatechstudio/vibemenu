@@ -217,6 +217,10 @@ function Contenido() {
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr]">
+        {/* min-w-0 overrides CSS Grid's default min-width: auto, which would size
+            this grid column to TarjetaQR's unscaled 1000px min-content width,
+            causing page-wide horizontal scroll. Without it, the grid item
+            stretches beyond the available space on mobile viewports. */}
         <div className="min-w-0">
           <TarjetaQR opciones={opciones} refQr={refQr} />
 
