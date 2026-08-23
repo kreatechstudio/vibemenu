@@ -1,5 +1,5 @@
 -- ============================================================================
---  VIBEMENU — migracion: dominio_estado
+--  VIBEMENU — migracion 018: dominio_estado
 --
 --  Agrega tenants.dominio_estado ('pendiente' | 'verificado' | null) y hace
 --  que el trigger validar_dominio_tenant() lo mantenga solo: 'pendiente' en

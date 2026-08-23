@@ -24,7 +24,8 @@ const SITIO = "https://vibemenu.com.mx";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -124,21 +125,60 @@ function plantillaDominioListo(negocioNombre: string, dominio: string) {
 
 type TenantPendiente = { id: string; nombre_negocio: string; dominio_personalizado: string };
 
-async function verificarUno(vercelToken: string, vercelProject: string, vercelTeam: string, t: TenantPendiente) {
+async function verificarUno(
+  vercelToken: string,
+  vercelProject: string,
+  vercelTeam: string,
+  t: TenantPendiente,
+) {
   const resp = await fetch(
     `https://api.vercel.com/v9/projects/${vercelProject}/domains/${t.dominio_personalizado}/verify?teamId=${vercelTeam}`,
     { method: "POST", headers: { Authorization: `Bearer ${vercelToken}` } },
   );
 
   if (!resp.ok) {
-    console.error(`vercel_verify_fallo (${resp.status}) para ${t.dominio_personalizado}:`, await resp.text());
+    const detalle = await resp.text();
+    console.error(
+      `vercel_verify_fallo (${resp.status}) para ${t.dominio_personalizado}:`,
+      detalle,
+    );
+    // Un 404 aqui significa que el dominio nunca se registro en Vercel (p.ej. el intento
+    // inicial de agregar-dominio-vercel fallo, o los secretos apenas se configuraron). Lo
+    // agregamos ahora; la siguiente corrida del cron ya lo encuentra y lo verifica -- asi el
+    // reintento automatico que promete el spec y el comentario de esta funcion es real.
+    if (resp.status === 404) {
+      const alta = await fetch(
+        `https://api.vercel.com/v10/projects/${vercelProject}/domains?teamId=${vercelTeam}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${vercelToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: t.dominio_personalizado }),
+        },
+      );
+      if (!alta.ok) {
+        console.error(
+          `vercel_add_domain_fallo (${alta.status}) para ${t.dominio_personalizado}:`,
+          await alta.text(),
+        );
+      }
+    }
     return false;
   }
 
   const data = (await resp.json()) as { verified?: boolean };
   if (!data.verified) return false;
 
-  await db.from("tenants").update({ dominio_estado: "verificado" }).eq("id", t.id);
+  const { error: errorEstado } = await db
+    .from("tenants")
+    .update({ dominio_estado: "verificado" })
+    .eq("id", t.id);
+  if (errorEstado) {
+    console.error("no se pudo marcar dominio_estado='verificado' para", t.id, errorEstado);
+    return false;
+  }
 
   const { data: owner } = await db
     .from("tenant_usuarios")
