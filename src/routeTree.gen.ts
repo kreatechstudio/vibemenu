@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SlugIndexRouteImport } from './routes/$slug.index'
 import { Route as SuperadminTenantIdRouteImport } from './routes/superadmin.$tenantId'
+import { Route as SucursalSucursalSlugRouteImport } from './routes/sucursal.$sucursalSlug'
 import { Route as InvitacionTokenRouteImport } from './routes/invitacion.$token'
 import { Route as AuthCompletarRouteImport } from './routes/auth.completar'
 import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
@@ -105,6 +106,11 @@ const SuperadminTenantIdRoute = SuperadminTenantIdRouteImport.update({
   path: '/$tenantId',
   getParentRoute: () => SuperadminRoute,
 } as any)
+const SucursalSucursalSlugRoute = SucursalSucursalSlugRouteImport.update({
+  id: '/sucursal/$sucursalSlug',
+  path: '/sucursal/$sucursalSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvitacionTokenRoute = InvitacionTokenRouteImport.update({
   id: '/invitacion/$token',
   path: '/invitacion/$token',
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/admin/suscripcion': typeof AdminSuscripcionRoute
   '/auth/completar': typeof AuthCompletarRoute
   '/invitacion/$token': typeof InvitacionTokenRoute
+  '/sucursal/$sucursalSlug': typeof SucursalSucursalSlugRoute
   '/superadmin/$tenantId': typeof SuperadminTenantIdRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/admin/suscripcion': typeof AdminSuscripcionRoute
   '/auth/completar': typeof AuthCompletarRoute
   '/invitacion/$token': typeof InvitacionTokenRoute
+  '/sucursal/$sucursalSlug': typeof SucursalSucursalSlugRoute
   '/superadmin/$tenantId': typeof SuperadminTenantIdRoute
   '/$slug': typeof SlugIndexRoute
   '/admin': typeof AdminIndexRoute
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/admin/suscripcion': typeof AdminSuscripcionRoute
   '/auth/completar': typeof AuthCompletarRoute
   '/invitacion/$token': typeof InvitacionTokenRoute
+  '/sucursal/$sucursalSlug': typeof SucursalSucursalSlugRoute
   '/superadmin/$tenantId': typeof SuperadminTenantIdRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/suscripcion'
     | '/auth/completar'
     | '/invitacion/$token'
+    | '/sucursal/$sucursalSlug'
     | '/superadmin/$tenantId'
     | '/$slug/'
     | '/admin/'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/suscripcion'
     | '/auth/completar'
     | '/invitacion/$token'
+    | '/sucursal/$sucursalSlug'
     | '/superadmin/$tenantId'
     | '/$slug'
     | '/admin'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/admin/suscripcion'
     | '/auth/completar'
     | '/invitacion/$token'
+    | '/sucursal/$sucursalSlug'
     | '/superadmin/$tenantId'
     | '/$slug/'
     | '/admin/'
@@ -350,6 +362,7 @@ export interface RootRouteChildren {
   AdminSuscripcionRoute: typeof AdminSuscripcionRoute
   AuthCompletarRoute: typeof AuthCompletarRoute
   InvitacionTokenRoute: typeof InvitacionTokenRoute
+  SucursalSucursalSlugRoute: typeof SucursalSucursalSlugRoute
   SlugIndexRoute: typeof SlugIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
   SlugSucursalSucursalSlugRoute: typeof SlugSucursalSucursalSlugRoute
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/superadmin/$tenantId'
       preLoaderRoute: typeof SuperadminTenantIdRouteImport
       parentRoute: typeof SuperadminRoute
+    }
+    '/sucursal/$sucursalSlug': {
+      id: '/sucursal/$sucursalSlug'
+      path: '/sucursal/$sucursalSlug'
+      fullPath: '/sucursal/$sucursalSlug'
+      preLoaderRoute: typeof SucursalSucursalSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/invitacion/$token': {
       id: '/invitacion/$token'
@@ -569,6 +589,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminSuscripcionRoute: AdminSuscripcionRoute,
   AuthCompletarRoute: AuthCompletarRoute,
   InvitacionTokenRoute: InvitacionTokenRoute,
+  SucursalSucursalSlugRoute: SucursalSucursalSlugRoute,
   SlugIndexRoute: SlugIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
   SlugSucursalSucursalSlugRoute: SlugSucursalSucursalSlugRoute,
