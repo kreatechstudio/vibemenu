@@ -22,6 +22,18 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SITIO = "https://vibemenu.com.mx";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const json = (cuerpo: unknown, status = 200) =>
+  new Response(JSON.stringify(cuerpo), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false },
 });
@@ -155,11 +167,13 @@ async function verificarUno(vercelToken: string, vercelProject: string, vercelTe
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
   const vercelToken = Deno.env.get("VERCEL_API_TOKEN");
   const vercelProject = Deno.env.get("VERCEL_PROJECT_ID");
   const vercelTeam = Deno.env.get("VERCEL_TEAM_ID");
   if (!vercelToken || !vercelProject || !vercelTeam) {
-    return new Response(JSON.stringify({ error: "falta_configuracion_vercel" }), { status: 500 });
+    return json({ error: "falta_configuracion_vercel" }, 500);
   }
 
   const secretoCron = Deno.env.get("DOMINIO_CRON_SECRET");
@@ -173,12 +187,12 @@ Deno.serve(async (req) => {
       .select("id, nombre_negocio, dominio_personalizado")
       .eq("dominio_estado", "pendiente")
       .not("dominio_personalizado", "is", null);
-    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    if (error) return json({ error: error.message }, 500);
     tenants = (data ?? []) as TenantPendiente[];
   } else {
     // No es el cron: exige sesion de un super_admin, y solo revisa un tenant.
     const autorizacion = req.headers.get("Authorization");
-    if (!autorizacion) return new Response(JSON.stringify({ error: "sin_sesion" }), { status: 401 });
+    if (!autorizacion) return json({ error: "sin_sesion" }, 401);
 
     const comoUsuario = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -188,7 +202,7 @@ Deno.serve(async (req) => {
     const {
       data: { user },
     } = await comoUsuario.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "sin_sesion" }), { status: 401 });
+    if (!user) return json({ error: "sin_sesion" }, 401);
 
     // RLS de super_admins solo deja leer la propia fila: si no existe, no es admin.
     const { data: esAdmin } = await comoUsuario
@@ -196,15 +210,15 @@ Deno.serve(async (req) => {
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (!esAdmin) return new Response(JSON.stringify({ error: "sin_permiso" }), { status: 403 });
+    if (!esAdmin) return json({ error: "sin_permiso" }, 403);
 
     let tenantId: string | undefined;
     try {
       ({ tenant_id: tenantId } = await req.json());
     } catch {
-      return new Response(JSON.stringify({ error: "body_invalido" }), { status: 400 });
+      return json({ error: "body_invalido" }, 400);
     }
-    if (!tenantId) return new Response(JSON.stringify({ error: "falta_tenant_id" }), { status: 400 });
+    if (!tenantId) return json({ error: "falta_tenant_id" }, 400);
 
     const { data, error } = await db
       .from("tenants")
@@ -212,7 +226,7 @@ Deno.serve(async (req) => {
       .eq("id", tenantId)
       .eq("dominio_estado", "pendiente")
       .not("dominio_personalizado", "is", null);
-    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    if (error) return json({ error: error.message }, 500);
     tenants = (data ?? []) as TenantPendiente[];
   }
 
@@ -225,7 +239,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, revisados: tenants.length, verificados }), {
-    headers: { "Content-Type": "application/json" },
-  });
+  return json({ ok: true, revisados: tenants.length, verificados });
 });
