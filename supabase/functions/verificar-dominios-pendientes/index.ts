@@ -138,10 +138,7 @@ async function verificarUno(
 
   if (!resp.ok) {
     const detalle = await resp.text();
-    console.error(
-      `vercel_verify_fallo (${resp.status}) para ${t.dominio_personalizado}:`,
-      detalle,
-    );
+    console.error(`vercel_verify_fallo (${resp.status}) para ${t.dominio_personalizado}:`, detalle);
     // Un 404 aqui significa que el dominio nunca se registro en Vercel (p.ej. el intento
     // inicial de agregar-dominio-vercel fallo, o los secretos apenas se configuraron). Lo
     // agregamos ahora; la siguiente corrida del cron ya lo encuentra y lo verifica -- asi el
