@@ -410,8 +410,8 @@ function Contenido() {
                       </p>
                     )}
                     <p className="mt-2">
-                      Después de guardar, avísanos: activar tu dominio del lado del servidor es un
-                      paso manual que hacemos una sola vez.
+                      En cuanto tu DNS esté configurado, lo detectamos solos — no hace falta que nos
+                      avises.
                     </p>
                   </div>
                 </>

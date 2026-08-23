@@ -14,6 +14,7 @@ import {
 } from "@/hooks/useSuperAdmin";
 import { formatearPrecio } from "@/lib/plan";
 import { COLOR_ESTADO, FECHA } from "@/lib/superadmin";
+import { avisarError } from "@/lib/avisos";
 import {
   NOMBRE_PLAN,
   type EstadoTenant,
@@ -77,9 +78,13 @@ export default function SuperAdmin() {
   async function verificarDominio(tenantId: string) {
     setVerificandoId(tenantId);
     try {
-      await supabase.functions.invoke("verificar-dominios-pendientes", {
+      const { error } = await supabase.functions.invoke("verificar-dominios-pendientes", {
         body: { tenant_id: tenantId },
       });
+      if (error) {
+        avisarError("No se pudo verificar el dominio. Intenta de nuevo.");
+        return;
+      }
       await qc.invalidateQueries({ queryKey: ["super-admin-tenants"] });
     } finally {
       setVerificandoId(null);
