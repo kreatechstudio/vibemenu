@@ -376,28 +376,45 @@ function Contenido() {
               )}
 
               {dominio.trim().length > 0 && !dominioInvalido && (
-                <div className="mt-4 rounded-lg bg-vm-bg-soft px-4 py-3 text-xs text-vm-body">
-                  <p className="font-medium text-vm-ink">Configura tu DNS</p>
-                  {dominio.split(".").length > 2 ? (
-                    <p className="mt-1">
-                      En el proveedor donde compraste tu dominio, crea un registro{" "}
-                      <span className="vm-data font-medium">CNAME</span> que apunte{" "}
-                      <span className="vm-data font-medium">{dominio}</span> a{" "}
-                      <span className="vm-data font-medium">cname.vercel-dns.com</span>.
-                    </p>
-                  ) : (
-                    <p className="mt-1">
-                      Como es un dominio raíz (sin "www" ni otro prefijo), crea un registro{" "}
-                      <span className="vm-data font-medium">A</span> que apunte{" "}
-                      <span className="vm-data font-medium">{dominio}</span> a{" "}
-                      <span className="vm-data font-medium">76.76.21.21</span>.
+                <>
+                  {!cambioDominio && tenant.dominio_estado && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs">
+                      {tenant.dominio_estado === "verificado" ? (
+                        <>
+                          <Check className="size-3.5 shrink-0 text-vm-success" aria-hidden />
+                          <span className="text-vm-success">Verificado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="size-3.5 shrink-0 text-vm-body" aria-hidden />
+                          <span className="text-vm-body">Pendiente de verificar</span>
+                        </>
+                      )}
                     </p>
                   )}
-                  <p className="mt-2">
-                    Después de guardar, avísanos: activar tu dominio del lado del servidor es un
-                    paso manual que hacemos una sola vez.
-                  </p>
-                </div>
+                  <div className="mt-4 rounded-lg bg-vm-bg-soft px-4 py-3 text-xs text-vm-body">
+                    <p className="font-medium text-vm-ink">Configura tu DNS</p>
+                    {dominio.split(".").length > 2 ? (
+                      <p className="mt-1">
+                        En el proveedor donde compraste tu dominio, crea un registro{" "}
+                        <span className="vm-data font-medium">CNAME</span> que apunte{" "}
+                        <span className="vm-data font-medium">{dominio}</span> a{" "}
+                        <span className="vm-data font-medium">cname.vercel-dns.com</span>.
+                      </p>
+                    ) : (
+                      <p className="mt-1">
+                        Como es un dominio raíz (sin "www" ni otro prefijo), crea un registro{" "}
+                        <span className="vm-data font-medium">A</span> que apunte{" "}
+                        <span className="vm-data font-medium">{dominio}</span> a{" "}
+                        <span className="vm-data font-medium">76.76.21.21</span>.
+                      </p>
+                    )}
+                    <p className="mt-2">
+                      Después de guardar, avísanos: activar tu dominio del lado del servidor es un
+                      paso manual que hacemos una sola vez.
+                    </p>
+                  </div>
+                </>
               )}
             </>
           ) : (
