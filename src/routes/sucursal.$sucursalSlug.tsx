@@ -22,7 +22,13 @@ export const Route = createFileRoute("/sucursal/$sucursalSlug")({
   },
   head: ({ loaderData, params }) =>
     loaderData
-      ? { meta: metaMenuPublico(loaderData, `/sucursal/${params.sucursalSlug}`, loaderData.tenant.dominio_personalizado ?? undefined) }
+      ? {
+          meta: metaMenuPublico(
+            loaderData,
+            `/sucursal/${params.sucursalSlug}`,
+            loaderData.tenant.dominio_personalizado ?? undefined,
+          ),
+        }
       : {},
   component: RouteComponent,
   notFoundComponent: MenuNoEncontrado,
@@ -31,7 +37,5 @@ export const Route = createFileRoute("/sucursal/$sucursalSlug")({
 function RouteComponent() {
   const { sucursalSlug } = Route.useParams();
   const menu = Route.useLoaderData();
-  return (
-    <MenuPublicoSucursal slug={menu.tenant.slug} sucursalSlug={sucursalSlug} inicial={menu} />
-  );
+  return <MenuPublicoSucursal slug={menu.tenant.slug} sucursalSlug={sucursalSlug} inicial={menu} />;
 }
