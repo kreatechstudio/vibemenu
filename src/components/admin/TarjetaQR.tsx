@@ -56,7 +56,7 @@ export default function TarjetaQR({
   const bloque = disposicion(opciones);
 
   return (
-    <div ref={caja} className="w-full" style={{ height: LIENZO.alto * escala }}>
+    <div ref={caja} className="w-full overflow-hidden" style={{ height: LIENZO.alto * escala }}>
       <div
         className="relative overflow-hidden rounded-xl bg-cover bg-center shadow-vm-2"
         style={{

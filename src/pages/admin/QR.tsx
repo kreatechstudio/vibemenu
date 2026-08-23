@@ -217,7 +217,7 @@ function Contenido() {
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr]">
-        <div>
+        <div className="min-w-0">
           <TarjetaQR opciones={opciones} refQr={refQr} />
 
           <div className="mt-4 flex items-center gap-2 rounded-lg border bg-vm-bg-soft px-3.5 py-3">
