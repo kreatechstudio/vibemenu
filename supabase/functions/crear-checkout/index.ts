@@ -111,6 +111,32 @@ Deno.serve(async (req) => {
     .eq("id", tenant_id)
     .single();
 
+  // Si ya hay una suscripción activa, esto es un cambio de plan, no un alta:
+  // se modifica la suscripción existente en Stripe en vez de abrir un Checkout
+  // nuevo. Antes esto creaba una SEGUNDA suscripción cobrando en paralelo.
+  const { data: vigente } = await db
+    .from("suscripciones")
+    .select("stripe_subscription_id")
+    .eq("tenant_id", tenant_id)
+    .eq("estado", "activa")
+    .maybeSingle();
+
+  if (vigente?.stripe_subscription_id) {
+    const suscripcion = await stripeClient().subscriptions.retrieve(vigente.stripe_subscription_id);
+    const item = suscripcion.items.data[0];
+    if (!item) return json({ error: "suscripcion_sin_items" }, 400);
+
+    await stripeClient().subscriptions.update(vigente.stripe_subscription_id, {
+      items: [{ id: item.id, price: priceId }],
+      proration_behavior: "create_prorations",
+      // El webhook de customer.subscription.updated compara este plan_id
+      // contra el vigente en la base para decidir si abre un periodo nuevo.
+      metadata: { tenant_id, plan_id, moneda, intervalo },
+    });
+
+    return json({ ok: true });
+  }
+
   const sesion = await stripeClient().checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],

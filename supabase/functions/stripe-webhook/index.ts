@@ -305,6 +305,19 @@ Deno.serve(async (req) => {
         const suscripcionId =
           typeof sesion.subscription === "string" ? sesion.subscription : sesion.subscription?.id;
 
+        // Reintento de Stripe del mismo evento: esta suscripcion ya quedo
+        // activa. Sin este guard, abrirPeriodo() se repite y deja una fila
+        // extra de historial marcada "reactivacion" por cada reintento.
+        if (suscripcionId) {
+          const { data: yaActiva } = await db
+            .from("suscripciones")
+            .select("id")
+            .eq("stripe_subscription_id", suscripcionId)
+            .eq("estado", "activa")
+            .maybeSingle();
+          if (yaActiva) break;
+        }
+
         let renovacion: string | null = null;
         if (suscripcionId) {
           renovacion = renovacionDe(await stripeClient().subscriptions.retrieve(suscripcionId));
@@ -330,8 +343,6 @@ Deno.serve(async (req) => {
 
       case "customer.subscription.updated": {
         const s = evento.data.object;
-        // Solo sincroniza la renovacion. Un cambio de plan real llega como
-        // checkout.session.completed, que es quien congela el precio nuevo.
         await db
           .from("suscripciones")
           .update({ fecha_renovacion: renovacionDe(s) })
@@ -340,6 +351,31 @@ Deno.serve(async (req) => {
 
         if (s.status === "past_due" || s.status === "unpaid") {
           await cerrarPeriodo(s.id, "vencida");
+        }
+
+        // Cambio de plan sobre una suscripcion ya activa (ver crear-checkout):
+        // la metadata trae el plan nuevo. Si difiere del vigente en la base,
+        // se congela el precio de lista de HOY con el mismo stripe_subscription_id
+        // -- no es un alta, es la misma suscripcion cambiando de item. Idempotente:
+        // tras la primera corrida vigente.plan_id ya coincide y un reintento no-op.
+        const { tenant_id, plan_id, moneda } = s.metadata ?? {};
+        if (tenant_id && plan_id) {
+          const { data: vigente } = await db
+            .from("suscripciones")
+            .select("plan_id")
+            .eq("stripe_subscription_id", s.id)
+            .eq("estado", "activa")
+            .maybeSingle();
+
+          if (vigente && vigente.plan_id !== plan_id) {
+            await abrirPeriodo({
+              tenantId: tenant_id,
+              planId: plan_id,
+              moneda: (moneda as "usd" | "mxn") ?? "usd",
+              stripeSubscriptionId: s.id,
+              fechaRenovacion: renovacionDe(s),
+            });
+          }
         }
         break;
       }

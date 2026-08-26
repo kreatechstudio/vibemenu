@@ -1,5 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { urlDeCheckout, type RespuestaCambioDePlan } from "@/lib/checkout";
+import { avisarExito } from "@/lib/avisos";
 import type { IntervaloCobro, MonedaCobro } from "@/types/database";
 
 /**
@@ -60,18 +62,26 @@ async function motivoReal(error: unknown): Promise<string> {
   return conRespuesta.message ?? "";
 }
 
-async function invocar(nombre: string, cuerpo: Record<string, unknown>): Promise<string> {
-  const { data, error } = await supabase.functions.invoke<{ url?: string } & ErrorFuncion>(nombre, {
+async function invocar(
+  nombre: string,
+  cuerpo: Record<string, unknown>,
+): Promise<RespuestaCambioDePlan> {
+  const { data, error } = await supabase.functions.invoke<
+    { url?: string; ok?: boolean } & ErrorFuncion
+  >(nombre, {
     body: { ...cuerpo, url_retorno: `${window.location.origin}/admin/suscripcion` },
   });
 
   if (error) throw new Error(traducir(await motivoReal(error)));
   if (data?.error) throw new Error(traducir(data.error));
-  if (!data?.url) throw new Error(GENERICO);
-  return data.url;
+  if (data?.url) return { url: data.url };
+  if (data?.ok) return { ok: true };
+  throw new Error(GENERICO);
 }
 
 export function useCheckout() {
+  const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (args: {
       tenantId: string;
@@ -79,13 +89,24 @@ export function useCheckout() {
       moneda: MonedaCobro;
       intervalo: IntervaloCobro;
     }) => {
-      const url = await invocar("crear-checkout", {
+      const respuesta = await invocar("crear-checkout", {
         tenant_id: args.tenantId,
         plan_id: args.planId,
         moneda: args.moneda,
         intervalo: args.intervalo,
       });
-      window.location.href = url;
+
+      const url = urlDeCheckout(respuesta);
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+
+      // Ya había una suscripción activa: Stripe la modificó directo, sin
+      // checkout nuevo (evita cobrar dos veces). No hay a dónde redirigir.
+      await qc.invalidateQueries({ queryKey: ["suscripciones", args.tenantId] });
+      await qc.invalidateQueries({ queryKey: ["tenant-actual"] });
+      avisarExito("Listo, cambiaste de plan.");
     },
   });
 }
@@ -93,7 +114,9 @@ export function useCheckout() {
 export function usePortalStripe() {
   return useMutation({
     mutationFn: async (tenantId: string) => {
-      const url = await invocar("portal-stripe", { tenant_id: tenantId });
+      const respuesta = await invocar("portal-stripe", { tenant_id: tenantId });
+      const url = urlDeCheckout(respuesta);
+      if (!url) throw new Error(GENERICO);
       window.location.href = url;
     },
   });
