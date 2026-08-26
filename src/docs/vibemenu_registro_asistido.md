@@ -78,6 +78,11 @@ el logo. Los pasos 3, 4 y 5 dejan de trabajar sobre un borrador en memoria y pas
 - Paso 5 (Métricas) → un solo `insert` en la tabla nueva `onboarding_respuestas` (§4) con lo
   que se haya contestado.
 
+**"Atrás" solo existe entre Cuenta → Bienvenida → Negocio** (nada se ha creado todavía). A
+partir de Contacto ya hay un tenant creado — volver a Negocio invitaría a "crear" el negocio
+otra vez, y el trigger `trg_tenants_05_un_solo_tenant` lo rechazaría. Contacto, Logo y
+Métricas solo tienen "Continuar" (y, donde aplica, "Omitir"/"Lo hago después").
+
 **Consecuencia aceptada:** si el usuario abandona después del paso 2, ya tiene un tenant
 funcional y `AdminLayout` lo deja entrar directo a `/admin` en su próxima visita — no vuelve al
 wizard. Es el mismo comportamiento de hoy (registro mínimo + completar después desde "Mi
