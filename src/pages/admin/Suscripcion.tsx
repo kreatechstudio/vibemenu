@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, Info, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { usePlanes } from "@/hooks/usePlanes";
 import { useCheckout, usePortalStripe } from "@/hooks/useStripe";
@@ -351,6 +352,8 @@ function Contenido() {
 
   return (
     <>
+      <PillTabs pestanas={PESTANAS_NEGOCIO} />
+
       <h1 className="text-2xl">Suscripción</h1>
       <p className="mt-1 text-sm text-vm-body">Tu plan, tu precio y todo lo que has pagado.</p>
 

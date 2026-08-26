@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Lock, Trash2, UserPlus } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
 import AvatarUsuario from "@/components/ui/avatar-usuario";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { useEquipo, useInvitarEncargado, useQuitarDelEquipo } from "@/hooks/useEquipo";
@@ -161,6 +162,7 @@ function Contenido() {
   if (!plan.permite_multiusuario) {
     return (
       <>
+        <PillTabs pestanas={PESTANAS_NEGOCIO} />
         <h1 className="text-2xl">Equipo</h1>
         <p className="mt-1 text-sm text-vm-body">Quién puede entrar a administrar tu menú.</p>
         <Bloqueado />
@@ -186,6 +188,8 @@ function Contenido() {
 
   return (
     <>
+      <PillTabs pestanas={PESTANAS_NEGOCIO} />
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl">Equipo</h1>

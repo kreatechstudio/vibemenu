@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { FolderPlus, ImageOff, Lock, Plus, Store, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import PillTabs from "@/components/layout/PillTabs";
 import EditorProducto from "@/components/admin/EditorProducto";
 import ModalLimite from "@/components/admin/ModalLimite";
 import { DialogoConfirmar, DialogoTexto } from "@/components/ui/dialogo";
@@ -181,6 +182,13 @@ function Contenido() {
 
   return (
     <>
+      <PillTabs
+        pestanas={[
+          { a: "/admin/menu", etiqueta: "Productos" },
+          { a: "/admin/modificadores", etiqueta: "Modificadores" },
+        ]}
+      />
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl">Mi carta</h1>

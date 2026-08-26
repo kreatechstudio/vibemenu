@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { AlertTriangle, Check, ImagePlus, Loader2, Lock, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
+import PhoneInput from "@/components/ui/phone-input";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { useActualizarTenant } from "@/hooks/useActualizarTenant";
 import { borrarImagen, subirImagen } from "@/hooks/useCarta";
@@ -176,6 +178,8 @@ function Contenido() {
 
   return (
     <form onSubmit={alGuardar}>
+      <PillTabs pestanas={PESTANAS_NEGOCIO} />
+
       <h1 className="text-2xl">Datos de tu negocio</h1>
       <p className="mt-1 max-w-prose text-sm text-vm-body">
         Es lo que ve el comensal al abrir tu menú, y lo que se imprime en tu QR.
@@ -438,26 +442,22 @@ function Contenido() {
               <label htmlFor="e-tel" className="text-sm font-medium text-vm-ink">
                 Teléfono
               </label>
-              <input
+              <PhoneInput
                 id="e-tel"
-                type="tel"
                 value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                placeholder="+52 55 1234 5678"
-                className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+                onChange={setTelefono}
+                placeholder="55 1234 5678"
               />
             </div>
             <div>
               <label htmlFor="e-wa" className="text-sm font-medium text-vm-ink">
                 WhatsApp
               </label>
-              <input
+              <PhoneInput
                 id="e-wa"
-                type="tel"
                 value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="+52 55 1234 5678"
-                className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+                onChange={setWhatsapp}
+                placeholder="55 1234 5678"
               />
             </div>
           </div>
