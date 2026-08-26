@@ -60,7 +60,7 @@ export default function PhoneInput({
   }
 
   return (
-    <div className="mt-2 flex h-12 overflow-hidden rounded-lg border focus-within:border-vm-primary focus-within:ring-2 focus-within:ring-vm-primary/20">
+    <div className="mt-2 flex h-12 w-full overflow-hidden rounded-lg border focus-within:border-vm-primary focus-within:ring-2 focus-within:ring-vm-primary/20">
       <label className="sr-only" htmlFor={`${id}-codigo`}>
         Código de país
       </label>
@@ -68,7 +68,7 @@ export default function PhoneInput({
         id={`${id}-codigo`}
         value={codigo}
         onChange={(e) => cambiarCodigo(e.target.value)}
-        className="vm-data h-full shrink-0 border-r bg-vm-bg-soft px-2 text-sm outline-none"
+        className="vm-data h-full w-20 shrink-0 truncate border-r bg-vm-bg-soft px-2 text-sm outline-none"
       >
         {CODIGOS_PAIS.map((c) => (
           <option key={c.codigo} value={c.codigo}>
