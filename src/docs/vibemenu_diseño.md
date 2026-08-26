@@ -11,18 +11,18 @@ Referencia base: mockup limpio, tipo SaaS profesional — fondo blanco, headline
 
 ### Colores
 
-| Token | Hex | Uso |
-|-------|-----|-----|
-| `--vm-primary` | `#2B4EFF` | Azul eléctrico — CTAs primarios, links activos, acentos de marca |
-| `--vm-primary-hover` | `#1E3AE0` | Hover de botones primarios |
-| `--vm-ink` | `#0B0B0F` | Negro casi puro — headlines, texto principal |
-| `--vm-body` | `#4B4E5A` | Gris — texto secundario, párrafos |
-| `--vm-bg` | `#FFFFFF` | Fondo principal |
-| `--vm-bg-soft` | `#F5F6F9` | Fondo de secciones alternas, cards del dashboard |
-| `--vm-border` | `#E4E6ED` | Bordes de cards, inputs |
-| `--vm-success` | `#16A34A` | Estados "activo", "abierto" |
-| `--vm-warning` | `#D97706` | Estados "trial", límite cerca de alcanzarse |
-| `--vm-danger` | `#DC2626` | Estados "cerrado", "suspendido", errores |
+| Token                | Hex       | Uso                                                              |
+| -------------------- | --------- | ---------------------------------------------------------------- |
+| `--vm-primary`       | `#2B4EFF` | Azul eléctrico — CTAs primarios, links activos, acentos de marca |
+| `--vm-primary-hover` | `#1E3AE0` | Hover de botones primarios                                       |
+| `--vm-ink`           | `#0B0B0F` | Negro casi puro — headlines, texto principal                     |
+| `--vm-body`          | `#4B4E5A` | Gris — texto secundario, párrafos                                |
+| `--vm-bg`            | `#FFFFFF` | Fondo principal                                                  |
+| `--vm-bg-soft`       | `#F5F6F9` | Fondo de secciones alternas, cards del dashboard                 |
+| `--vm-border`        | `#E4E6ED` | Bordes de cards, inputs                                          |
+| `--vm-success`       | `#16A34A` | Estados "activo", "abierto"                                      |
+| `--vm-warning`       | `#D97706` | Estados "trial", límite cerca de alcanzarse                      |
+| `--vm-danger`        | `#DC2626` | Estados "cerrado", "suspendido", errores                         |
 
 ### Tipografía
 
@@ -57,15 +57,15 @@ Referencia base: mockup limpio, tipo SaaS profesional — fondo blanco, headline
 
 ## Paleta de componentes — Landing y Panel Admin
 
-| Elemento | Color / estilo |
-|----------|-----------------|
-| Navbar | Fondo blanco, borde inferior `--vm-border`, logo en `--vm-ink`, link activo subrayado en `--vm-primary` |
-| Botón primario | Fondo `--vm-primary`, texto blanco, `rounded-xl`, hover `--vm-primary-hover` |
-| Botón secundario | Fondo `--vm-bg-soft`, texto `--vm-ink`, sin borde |
-| Cards de plan (precios) | Fondo blanco, borde `--vm-border`, plan recomendado (Pro) con borde `--vm-primary` de 2px y badge "Más popular" |
-| Cards del dashboard admin | Fondo blanco, borde `--vm-border`, número grande en JetBrains Mono, label en gris uppercase pequeño (como "TOTAL ITEMS" de la referencia) |
-| Badge de estado (activo/trial/suspendido) | Pill pequeño, fondo suave del color de estado al 10% opacidad, texto del color sólido |
-| Inputs de formulario | Borde `--vm-border`, focus ring `--vm-primary` |
+| Elemento                                  | Color / estilo                                                                                                                            |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Navbar                                    | Fondo blanco, borde inferior `--vm-border`, logo en `--vm-ink`, link activo subrayado en `--vm-primary`                                   |
+| Botón primario                            | Fondo `--vm-primary`, texto blanco, `rounded-xl`, hover `--vm-primary-hover`                                                              |
+| Botón secundario                          | Fondo `--vm-bg-soft`, texto `--vm-ink`, sin borde                                                                                         |
+| Cards de plan (precios)                   | Fondo blanco, borde `--vm-border`, plan recomendado (Pro) con borde `--vm-primary` de 2px y badge "Más popular"                           |
+| Cards del dashboard admin                 | Fondo blanco, borde `--vm-border`, número grande en JetBrains Mono, label en gris uppercase pequeño (como "TOTAL ITEMS" de la referencia) |
+| Badge de estado (activo/trial/suspendido) | Pill pequeño, fondo suave del color de estado al 10% opacidad, texto del color sólido                                                     |
+| Inputs de formulario                      | Borde `--vm-border`, focus ring `--vm-primary`                                                                                            |
 
 ---
 
@@ -74,21 +74,25 @@ Referencia base: mockup limpio, tipo SaaS profesional — fondo blanco, headline
 Cada formato tiene su propio set de defaults (el tenant los puede personalizar en `/admin/diseno`, esto es el punto de partida):
 
 ### Clásico
+
 - Tipografía: serif elegante (ej. Fraunces o Playfair Display) para nombres de producto, sans-serif para descripciones
 - Fondo: color sólido o imagen tenue con overlay oscuro, texto blanco/crema
 - Layout: lista vertical por categoría, precios alineados a la derecha con línea punteada clásica de menú de restaurante
 
 ### Pinterest
+
 - Grid tipo masonry (columnas de alturas variables según proporción de la foto)
 - Fondo blanco o gris muy claro, las fotos son el protagonista
 - Al tocar una foto, expande a detalle del producto con animación de escala
 
 ### Instagram
+
 - Grid perfecto 3 columnas, fotos cuadradas (crop automático)
 - Al abrir producto: vista tipo "post" con foto grande arriba, nombre/precio/descripción abajo, modificadores como si fueran "detalles del post"
 - Usa un header de perfil simulado arriba del grid: logo del tenant + nombre + bio corta (dirección/horario)
 
 ### TikTok
+
 - Fullscreen vertical, un producto a la vez, swipe/scroll vertical entre productos
 - Si hay video: autoplay muteado con controles mínimos; si no hay video, foto con animación de zoom lento (Ken Burns)
 - Overlay de texto (nombre, precio, descripción corta) sobre la parte inferior del video/foto, con gradiente oscuro para legibilidad

@@ -26,11 +26,13 @@ slugs_reservados (standalone)
 ## Conceptos clave
 
 ### Límites de plan
+
 Todo límite vive en la tabla `planes` y se aplica con **triggers en la base de datos**, no solo en la UI.
 Un `null` en cualquier columna `limite_*` significa **ilimitado**.
 El frontend lee `planes` para mostrar/ocultar controles; la base de datos es la que realmente bloquea.
 
 ### Formatos: pool elegible + límite
+
 - `planes.formatos_permitidos` = el **pool** entre los que el tenant puede elegir.
 - `planes.limite_formatos` = **cuántos** puede tener desbloqueados a la vez (`null` = todos los del pool).
 - `tenants.formatos_desbloqueados` = los que el tenant **eligió**.
@@ -44,7 +46,9 @@ y `formato_activo` cae a `'clasico'` si quedó fuera). Al **editar manualmente**
 plan lanza error explícito.
 
 ### Menú compartido vs. independiente
+
 `sucursal_id` nullable en `categorias` y `productos`:
+
 - `NULL` → visible en **todas** las sucursales (menú compartido)
 - `uuid` → exclusivo de **esa** sucursal (menú independiente)
 
@@ -52,11 +56,13 @@ Solo los planes con `menu_independiente_por_sucursal = true` pueden escribir un 
 No existe tabla `menus`.
 
 ### Precio congelado
+
 `suscripciones.precio_congelado_usd/mxn` se copian de `planes` en el momento del alta o del upgrade.
 Subir el precio de lista en `planes` no afecta a suscripciones ya existentes.
 Solo la Edge Function de webhooks (con `service_role_key`) escribe en `suscripciones`.
 
 ### Historial de suscripciones
+
 `suscripciones` guarda **una fila por periodo de plan**, no una sola fila mutable.
 Un índice único parcial garantiza **una sola fila `'activa'` por tenant**.
 Al cambiar de plan, la fila anterior pasa a `'reemplazada'` con su `fecha_fin`, y se inserta una nueva.
@@ -219,6 +225,7 @@ create table horarios (
 ```
 
 Convención de horarios:
+
 - `cerrado = true` → ese día no abre, se ignoran las horas.
 - `hora_cierre > hora_apertura` → turno normal (09:00 → 22:00).
 - `hora_cierre < hora_apertura` → **cruza medianoche** (20:00 → 02:00).
@@ -1017,11 +1024,11 @@ create policy "vibemenu_media_delete_miembros" on storage.objects for delete
 
 Escribe siempre en `suscripciones` **insertando una fila nueva**, nunca mutando el historial.
 
-| Evento de Stripe | Acción |
-|---|---|
-| `checkout.session.completed` | Cierra la fila `activa` previa (`estado='reemplazada'`, `fecha_fin=now()`), inserta una nueva con `precio_congelado_*` copiado de `planes` y `motivo_cambio` = `'alta'` o `'upgrade'`/`'downgrade'`. Actualiza `tenants.plan_id` y `tenants.estado='activo'`. |
-| `customer.subscription.updated` | Sincroniza `fecha_renovacion` y `estado` de la fila activa. Si cambió el plan, aplica el mismo cierre + inserción de arriba. |
-| `customer.subscription.deleted` | `estado='cancelada'`, `fecha_fin=now()` en la fila activa. `tenants.estado='suspendido'`. |
+| Evento de Stripe                | Acción                                                                                                                                                                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checkout.session.completed`    | Cierra la fila `activa` previa (`estado='reemplazada'`, `fecha_fin=now()`), inserta una nueva con `precio_congelado_*` copiado de `planes` y `motivo_cambio` = `'alta'` o `'upgrade'`/`'downgrade'`. Actualiza `tenants.plan_id` y `tenants.estado='activo'`. |
+| `customer.subscription.updated` | Sincroniza `fecha_renovacion` y `estado` de la fila activa. Si cambió el plan, aplica el mismo cierre + inserción de arriba.                                                                                                                                  |
+| `customer.subscription.deleted` | `estado='cancelada'`, `fecha_fin=now()` en la fila activa. `tenants.estado='suspendido'`.                                                                                                                                                                     |
 
 Al bajar de plan, actualizar `tenants.plan_id` dispara `trg_tenants_20_formatos`, que recorta
 `formatos_desbloqueados` automáticamente. **Lo que no se recorta solo** son productos y sucursales

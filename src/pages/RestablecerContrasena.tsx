@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
@@ -14,6 +14,8 @@ export default function RestablecerContrasena() {
   const [estado, setEstado] = useState<Estado>("verificando");
   const [password, setPassword] = useState("");
   const [confirmar, setConfirmar] = useState("");
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,32 +115,60 @@ export default function RestablecerContrasena() {
             <label htmlFor="password" className="text-sm font-medium text-vm-ink">
               Nueva contraseña
             </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
-            />
+            <div className="relative mt-2">
+              <input
+                id="password"
+                type={mostrarPassword ? "text" : "password"}
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 w-full rounded-lg border px-4 pr-12 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-vm-body hover:text-vm-ink"
+                aria-label={mostrarPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {mostrarPassword ? (
+                  <EyeOff className="size-4" aria-hidden />
+                ) : (
+                  <Eye className="size-4" aria-hidden />
+                )}
+              </button>
+            </div>
           </div>
 
           <div>
             <label htmlFor="confirmar" className="text-sm font-medium text-vm-ink">
               Confirma tu contraseña
             </label>
-            <input
-              id="confirmar"
-              type="password"
-              required
-              minLength={6}
-              autoComplete="new-password"
-              value={confirmar}
-              onChange={(e) => setConfirmar(e.target.value)}
-              className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
-            />
+            <div className="relative mt-2">
+              <input
+                id="confirmar"
+                type={mostrarConfirmar ? "text" : "password"}
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={confirmar}
+                onChange={(e) => setConfirmar(e.target.value)}
+                className="h-12 w-full rounded-lg border px-4 pr-12 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarConfirmar((v) => !v)}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-vm-body hover:text-vm-ink"
+                aria-label={mostrarConfirmar ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {mostrarConfirmar ? (
+                  <EyeOff className="size-4" aria-hidden />
+                ) : (
+                  <Eye className="size-4" aria-hidden />
+                )}
+              </button>
+            </div>
           </div>
 
           {error && (

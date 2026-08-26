@@ -32,26 +32,28 @@ Idioma de toda la interfaz: **español de México**.
 
 **Colores** (usa estos hex exactos, nunca colores por defecto de una librería):
 
-| Token | Hex | Uso |
-|---|---|---|
-| Primario | `#2B4EFF` | Azul eléctrico. CTAs primarios, links activos, acentos de marca |
-| Primario hover | `#1E3AE0` | Hover de botones primarios |
-| Tinta | `#0B0B0F` | Negro casi puro. Headlines, texto principal |
-| Cuerpo | `#4B4E5A` | Gris. Texto secundario, párrafos |
-| Fondo | `#FFFFFF` | Fondo principal |
-| Fondo suave | `#F5F6F9` | Secciones alternas, cards del dashboard |
-| Borde | `#E4E6ED` | Bordes de cards e inputs |
-| Éxito | `#16A34A` | Estados "activo", "abierto" |
-| Advertencia | `#D97706` | Estados "trial", límite por alcanzarse |
-| Peligro | `#DC2626` | Estados "cerrado", "suspendido", errores |
+| Token          | Hex       | Uso                                                             |
+| -------------- | --------- | --------------------------------------------------------------- |
+| Primario       | `#2B4EFF` | Azul eléctrico. CTAs primarios, links activos, acentos de marca |
+| Primario hover | `#1E3AE0` | Hover de botones primarios                                      |
+| Tinta          | `#0B0B0F` | Negro casi puro. Headlines, texto principal                     |
+| Cuerpo         | `#4B4E5A` | Gris. Texto secundario, párrafos                                |
+| Fondo          | `#FFFFFF` | Fondo principal                                                 |
+| Fondo suave    | `#F5F6F9` | Secciones alternas, cards del dashboard                         |
+| Borde          | `#E4E6ED` | Bordes de cards e inputs                                        |
+| Éxito          | `#16A34A` | Estados "activo", "abierto"                                     |
+| Advertencia    | `#D97706` | Estados "trial", límite por alcanzarse                          |
+| Peligro        | `#DC2626` | Estados "cerrado", "suspendido", errores                        |
 
 **Tipografía:**
+
 - Headlines y hero: **Space Grotesk**, bold 700–800, tracking ajustado (negativo).
 - Cuerpo y UI: **Inter**, regular 400, medium 500 para labels.
 - Datos numéricos (precios, métricas del dashboard): **JetBrains Mono**.
 - Nunca uses Inter para headlines.
 
 **Estilo:**
+
 - Esquinas redondeadas moderadas (12–16 px). **Nunca botones tipo píldora.**
 - Sombras muy sutiles, casi planas. Nada de glassmorphism ni sombras dramáticas.
 - Mucho aire entre secciones: padding vertical generoso.
@@ -62,6 +64,7 @@ Idioma de toda la interfaz: **español de México**.
   respiran, y el lenguaje es cercano. El azul es el acento, no el protagonista.
 
 **Reglas anti-genérico (no negociables):**
+
 - El hero de la landing muestra **un preview real del panel admin funcionando**, con datos de un
   negocio ficticio realista: **"Café Aurora"**. Nunca una ilustración ni un mockup abstracto.
 - Los 4 formatos de menú público **no comparten layout**. No son la misma tarjeta con distinto grid:
@@ -102,7 +105,7 @@ Secciones en orden:
   CTA a la derecha: `Empezar gratis`.
 - **Hero centrado**, con badge pequeño arriba del headline.
   - Headline: **Tu menú, como tú lo imaginas.**
-  - Subheadline: *Vibemenu convierte tu carta en una experiencia visual moderna — elige entre 4 formatos, personalízalo en minutos y compártelo con un QR. Sin apps, sin complicaciones.*
+  - Subheadline: _Vibemenu convierte tu carta en una experiencia visual moderna — elige entre 4 formatos, personalízalo en minutos y compártelo con un QR. Sin apps, sin complicaciones._
   - CTA primario (azul sólido): `Prueba gratis, sin tarjeta`
   - CTA secundario (gris, sin borde): `Ver demo en vivo`
 - **Preview del panel admin**, inmediatamente debajo del hero, ligeramente recortado por abajo.
@@ -118,35 +121,36 @@ Secciones en orden:
   | TikTok | Deja que tu comida hable | Video vertical de tus platillos en pantalla completa. Sube tu reel o video de YouTube y conviértelo en tu vitrina. |
 - **Sección "Cómo funciona".**
   - Título: **De tu carta a tu QR, en tres pasos**
-  - Párrafo: *Configura tu menú, elige tu formato favorito y descarga tu código QR para imprimir. Así de simple. Sin depender de nadie para actualizar un precio o agregar un platillo nuevo.*
+  - Párrafo: _Configura tu menú, elige tu formato favorito y descarga tu código QR para imprimir. Así de simple. Sin depender de nadie para actualizar un precio o agregar un platillo nuevo._
   - Dos estadísticas grandes: **4 formatos visuales incluidos** · **Menú siempre actualizado, sin reimprimir**
 - **Testimonios.** Dos tarjetas:
-  - *"Cambié mi menú impreso por Vibemenu y mis clientes empezaron a pedir cosas que ni sabían que teníamos — el formato Pinterest les encantó."*
-  - *"Actualizo precios desde mi celular en el momento. Ya no gasto en reimprimir cada vez que cambia algo."*
+  - _"Cambié mi menú impreso por Vibemenu y mis clientes empezaron a pedir cosas que ni sabían que teníamos — el formato Pinterest les encantó."_
+  - _"Actualizo precios desde mi celular en el momento. Ya no gasto en reimprimir cada vez que cambia algo."_
 - **CTA final.**
   - Headline: **Tu menú merece verse tan bien como sabe tu comida.**
-  - Subheadline: *Empieza gratis hoy — sin tarjeta de crédito, sin compromiso.*
+  - Subheadline: _Empieza gratis hoy — sin tarjeta de crédito, sin compromiso._
   - Botón: `Crear mi menú gratis`
-- **Footer.** Tagline: *Tu menú, tu formato.*
-  Descripción: *Vibemenu es la plataforma de menú digital que se adapta a cómo tu negocio quiere mostrarse — no al revés.*
+- **Footer.** Tagline: _Tu menú, tu formato._
+  Descripción: _Vibemenu es la plataforma de menú digital que se adapta a cómo tu negocio quiere mostrarse — no al revés._
 
 **1.2 — Landing `/` (mobile).** Misma estructura, navbar colapsada en menú hamburguesa,
 formatos en carrusel horizontal en vez de cuatro columnas.
 
 **1.3 — Precios `/precios` (desktop + mobile).**
+
 - Toggle de moneda: `USD / MXN`. Toggle de periodo: `Mensual` (anual deshabilitado, con tooltip "Próximamente").
 - Cuatro tarjetas de plan. **Pro es la recomendada**: borde azul de 2 px y badge `Más popular`.
 
-  | Plan | Precio | Headline | Descripción |
-  |---|---|---|---|
-  | Free perpetuo | $0 | Empieza sin arriesgar nada | Ideal para probar Vibemenu con tu menú real. Gratis para siempre, hasta 20 productos. |
-  | Basic | $9 / $169 MXN | Para un solo local, sin límites de menú | Productos ilimitados, sin marca de agua, con el formato Clásico y uno más a tu elección. |
-  | Pro | $19 / $349 MXN | Para negocios que quieren destacar | Los 4 formatos, hasta 3 sucursales con menús independientes, tu propio dominio. |
-  | Enterprise | $39 / $699 MXN | Para cadenas y grupos restauranteros | Sucursales ilimitadas, equipo completo con múltiples usuarios, soporte prioritario. |
+  | Plan          | Precio         | Headline                                | Descripción                                                                              |
+  | ------------- | -------------- | --------------------------------------- | ---------------------------------------------------------------------------------------- |
+  | Free perpetuo | $0             | Empieza sin arriesgar nada              | Ideal para probar Vibemenu con tu menú real. Gratis para siempre, hasta 20 productos.    |
+  | Basic         | $9 / $169 MXN  | Para un solo local, sin límites de menú | Productos ilimitados, sin marca de agua, con el formato Clásico y uno más a tu elección. |
+  | Pro           | $19 / $349 MXN | Para negocios que quieren destacar      | Los 4 formatos, hasta 3 sucursales con menús independientes, tu propio dominio.          |
+  | Enterprise    | $39 / $699 MXN | Para cadenas y grupos restauranteros    | Sucursales ilimitadas, equipo completo con múltiples usuarios, soporte prioritario.      |
 
 - CTA de Free: `Empezar gratis`. CTA de Basic y Pro: `Elegir plan`. CTA de Enterprise: `Contactar ventas`.
 - Debajo de las tarjetas, en gris pequeño:
-  *Tu precio no sube mientras sigas activo, aunque lancemos nuevos precios más adelante.*
+  _Tu precio no sube mientras sigas activo, aunque lancemos nuevos precios más adelante._
 - Tabla comparativa de características debajo: sucursales, productos, usuarios, grupos de
   modificadores, formatos, menú independiente por sucursal, marca de agua, dominio propio.
 
@@ -161,14 +165,15 @@ en desktop. Campos: nombre del negocio, giro, email, contraseña, y **slug**.
 
 El campo de slug es el protagonista. Se muestra como `vibemenu.com/` + input. Valida en vivo y tiene
 tres estados visibles, diseña los tres:
+
 - Disponible: check verde.
-- Ocupado: borde rojo + *Ese nombre ya está en uso — prueba con otra variante.*
+- Ocupado: borde rojo + _Ese nombre ya está en uso — prueba con otra variante._
 - Reservado (palabras como `admin`, `api`, `login`): mismo tratamiento que ocupado.
 
-Botón: `Prueba gratis, sin tarjeta`. Debajo: *Sin tarjeta de crédito. Gratis para siempre.*
+Botón: `Prueba gratis, sin tarjeta`. Debajo: _Sin tarjeta de crédito. Gratis para siempre._
 
 **2.2 — `/login`.** Email, contraseña, "¿Olvidaste tu contraseña?", botón `Entrar`.
-Link a registro: *¿Aún no tienes menú? Crea el tuyo gratis.*
+Link a registro: _¿Aún no tienes menú? Crea el tuyo gratis._
 
 Al terminar: `FASE 2 COMPLETADA. Escribe CONTINUAR FASE 3 para seguir.`
 
@@ -215,8 +220,9 @@ Los 4 formatos navegables con un switcher persistente arriba. Datos de "Tacos El
 Sin ningún control de edición visible.
 
 **Extras de esta fase, diséñalos como estados dentro de las pantallas anteriores:**
+
 - Marca de agua **"Hecho con Vibemenu"** discreta al pie, solo para plan Free.
-- Estado de menú inexistente: *Este menú no existe o ya no está disponible.*
+- Estado de menú inexistente: _Este menú no existe o ya no está disponible._
 
 Al terminar: `FASE 3 COMPLETADA. Escribe CONTINUAR FASE 4 para seguir.`
 
@@ -266,12 +272,12 @@ Al terminar: `FASE 4 COMPLETADA. Escribe CONTINUAR FASE 5 para seguir.`
 **5.1 — `/admin/sucursales`.**
 Lista de sucursales con nombre, dirección, badge de abierto/cerrado y un contador de límite de plan
 arriba a la derecha: `2 de 3 sucursales`. Cuando se alcanza el límite, el botón `Añadir sucursal`
-se deshabilita y aparece: *Tu plan actual permite hasta 3 sucursales. Actualiza tu plan para agregar más.*
+se deshabilita y aparece: _Tu plan actual permite hasta 3 sucursales. Actualiza tu plan para agregar más._
 
 **5.2 — Editor de sucursal.**
 Datos: nombre, slug de sucursal, dirección, teléfono, WhatsApp con selector de código de país.
 **Selector de zona horaria** (IANA, con buscador; por defecto `America/Mexico_City`), con la nota:
-*Se usa para calcular si tu negocio está abierto ahora.*
+_Se usa para calcular si tu negocio está abierto ahora._
 Debajo, **horarios**: siete filas, una por día. Cada fila tiene un toggle "Cerrado" y dos campos de
 hora. Diseña el caso en que el cierre es **más temprano que la apertura** (20:00 → 02:00): debe
 mostrarse una etiqueta discreta `+1 día` junto a la hora de cierre.
@@ -280,7 +286,7 @@ mostrarse una etiqueta discreta `+1 día` junto a la hora de cierre.
 Arriba: los cuatro formatos como tarjetas grandes con preview real. El activo lleva borde azul.
 Los que el plan no permite llevan **candado** y un botón `Actualizar plan`.
 En Basic, donde el usuario elige Clásico + uno más: los ya desbloqueados se ven normales, y al
-intentar activar un tercero aparece *Tu plan permite 2 formatos desbloqueados.*
+intentar activar un tercero aparece _Tu plan permite 2 formatos desbloqueados._
 Abajo: personalización del tema del tenant — color primario, color de fondo, tipografía e imagen de
 fondo, con preview en vivo del menú a la derecha.
 Botón: `Cambiar formato de menú`.
@@ -302,12 +308,12 @@ Tabla de usuarios: avatar, nombre, email, rol (`Owner` o `Encargado`), fecha de 
 El owner no se puede eliminar.
 Botón `Invitar encargado`, con contador `1 de 2 usuarios`.
 **Diseña también el estado bloqueado**, que es lo que ven Free y Basic: la tabla difuminada detrás de
-una tarjeta central que dice *El trabajo en equipo es parte de Pro.* con botón `Actualizar plan`.
+una tarjeta central que dice _El trabajo en equipo es parte de Pro._ con botón `Actualizar plan`.
 
 **6.2 — `/admin/suscripcion`.**
 Arriba, tarjeta del plan actual: nombre del plan, precio que paga el tenant, moneda, fecha de próxima
 renovación, badge de estado. Junto al precio, una nota en gris:
-*Este es tu precio congelado. No sube mientras sigas activo.*
+_Este es tu precio congelado. No sube mientras sigas activo._
 Botón principal: `Administrar mi plan` (abre el portal de Stripe).
 
 Debajo, **historial de suscripciones**: una tabla con una fila por periodo, columnas
@@ -319,7 +325,7 @@ la facturación llega después.
 
 **6.3 — Modal de límite alcanzado.**
 Se dispara al intentar pasarse del plan. Diseña la variante de productos:
-*Llegaste al límite de productos de tu plan actual. Actualiza tu plan para seguir agregando.*
+_Llegaste al límite de productos de tu plan actual. Actualiza tu plan para seguir agregando._
 Muestra el plan actual y el siguiente lado a lado, con lo que se desbloquea resaltado.
 Botones: `Actualizar plan` (azul) y `Ahora no` (gris).
 
@@ -337,15 +343,17 @@ Todos los estados vacíos comparten anatomía: ilustración mínima monocroma en
 Space Grotesk, una línea de texto en gris, y un solo CTA azul.
 
 **7.1 — Estados vacíos.** Diseña los tres:
-- Sin productos: *Todavía no tienes productos en tu menú. Añade el primero para empezar a construir tu carta.* → `Añadir producto`
-- Sin categorías: *Crea tu primera categoría para empezar a organizar tu menú.*
-- Sin sucursales: *Aún no has agregado ninguna sucursal.*
+
+- Sin productos: _Todavía no tienes productos en tu menú. Añade el primero para empezar a construir tu carta._ → `Añadir producto`
+- Sin categorías: _Crea tu primera categoría para empezar a organizar tu menú._
+- Sin sucursales: _Aún no has agregado ninguna sucursal._
 
 **7.2 — Errores.**
-- Error de imagen: *No pudimos subir tu imagen. Verifica el formato (JPG o PNG) y vuelve a intentar.*
-- Menú no encontrado (público, sin sidebar): *Este menú no existe o ya no está disponible.*
 
-**7.3 — Toast de éxito.** *Cambios guardados. Tu menú ya está actualizado.*
+- Error de imagen: _No pudimos subir tu imagen. Verifica el formato (JPG o PNG) y vuelve a intentar._
+- Menú no encontrado (público, sin sidebar): _Este menú no existe o ya no está disponible._
+
+**7.3 — Toast de éxito.** _Cambios guardados. Tu menú ya está actualizado._
 Aparece abajo a la derecha, con check verde.
 
 **7.4 — Panel admin en mobile.** Sidebar colapsada en bottom tab bar de 5 ítems

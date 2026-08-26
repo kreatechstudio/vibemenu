@@ -30,11 +30,14 @@ Fuera de este documento (explícitamente **no** se construye ahora):
 - **Dominio personalizado.** No se pide en el wizard — deja de funcionar en cuanto vence la
   prueba si el tenant baja a Free, así que no tiene sentido pedirlo en el alta. Se sigue
   gestionando solo desde "Mi negocio", como hoy.
-- **Redes sociales y descripción del negocio.** Hoy `tenants` tiene estas columnas pero la
-  política RLS actual (`grant update` en `src/docs/vibemenu_base-datos.md:460-467`) no las
-  incluye en la lista de columnas editables desde el cliente. Agregarlas requeriría una
-  migración de RLS aparte — se deja fuera para no mezclarla con esta feature. Se siguen
-  editando solo desde "Mi negocio".
+- **Redes sociales y descripción del negocio.** *(Corrección tras revisar las migraciones
+  reales: `vibemenu_migracion_empresa.sql` y `vibemenu_migracion_redes_visitas.sql` ya
+  otorgan `grant update` sobre estas columnas a `authenticated` — la nota original de que
+  hacía falta tocar RLS estaba basada en `vibemenu_base-datos.md`, que está desactualizado en
+  este punto.)* Se dejan fuera de todas formas, por decisión de producto: son las preguntas
+  que más se sentirían como "papeleo" y el dueño del producto ya pidió mantener el wizard
+  corto. Se siguen editando desde "Mi negocio", sin bloqueo técnico si más adelante se quiere
+  sumar un paso opcional para ellas.
 
 ---
 
@@ -46,13 +49,17 @@ Un solo componente de wizard, sin rutas nuevas — estado interno + progreso per
 
 | # | Paso | Campos | Obligatorio |
 |---|------|--------|--------------|
-| 0 | Bienvenida | — (solo copy + CTA) | — |
-| 1 | Cuenta | email, password, captcha | Sí (se omite si ya hay sesión — caso OAuth) |
+| 0 | Cuenta | email, password, captcha | Sí (se omite si ya hay sesión — caso OAuth) |
+| 1 | Bienvenida | — (solo copy + CTA, "Tu cuenta ya está lista…") | — |
 | 2 | Tu negocio | nombre del negocio, giro¹, dirección del menú (slug) | Sí |
 | 3 | Contacto | teléfono (con lada), WhatsApp (con lada) | Sí |
 | 4 | Logo | imagen de logo | No — "Lo hago después" |
 | 5 | Cuéntanos más | 3 preguntas de opción única | No — "Omitir" salta las 3 |
 | 6 | Felicidades | resumen + CTA "Ir a mi panel" | — |
+
+El copy de Bienvenida ("Tu cuenta ya está lista…") solo tiene sentido DESPUÉS de que la cuenta
+existe, así que Cuenta va primero cuando aplica. En el caso OAuth (`arrancaEnCuenta={false}`)
+la sesión ya existe al entrar: el wizard arranca directo en Bienvenida, sin mostrar el paso 0.
 
 ¹ `giro` es opcional dentro del paso — mismo comportamiento que tiene hoy `Registro.tsx`
 (`src/pages/Registro.tsx:58`). "Sí/No" en la tabla indica si el PASO se puede saltar
@@ -71,15 +78,33 @@ el logo. Los pasos 3, 4 y 5 dejan de trabajar sobre un borrador en memoria y pas
 - Paso 5 (Métricas) → un solo `insert` en la tabla nueva `onboarding_respuestas` (§4) con lo
   que se haya contestado.
 
+**"Atrás" solo existe entre Cuenta → Bienvenida → Negocio** (nada se ha creado todavía). A
+partir de Contacto ya hay un tenant creado — volver a Negocio invitaría a "crear" el negocio
+otra vez, y el trigger `trg_tenants_05_un_solo_tenant` lo rechazaría. Contacto, Logo y
+Métricas solo tienen "Continuar" (y, donde aplica, "Omitir"/"Lo hago después").
+
 **Consecuencia aceptada:** si el usuario abandona después del paso 2, ya tiene un tenant
 funcional y `AdminLayout` lo deja entrar directo a `/admin` en su próxima visita — no vuelve al
 wizard. Es el mismo comportamiento de hoy (registro mínimo + completar después desde "Mi
 negocio"), solo que ahora el wizard le ofrece completarlo en el momento en vez de mandarlo
 directo al panel.
 
-**Draft en localStorage:** solo cubre los pasos previos a la creación del tenant (0, 1, 2) —
-mismo alcance que el `guardarTenantPendiente` actual, sin cambios de formato más allá de
-agregar `giro` si no estuviera ya.
+**Sin borrador en localStorage — ya no hace falta.** Como Cuenta (paso 0) ya no recolecta
+`nombre_negocio`/`giro`/`slug` (eso pasó al paso 2), en el momento del `signUp` no hay nada
+que guardar todavía. Si Supabase exige confirmar correo, el wizard simplemente muestra "Confirma
+tu correo" (igual que hoy) y termina ahí — sin sesión no hay nada más que hacer. Cuando el
+usuario confirma y entra (por `/login`, que sigue llamando a `asegurarTenantDelUsuario` sin
+tocarlo), cae en `/admin` sin tenant, ve el mensaje "Aún no tienes un menú" que ya existe en
+`AdminLayout.tsx:233-250`, y el botón "Terminar de configurar" lo manda a `/onboarding` — que
+ahora arranca el wizard directo en Bienvenida, sesión ya puesta. Es el mismo mecanismo que ya
+usan hoy los usuarios de Google, reutilizado tal cual — no se toca `Login.tsx`,
+`RestablecerContrasena.tsx` ni `AdminLayout.tsx`.
+
+`guardarTenantPendiente` / `leerTenantPendiente` / `limpiarTenantPendiente` /
+`asegurarTenantDelUsuario` se quedan sin cambios en `src/lib/registro.ts` — dejan de recibir
+borradores nuevos (nadie los llama ya) pero se mantienen porque `Login.tsx` y
+`RestablecerContrasena.tsx` los siguen invocando tras cada login; sin borrador que leer, son
+no-op seguro, igual que hoy para cualquier usuario que entra por Google.
 
 ### 2.1 Paso 3 — Contacto: lada de país
 
@@ -139,11 +164,18 @@ src/components/registro/
 src/lib/paises.ts           # lista curada de lada de país (§2.1)
 ```
 
-- `src/pages/Registro.tsx` (ruta `/registro`) → wrapper delgado: `<RegistroAsistido arrancaEnCuenta />`.
-- `src/pages/Onboarding.tsx` (ruta `/onboarding`) → wrapper delgado: `<RegistroAsistido arrancaEnCuenta={false} />` (ya hay sesión, arranca en "Tu negocio").
+- `RegistroAsistido` no recibe props: decide su propio paso inicial con `useSesion()` — con
+  sesión ya puesta (caso OAuth, o alguien que recarga después de crear su cuenta) arranca en
+  Bienvenida; sin sesión arranca en Cuenta. Con `useTenantActual()`, si ya hay tenant,
+  redirige a `/admin` (mismo guard que hoy tiene `Onboarding.tsx:73`, ahora también cubre
+  `/registro`).
+- `src/pages/Registro.tsx` (ruta `/registro`) → wrapper delgado: `<Layout><RegistroAsistido /></Layout>`.
+- `src/pages/Onboarding.tsx` (ruta `/onboarding`) → wrapper delgado, mismo cuerpo.
 - `src/lib/registro.ts`:
   - `crearTenant()` se mantiene igual (nombre, giro, slug) — el resto de campos se agregan
     después vía `UPDATE`, no en el insert inicial.
+  - `guardarTenantPendiente` / `leerTenantPendiente` / `limpiarTenantPendiente` /
+    `asegurarTenantDelUsuario` se quedan igual, sin llamadas nuevas (ver arriba).
   - Nueva función `guardarRespuestasOnboarding(tenantId, respuestas)` — insert best-effort en
     `onboarding_respuestas`, igual patrón fire-and-forget que ya usa el envío de
     `enviar-bienvenida` (línea 50): si falla, no bloquea ni se le muestra error al usuario.
@@ -183,17 +215,19 @@ Jsonb en vez de columnas fijas: si se agregan/quitan preguntas más adelante no 
 migración — justo lo que pidió el dueño del producto ("que tú determines las preguntas... no
 quiero que sean demasiadas").
 
-Migración a crear como `src/docs/vibemenu_migracion_onboarding_respuestas.sql`, aplicada con
-la tool `apply_migration` del MCP de Supabase — mismo patrón que
-`vibemenu_migracion_dominio_estado.sql`.
+Migración a crear como `src/docs/vibemenu_migracion_onboarding_respuestas.sql` (migración 019
+— sigue en número a la 018, `dominio_estado`). Se ejecuta COMPLETA en el SQL Editor de
+Supabase — mismo patrón que usan casi todas las migraciones existentes (el MCP de Supabase de
+este entorno no está autorizado ahora mismo; si se autoriza más adelante, se puede aplicar con
+la tool `apply_migration` en su lugar, mismo archivo).
 
 ---
 
 ## 5. Fuera de alcance (recordatorio)
 
 - Dominio personalizado — no se pide en el wizard (ver §1).
-- Redes sociales / descripción del negocio — quedan en "Mi negocio", requieren migración RLS
-  aparte que no es parte de esta feature.
+- Redes sociales / descripción del negocio — quedan en "Mi negocio". Ya son editables por RLS
+  hoy (ver corrección en §1); se excluyen del wizard por longitud, no por bloqueo técnico.
 - Subida de logo con recorte/edición de imagen — se sube tal cual, igual que la imagen de
   fondo en Diseño hoy. Sin editor de imagen.
 - Reenvío ni edición posterior de las respuestas de `onboarding_respuestas` desde la UI — es
