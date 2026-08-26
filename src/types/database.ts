@@ -243,6 +243,35 @@ export type Database = {
           },
         ];
       };
+      onboarding_respuestas: {
+        Row: {
+          created_at: string;
+          id: string;
+          respuestas: Json;
+          tenant_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          respuestas?: Json;
+          tenant_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          respuestas?: Json;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_respuestas_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: true;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       opciones_modificador: {
         Row: {
           grupo_id: string;
