@@ -122,14 +122,14 @@ _(Migración 017: tabla `datos_fiscales`, propia y privada — no columnas en `t
 `tenants` tiene lectura pública para el menú y un RFC ahí quedaría expuesto. Solo el owner del
 tenant puede leerla o escribirla, vía RLS.)_
 
-| Elemento         | Texto                                                                                                                                                     |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Título de sección | Datos de facturación                                                                                                                                       |
+| Elemento          | Texto                                                                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Título de sección | Datos de facturación                                                                                                                                                      |
 | Nota              | Por ahora Vibemenu no emite facturas fiscales (CFDI). Guarda tus datos aquí y en cuanto lancemos esa opción, ya estarán listos — sin que tengas que volver a capturarlos. |
-| Campos            | RFC · Razón social · Código postal fiscal · Régimen fiscal · Uso de CFDI · Correo para facturas                                                          |
-| Error RFC         | Ese RFC no tiene un formato válido.                                                                                                                       |
-| Error CP          | El código postal debe tener 5 dígitos.                                                                                                                    |
-| Éxito al guardar  | Datos de facturación guardados.                                                                                                                           |
+| Campos            | RFC · Razón social · Código postal fiscal · Régimen fiscal · Uso de CFDI · Correo para facturas                                                                           |
+| Error RFC         | Ese RFC no tiene un formato válido.                                                                                                                                       |
+| Error CP          | El código postal debe tener 5 dígitos.                                                                                                                                    |
+| Éxito al guardar  | Datos de facturación guardados.                                                                                                                                           |
 
 ---
 

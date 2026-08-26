@@ -23,10 +23,12 @@
 ### Task 1: Migración — `dominio_estado` y trigger actualizado
 
 **Files:**
+
 - Create: `src/docs/vibemenu_migracion_dominio_estado.sql`
 - Aplicar con la tool `apply_migration` del MCP de Supabase (`project_id: iaiiwtqqiaqxnzxjqcnt`, `name: dominio_estado`), no con `bun test`.
 
 **Interfaces:**
+
 - Produces: columna `tenants.dominio_estado text` (`null` / `'pendiente'` / `'verificado'`), función `validar_dominio_tenant()` actualizada (mismo nombre y trigger `trg_tenants_27_dominio`, solo cambia el cuerpo).
 
 - [ ] **Step 1: Escribir el archivo de migración**
@@ -143,10 +145,12 @@ git commit -m "feat: agrega tenants.dominio_estado, mantenido por el trigger exi
 ### Task 2: Regenerar tipos y exponer `dominio_estado` en super-admin
 
 **Files:**
+
 - Modify: `src/types/database.ts` (regenerar completo)
 - Modify: `src/hooks/useSuperAdmin.ts:55,78`
 
 **Interfaces:**
+
 - Consumes: columna `dominio_estado` del Task 1.
 - Produces: `TenantSuperAdmin.dominio_estado: string | null`, disponible para `SuperAdmin.tsx` en el Task 7.
 
@@ -167,7 +171,7 @@ Expected: al menos 3 apariciones (Row, Insert, Update), igual que `dominio_perso
 En `src/hooks/useSuperAdmin.ts:55` (dentro del type `TenantSuperAdmin`, junto a `dominio_personalizado: string | null;`):
 
 ```ts
-  dominio_estado: string | null;
+dominio_estado: string | null;
 ```
 
 En `src/hooks/useSuperAdmin.ts:78` (el string de `.select(...)`), agregar `dominio_estado` justo después de `dominio_personalizado`:
@@ -196,9 +200,11 @@ git commit -m "chore: regenera tipos de Supabase y expone dominio_estado en supe
 ### Task 3: Edge Function `agregar-dominio-vercel`
 
 **Files:**
+
 - Create: `supabase/functions/agregar-dominio-vercel/index.ts`
 
 **Interfaces:**
+
 - Consumes: `POST` con body `{ tenant_id: string }`, header `Authorization: Bearer <jwt del tenant>`.
 - Produces: efecto secundario (dominio agregado al proyecto de Vercel). Sin contrato de respuesta que otras tareas consuman — el Task 4 la invoca fire-and-forget.
 - Requiere secretos (Task 8, manual): `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID`.
@@ -312,7 +318,10 @@ Deno.serve(async (req) => {
   // guardado previo) tambien cuenta como exito: el objetivo ya esta cumplido.
   const cuerpo = await resp.text();
   if (!resp.ok) {
-    console.error(`vercel_add_domain_fallo (${resp.status}) para ${tenant.dominio_personalizado}:`, cuerpo);
+    console.error(
+      `vercel_add_domain_fallo (${resp.status}) para ${tenant.dominio_personalizado}:`,
+      cuerpo,
+    );
   }
 
   return json({ ok: true, vercel_status: resp.status });
@@ -337,9 +346,11 @@ git commit -m "feat: Edge Function agregar-dominio-vercel, da de alta el dominio
 ### Task 4: Invocar `agregar-dominio-vercel` desde `Empresa.tsx`
 
 **Files:**
+
 - Modify: `src/pages/admin/Empresa.tsx`
 
 **Interfaces:**
+
 - Consumes: Edge Function `agregar-dominio-vercel` del Task 3.
 
 - [ ] **Step 1: Detectar cuándo el dominio cambió a un valor nuevo, e invocar la función tras guardar**
@@ -347,16 +358,16 @@ git commit -m "feat: Edge Function agregar-dominio-vercel, da de alta el dominio
 En `alGuardar`, después de `avisarGuardado();` (línea 161) y antes del `catch`:
 
 ```tsx
-      avisarGuardado();
+avisarGuardado();
 
-      // Fire and forget: si guardar el dominio en tenants ya tuvo exito, no
-      // debe fallar el formulario porque Vercel este lento o caido. El cron
-      // de verificar-dominios-pendientes reintenta solo despues.
-      if (permiteDominio && cambioDominio && dominio.trim()) {
-        void supabase.functions
-          .invoke("agregar-dominio-vercel", { body: { tenant_id: tenantId } })
-          .catch(() => {});
-      }
+// Fire and forget: si guardar el dominio en tenants ya tuvo exito, no
+// debe fallar el formulario porque Vercel este lento o caido. El cron
+// de verificar-dominios-pendientes reintenta solo despues.
+if (permiteDominio && cambioDominio && dominio.trim()) {
+  void supabase.functions
+    .invoke("agregar-dominio-vercel", { body: { tenant_id: tenantId } })
+    .catch(() => {});
+}
 ```
 
 Requiere importar `supabase`:
@@ -395,10 +406,12 @@ git commit -m "feat: invoca agregar-dominio-vercel al guardar un dominio nuevo"
 ### Task 5: Edge Function `verificar-dominios-pendientes` + cron
 
 **Files:**
+
 - Create: `supabase/functions/verificar-dominios-pendientes/index.ts`
 - Create: `.github/workflows/verificar-dominios.yml`
 
 **Interfaces:**
+
 - Consumes: dos modos de invocación —
   - Cron: header `x-cron-secret` = `DOMINIO_CRON_SECRET`, sin body → procesa TODOS los tenants con `dominio_estado = 'pendiente'`.
   - Manual (Task 7): `Authorization: Bearer <jwt de un super_admin>`, body `{ tenant_id: string }` → procesa solo ese tenant.
@@ -522,14 +535,22 @@ function plantillaDominioListo(negocioNombre: string, dominio: string) {
 
 type TenantPendiente = { id: string; nombre_negocio: string; dominio_personalizado: string };
 
-async function verificarUno(vercelToken: string, vercelProject: string, vercelTeam: string, t: TenantPendiente) {
+async function verificarUno(
+  vercelToken: string,
+  vercelProject: string,
+  vercelTeam: string,
+  t: TenantPendiente,
+) {
   const resp = await fetch(
     `https://api.vercel.com/v9/projects/${vercelProject}/domains/${t.dominio_personalizado}/verify?teamId=${vercelTeam}`,
     { method: "POST", headers: { Authorization: `Bearer ${vercelToken}` } },
   );
 
   if (!resp.ok) {
-    console.error(`vercel_verify_fallo (${resp.status}) para ${t.dominio_personalizado}:`, await resp.text());
+    console.error(
+      `vercel_verify_fallo (${resp.status}) para ${t.dominio_personalizado}:`,
+      await resp.text(),
+    );
     return false;
   }
 
@@ -588,7 +609,8 @@ Deno.serve(async (req) => {
   } else {
     // No es el cron: exige sesion de un super_admin, y solo revisa un tenant.
     const autorizacion = req.headers.get("Authorization");
-    if (!autorizacion) return new Response(JSON.stringify({ error: "sin_sesion" }), { status: 401 });
+    if (!autorizacion)
+      return new Response(JSON.stringify({ error: "sin_sesion" }), { status: 401 });
 
     const comoUsuario = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -614,7 +636,8 @@ Deno.serve(async (req) => {
     } catch {
       return new Response(JSON.stringify({ error: "body_invalido" }), { status: 400 });
     }
-    if (!tenantId) return new Response(JSON.stringify({ error: "falta_tenant_id" }), { status: 400 });
+    if (!tenantId)
+      return new Response(JSON.stringify({ error: "falta_tenant_id" }), { status: 400 });
 
     const { data, error } = await db
       .from("tenants")
@@ -687,10 +710,12 @@ git commit -m "feat: Edge Function y cron de verificar-dominios-pendientes"
 ### Task 6: Enrutamiento de sucursales bajo dominio propio
 
 **Files:**
+
 - Modify: `src/hooks/useMenuPublico.ts`
 - Create: `src/routes/sucursal.$sucursalSlug.tsx`
 
 **Interfaces:**
+
 - Consumes: `armarMenuPublico` (ya existe en `useMenuPublico.ts`), `esDominioPrincipal`/`obtenerHost` (patrón ya existente en `src/routes/index.tsx`, se repite igual aquí).
 - Produces: `obtenerSucursalPublicaPorDominio(host, sucursalSlug): Promise<MenuPublico | null>`.
 
@@ -746,7 +771,13 @@ export const Route = createFileRoute("/sucursal/$sucursalSlug")({
   },
   head: ({ loaderData, params }) =>
     loaderData
-      ? { meta: metaMenuPublico(loaderData, `/sucursal/${params.sucursalSlug}`, loaderData.tenant.dominio_personalizado ?? undefined) }
+      ? {
+          meta: metaMenuPublico(
+            loaderData,
+            `/sucursal/${params.sucursalSlug}`,
+            loaderData.tenant.dominio_personalizado ?? undefined,
+          ),
+        }
       : {},
   component: RouteComponent,
   notFoundComponent: MenuNoEncontrado,
@@ -755,9 +786,7 @@ export const Route = createFileRoute("/sucursal/$sucursalSlug")({
 function RouteComponent() {
   const { sucursalSlug } = Route.useParams();
   const menu = Route.useLoaderData();
-  return (
-    <MenuPublicoSucursal slug={menu.tenant.slug} sucursalSlug={sucursalSlug} inicial={menu} />
-  );
+  return <MenuPublicoSucursal slug={menu.tenant.slug} sucursalSlug={sucursalSlug} inicial={menu} />;
 }
 ```
 
@@ -791,10 +820,12 @@ git commit -m "feat: enrutamiento de sucursales bajo dominio personalizado"
 ### Task 7: Estado visible en `Empresa.tsx` y `SuperAdmin.tsx`
 
 **Files:**
+
 - Modify: `src/pages/admin/Empresa.tsx`
 - Modify: `src/pages/SuperAdmin.tsx`
 
 **Interfaces:**
+
 - Consumes: `tenant.dominio_estado` (Task 1/2), Edge Function `verificar-dominios-pendientes` (Task 5, modo manual).
 
 - [ ] **Step 1: Badge de estado en `Empresa.tsx`**
@@ -802,21 +833,23 @@ git commit -m "feat: enrutamiento de sucursales bajo dominio personalizado"
 Dentro del bloque `{dominio.trim().length > 0 && !dominioInvalido && (...)}` (línea 368-391 actual), agregar el badge antes del párrafo de "Configura tu DNS", usando `tenant.dominio_estado` (no `dominio` local, que es el valor del input — el estado real viene del tenant guardado):
 
 ```tsx
-{!cambioDominio && tenant.dominio_estado && (
-  <p className="mt-2 flex items-center gap-1.5 text-xs">
-    {tenant.dominio_estado === "verificado" ? (
-      <>
-        <Check className="size-3.5 shrink-0 text-vm-success" aria-hidden />
-        <span className="text-vm-success">Verificado</span>
-      </>
-    ) : (
-      <>
-        <Loader2 className="size-3.5 shrink-0 text-vm-body" aria-hidden />
-        <span className="text-vm-body">Pendiente de verificar</span>
-      </>
-    )}
-  </p>
-)}
+{
+  !cambioDominio && tenant.dominio_estado && (
+    <p className="mt-2 flex items-center gap-1.5 text-xs">
+      {tenant.dominio_estado === "verificado" ? (
+        <>
+          <Check className="size-3.5 shrink-0 text-vm-success" aria-hidden />
+          <span className="text-vm-success">Verificado</span>
+        </>
+      ) : (
+        <>
+          <Loader2 className="size-3.5 shrink-0 text-vm-body" aria-hidden />
+          <span className="text-vm-body">Pendiente de verificar</span>
+        </>
+      )}
+    </p>
+  );
+}
 ```
 
 (Se muestra solo cuando el dominio en pantalla es el ya guardado, no un valor que el tenant está escribiendo sin guardar todavía — de ahí `!cambioDominio`.)
@@ -826,33 +859,35 @@ Dentro del bloque `{dominio.trim().length > 0 && !dominioInvalido && (...)}` (l�
 En `src/pages/SuperAdmin.tsx:237-246`, reemplazar el bloque completo:
 
 ```tsx
-{t.dominio_personalizado ? (
-  <div className="flex items-center gap-2">
-    <span
-      className={cn(
-        "rounded-full px-2.5 py-1 text-xs font-medium",
-        t.dominio_estado === "verificado"
-          ? "bg-vm-success-soft text-vm-success"
-          : "bg-vm-warning-soft text-vm-warning",
-      )}
-    >
-      {t.dominio_personalizado}
-      {t.dominio_estado === "verificado" ? " · verificado" : " · pendiente"}
-    </span>
-    {t.dominio_estado !== "verificado" && (
-      <button
-        type="button"
-        onClick={() => void verificarDominio(t.id)}
-        disabled={verificandoId === t.id}
-        className="text-xs font-medium text-vm-primary hover:underline disabled:opacity-50"
+{
+  t.dominio_personalizado ? (
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "rounded-full px-2.5 py-1 text-xs font-medium",
+          t.dominio_estado === "verificado"
+            ? "bg-vm-success-soft text-vm-success"
+            : "bg-vm-warning-soft text-vm-warning",
+        )}
       >
-        {verificandoId === t.id ? "Revisando…" : "Verificar ahora"}
-      </button>
-    )}
-  </div>
-) : (
-  <span className="text-vm-body">—</span>
-)}
+        {t.dominio_personalizado}
+        {t.dominio_estado === "verificado" ? " · verificado" : " · pendiente"}
+      </span>
+      {t.dominio_estado !== "verificado" && (
+        <button
+          type="button"
+          onClick={() => void verificarDominio(t.id)}
+          disabled={verificandoId === t.id}
+          className="text-xs font-medium text-vm-primary hover:underline disabled:opacity-50"
+        >
+          {verificandoId === t.id ? "Revisando…" : "Verificar ahora"}
+        </button>
+      )}
+    </div>
+  ) : (
+    <span className="text-vm-body">—</span>
+  );
+}
 ```
 
 - [ ] **Step 3: Agregar el estado y la función `verificarDominio` al componente**

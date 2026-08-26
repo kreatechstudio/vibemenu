@@ -1,26 +1,30 @@
 # Vibemenu — Alcance y Especificaciones
 
 ## Proyecto
+
 - Producto propio de KreaTech Studio (no es un desarrollo para cliente — es un SaaS a vender)
 - Responsable: Carlos López
 - Dominio objetivo: vibemenu.com (a comprar más adelante; por lo pronto se usa subdominio de Lovable)
 
 ## Descripción
+
 Vibemenu es una plataforma SaaS multi-tenant de menú digital. Cada negocio (restaurante, cafetería, taquería, etc.) se registra, configura su menú (productos, precios, modificadores), su(s) sucursal(es) con horarios, y elige un formato de visualización para su menú público. El menú se comparte por un slug único (`vibemenu.com/slug`) y por un código QR descargable para imprimir.
 
 ## Objetivo principal
+
 Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 formatos distintos de presentación) y autoservicio total para el dueño del negocio — sin depender de un desarrollador para actualizar su menú.
 
 ## Usuarios y roles
 
-| Rol | Descripción | Accesos |
-|-----|-------------|---------|
-| Visitante público | Cliente del restaurante que escanea el QR | Solo lectura del menú público en `/:slug` |
-| Owner (dueño) | Usuario principal del tenant, existe en todos los planes | Panel admin completo: menú, sucursales, horarios, diseño, suscripción |
-| Encargado | Usuario adicional del panel admin | Solo planes Pro/Enterprise. Mismo acceso que owner excepto facturación/suscripción |
-| Super admin (KreaTech) | Carlos, gestión interna de la plataforma | Panel interno fuera de MVP — revisar en fase 2 |
+| Rol                    | Descripción                                              | Accesos                                                                            |
+| ---------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Visitante público      | Cliente del restaurante que escanea el QR                | Solo lectura del menú público en `/:slug`                                          |
+| Owner (dueño)          | Usuario principal del tenant, existe en todos los planes | Panel admin completo: menú, sucursales, horarios, diseño, suscripción              |
+| Encargado              | Usuario adicional del panel admin                        | Solo planes Pro/Enterprise. Mismo acceso que owner excepto facturación/suscripción |
+| Super admin (KreaTech) | Carlos, gestión interna de la plataforma                 | Panel interno fuera de MVP — revisar en fase 2                                     |
 
 ## Stack
+
 - Frontend: React + Vite + TypeScript + TailwindCSS + shadcn/ui + Framer Motion
 - Componentes premium: Magic UI
 - Backend: Supabase (DB + Auth + Storage + RLS)
@@ -30,28 +34,28 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 
 ## Modelo de negocio — Planes
 
-| Plan | USD/mes | MXN/mes | Sucursales | Productos | Usuarios | Grupos modif. | Formatos | Menú por sucursal | Extras |
-|------|---------|---------|------------|-----------|----------|---------------|----------|--------------------|--------|
-| Free perpetuo | $0 | $0 | 1 | 20 | 1 | 2 | Solo Clásico | N/A | Marca de agua "Hecho con Vibemenu" |
-| Basic | $9 | $169 | 1 | Ilimitados | 1 | 5 | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido | Sin marca de agua |
-| Pro | $19 | $349 | hasta 3 | Ilimitados | 2 (owner + encargado) | Ilimitados | Los 4 | Independiente | Dominio propio (CNAME) |
-| Enterprise | $39 | $699 | Ilimitado | Ilimitados | Ilimitados | Ilimitados | Los 4 | Independiente | Soporte prioritario |
+| Plan          | USD/mes | MXN/mes | Sucursales | Productos  | Usuarios              | Grupos modif. | Formatos                                                     | Menú por sucursal | Extras                             |
+| ------------- | ------- | ------- | ---------- | ---------- | --------------------- | ------------- | ------------------------------------------------------------ | ----------------- | ---------------------------------- |
+| Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu" |
+| Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                  |
+| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | Dominio propio (CNAME)             |
+| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | Soporte prioritario                |
 
 Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
 
-**Cómo se modelan los formatos.** `planes.formatos_permitidos` es el *pool* elegible y `planes.limite_formatos` cuántos puede tener desbloqueados a la vez. Basic tiene pool de los 4 y límite 2, lo que da "Clásico + 1 a elegir". El tenant guarda su elección en `tenants.formatos_desbloqueados`, y `tenants.formato_activo` es el que se muestra. `'clasico'` siempre está desbloqueado.
+**Cómo se modelan los formatos.** `planes.formatos_permitidos` es el _pool_ elegible y `planes.limite_formatos` cuántos puede tener desbloqueados a la vez. Basic tiene pool de los 4 y límite 2, lo que da "Clásico + 1 a elegir". El tenant guarda su elección en `tenants.formatos_desbloqueados`, y `tenants.formato_activo` es el que se muestra. `'clasico'` siempre está desbloqueado.
 
 ## Personalización del menú por plan
 
 La segunda palanca de venta, además de los formatos. Todo vive en `tenants.tema` (jsonb) y lo valida el trigger `validar_tema_tenant` contra las columnas de `planes`.
 
-| Capacidad | Free | Basic | Pro | Enterprise | Columna en `planes` |
-|---|---|---|---|---|---|
-| Tipografías del catálogo | 2 | 6 | 12 | 12 | `fuentes_permitidas` |
-| Color de acento, fondo y texto | ✅ | ✅ | ✅ | ✅ | — |
-| Color de los modificadores | ❌ | ✅ | ✅ | ✅ | `permite_color_modificadores` |
-| Imagen de fondo | ❌ | modo marco | marco + completo | marco + completo | `modos_imagen_permitidos` |
-| Desenfoque detrás del texto | ❌ | ❌ | ✅ | ✅ | `permite_desenfoque` |
+| Capacidad                      | Free | Basic      | Pro              | Enterprise       | Columna en `planes`           |
+| ------------------------------ | ---- | ---------- | ---------------- | ---------------- | ----------------------------- |
+| Tipografías del catálogo       | 2    | 6          | 12               | 12               | `fuentes_permitidas`          |
+| Color de acento, fondo y texto | ✅   | ✅         | ✅               | ✅               | —                             |
+| Color de los modificadores     | ❌   | ✅         | ✅               | ✅               | `permite_color_modificadores` |
+| Imagen de fondo                | ❌   | modo marco | marco + completo | marco + completo | `modos_imagen_permitidos`     |
+| Desenfoque detrás del texto    | ❌   | ❌         | ✅               | ✅               | `permite_desenfoque`          |
 
 **Modos de imagen.** `marco` = la foto enmarca y la carta va en una tarjeta al centro, siempre legible. `completo` = la foto ocupa la pantalla a sangre, con velo oscuro; en ese modo los colores de texto del tenant se sobreescriben por blancos, o el menú se vuelve ilegible.
 
@@ -63,12 +67,12 @@ El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción
 
 La tarjeta del QR reutiliza el tema del menú: no hay un editor de QR aparte. Lo que el dueño elige en **Diseño** es lo que sale impreso.
 
-| Capacidad | Free | Basic | Pro | Enterprise | Columna en `planes` |
-|---|---|---|---|---|---|
-| Tarjeta con el nombre del negocio y de la sucursal | ✅ | ✅ | ✅ | ✅ | — |
-| Colores del tema (fondo y código) | ❌ | ✅ | ✅ | ✅ | `qr_color` |
-| Tipografía del tema, logo dentro del código, imagen de fondo | ❌ | ❌ | ✅ | ✅ | `qr_avanzado` |
-| «Hecho con Vibemenu» al pie | sí | no | no | no | `marca_agua` |
+| Capacidad                                                    | Free | Basic | Pro | Enterprise | Columna en `planes` |
+| ------------------------------------------------------------ | ---- | ----- | --- | ---------- | ------------------- |
+| Tarjeta con el nombre del negocio y de la sucursal           | ✅   | ✅    | ✅  | ✅         | —                   |
+| Colores del tema (fondo y código)                            | ❌   | ✅    | ✅  | ✅         | `qr_color`          |
+| Tipografía del tema, logo dentro del código, imagen de fondo | ❌   | ❌    | ✅  | ✅         | `qr_avanzado`       |
+| «Hecho con Vibemenu» al pie                                  | sí   | no    | no  | no         | `marca_agua`        |
 
 La descripción del negocio es opcional en la tarjeta y se corta a dos renglones. La ruta se imprime abajo para poder teclearla sin escanear: si no cabe, primero se achica y solo entonces se parte después de una barra.
 
@@ -99,6 +103,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 ## Alcance incluido
 
 ### Onboarding y cuenta
+
 - [ ] Registro con email/password (Supabase Auth)
 - [ ] Elección de slug único al registrarse, editable después (validación en tiempo real + tabla de slugs reservados)
 - [ ] Prueba gratuita perpetua sin tarjeta requerida
@@ -106,6 +111,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 - [ ] Webhooks de Stripe (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`) vía Edge Function con service role key
 
 ### Gestión de menú (panel admin)
+
 - [ ] CRUD de categorías (con orden)
 - [ ] CRUD de productos: nombre, descripción, precio, 1 foto, video opcional (URL de YouTube/Reel — si hay video se usa en formato TikTok, si no, cae a la foto)
 - [ ] Catálogo de grupos de modificadores reutilizables (ej. "Tamaño", "Tipo de leche", "Extras") con selección única o múltiple, obligatorio/opcional, mínimo/máximo de selecciones
@@ -114,12 +120,14 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 - [ ] Si el plan es compartido (Free/Basic): un solo menú visible en la única sucursal
 
 ### Sucursales y horarios
+
 - [ ] CRUD de sucursales: nombre, dirección, teléfono, WhatsApp (con selector de código de país), zona horaria IANA
 - [ ] Horarios por día de la semana por sucursal → cálculo de abierto/cerrado **en el servidor**, con la zona horaria de la sucursal (función `sucursal_esta_abierta`), nunca con la hora del navegador del visitante
 - [ ] Soporte de turnos que cruzan medianoche (ej. 20:00 → 02:00)
 - [ ] Límite de sucursales según plan
 
 ### Formatos de visualización (público, `/:slug`)
+
 - [ ] **Clásico/Carta** — texto, categorías, precios y modificadores; editable en tipografía, color y foto de fondo
 - [ ] **Pinterest** — grid tipo masonry con fotos de producto
 - [ ] **Instagram** — feed en cuadrícula + vista tipo "post" al abrir producto
@@ -128,17 +136,20 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 - [ ] Theming por tenant: colores, tipografía, imagen de fondo — independiente del branding de Vibemenu
 
 ### QR y compartir
+
 - [ ] Generación de QR on-the-fly a partir del slug
 - [ ] Un QR por sucursal, apuntando a `/:slug/sucursal/:sucursalSlug`
 - [ ] Tarjeta imprimible con el tema del tenant, escalonada por plan (`qr_color`, `qr_avanzado`)
 - [ ] Descarga: PNG de la tarjeta completa, SVG del código solo
 
 ### Landing pública de Vibemenu
+
 - [ ] Landing de venta del servicio (hero, planes, CTA registro)
 - [ ] Página `/demo` — los 4 formatos navegables con datos ficticios, sin controles de edición visibles
 - [ ] Página `/precios`
 
 ## Fuera del alcance (MVP)
+
 - Ordering / pago dentro del menú (solo visualización — el modelo de Vibemenu es "reemplazo de menú impreso", no POS)
 - Multi-idioma / auto-traducción
 - Panel de super-admin interno para Carlos (gestión de tenants, soporte)
@@ -149,36 +160,37 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 
 ## Rutas y páginas
 
-| Ruta | Nombre | Descripción | Rol |
-|------|--------|-------------|-----|
-| `/` | Landing | Venta del servicio | Público |
-| `/precios` | Precios | Tabla de planes | Público |
-| `/demo` | Demo | 4 formatos navegables, sin edición | Público |
-| `/registro` | Registro | Alta de tenant + elección de slug | Público |
-| `/login` | Login | Acceso al panel admin | Público |
-| `/:slug` | Menú público | Menú del tenant en su formato activo | Público |
-| `/:slug/sucursal/:sucursal_slug` | Menú por sucursal | Solo si plan permite menú independiente | Público |
-| `/admin` | Dashboard | Resumen del tenant | Owner/Encargado |
-| `/admin/menu` | Gestión de menú | Categorías y productos | Owner/Encargado |
-| `/admin/modificadores` | Modificadores | Catálogo de grupos y opciones | Owner/Encargado |
-| `/admin/sucursales` | Sucursales | CRUD + horarios + enlace de Google Maps | Owner/Encargado |
-| `/admin/empresa` | Mi negocio | Nombre, slug, logo, descripción, contacto | Owner/Encargado |
-| `/admin/diseno` | Diseño | Formato activo, colores, tipografía | Owner/Encargado |
-| `/admin/qr` | QR | Tarjeta imprimible, un QR por sucursal | Owner/Encargado |
-| `/admin/equipo` | Equipo | Multi-usuario (Pro/Enterprise) | Owner |
-| `/admin/suscripcion` | Suscripción | Plan actual, Stripe Customer Portal | Owner |
+| Ruta                             | Nombre            | Descripción                               | Rol             |
+| -------------------------------- | ----------------- | ----------------------------------------- | --------------- |
+| `/`                              | Landing           | Venta del servicio                        | Público         |
+| `/precios`                       | Precios           | Tabla de planes                           | Público         |
+| `/demo`                          | Demo              | 4 formatos navegables, sin edición        | Público         |
+| `/registro`                      | Registro          | Alta de tenant + elección de slug         | Público         |
+| `/login`                         | Login             | Acceso al panel admin                     | Público         |
+| `/:slug`                         | Menú público      | Menú del tenant en su formato activo      | Público         |
+| `/:slug/sucursal/:sucursal_slug` | Menú por sucursal | Solo si plan permite menú independiente   | Público         |
+| `/admin`                         | Dashboard         | Resumen del tenant                        | Owner/Encargado |
+| `/admin/menu`                    | Gestión de menú   | Categorías y productos                    | Owner/Encargado |
+| `/admin/modificadores`           | Modificadores     | Catálogo de grupos y opciones             | Owner/Encargado |
+| `/admin/sucursales`              | Sucursales        | CRUD + horarios + enlace de Google Maps   | Owner/Encargado |
+| `/admin/empresa`                 | Mi negocio        | Nombre, slug, logo, descripción, contacto | Owner/Encargado |
+| `/admin/diseno`                  | Diseño            | Formato activo, colores, tipografía       | Owner/Encargado |
+| `/admin/qr`                      | QR                | Tarjeta imprimible, un QR por sucursal    | Owner/Encargado |
+| `/admin/equipo`                  | Equipo            | Multi-usuario (Pro/Enterprise)            | Owner           |
+| `/admin/suscripcion`             | Suscripción       | Plan actual, Stripe Customer Portal       | Owner           |
 
 ## Tiempos estimados
 
-| Fase | Duración estimada |
-|------|--------------------|
-| Documentación (Fases 1-3) | Completada |
-| Setup Lovable + IDX + Stitch (Fases 4-6) | 1 semana |
-| Desarrollo core (Fase 7) | 3-4 semanas |
-| SQL + Stripe + QA (Fase 8-9) | 1 semana |
-| Lanzamiento beta | 1 semana |
+| Fase                                     | Duración estimada |
+| ---------------------------------------- | ----------------- |
+| Documentación (Fases 1-3)                | Completada        |
+| Setup Lovable + IDX + Stitch (Fases 4-6) | 1 semana          |
+| Desarrollo core (Fase 7)                 | 3-4 semanas       |
+| SQL + Stripe + QA (Fase 8-9)             | 1 semana          |
+| Lanzamiento beta                         | 1 semana          |
 
 ## Notas especiales
+
 - Este es producto propio, no hay contrato con cliente ni anticipos — el modelo de pago es recurrente vía Stripe, distinto al modelo de pago único de KreaTech Studio para clientes.
 - El riesgo de costo más alto es Supabase Storage en el plan Free perpetuo — por eso 1 foto por producto y sin subida de video (solo URL embebida) en TODOS los planes.
 - La lógica de "menú compartido vs independiente por sucursal" se resuelve con `sucursal_id` nullable en `categorias` y `productos` — no se requiere una tabla `menus` separada.

@@ -104,7 +104,10 @@ Deno.serve(async (req) => {
   // guardado previo) tambien cuenta como exito: el objetivo ya esta cumplido.
   const cuerpo = await resp.text();
   if (!resp.ok) {
-    console.error(`vercel_add_domain_fallo (${resp.status}) para ${tenant.dominio_personalizado}:`, cuerpo);
+    console.error(
+      `vercel_add_domain_fallo (${resp.status}) para ${tenant.dominio_personalizado}:`,
+      cuerpo,
+    );
   }
 
   return json({ ok: true, vercel_status: resp.status });
