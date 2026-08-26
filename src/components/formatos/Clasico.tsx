@@ -6,7 +6,10 @@ import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/us
  * Formato Clasico — la carta de siempre.
  *
  * Anatomia: lista vertical por categoria, nombre en serif, precio a la derecha
- * unido por la linea punteada clasica de menu de restaurante. Sin fotos.
+ * unido por la linea punteada clasica de menu de restaurante. Si el producto
+ * tiene foto se muestra una miniatura chica a la izquierda (misma altura
+ * aprox. que el bloque de texto, para no alargar la lista); sin foto no se
+ * reserva espacio, como antes.
  */
 
 function Modificadores({ producto }: { producto: ProductoConModificadores }) {
@@ -50,36 +53,46 @@ export default function Clasico({ categorias }: { categorias: CategoriaConProduc
 
           <ul className="mt-6 space-y-6">
             {categoria.productos.map((producto) => (
-              <li key={producto.id}>
-                <div className="flex items-baseline gap-2">
-                  <h3
-                    className="text-lg font-medium"
-                    style={{ fontFamily: "var(--menu-fuente)", color: "var(--menu-texto)" }}
-                  >
-                    {producto.nombre}
-                  </h3>
-                  <span
-                    className="min-w-4 flex-1 translate-y-[-3px] border-b border-dotted"
-                    style={{
-                      borderColor: "color-mix(in srgb, var(--menu-texto) 30%, transparent)",
-                    }}
-                    aria-hidden
+              <li key={producto.id} className="flex gap-3">
+                {producto.imagen_url && (
+                  <img
+                    src={producto.imagen_url}
+                    alt=""
+                    loading="lazy"
+                    className="size-16 shrink-0 rounded-lg object-cover"
                   />
-                  <span className="vm-data text-base" style={{ color: "var(--menu-texto)" }}>
-                    {precioMenu(producto.precio)}
-                  </span>
-                </div>
-
-                {producto.descripcion && (
-                  <p
-                    className="mt-1 max-w-prose text-sm leading-relaxed"
-                    style={{ color: "var(--menu-texto-suave)" }}
-                  >
-                    {producto.descripcion}
-                  </p>
                 )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <h3
+                      className="text-lg font-medium"
+                      style={{ fontFamily: "var(--menu-fuente)", color: "var(--menu-texto)" }}
+                    >
+                      {producto.nombre}
+                    </h3>
+                    <span
+                      className="min-w-4 flex-1 translate-y-[-3px] border-b border-dotted"
+                      style={{
+                        borderColor: "color-mix(in srgb, var(--menu-texto) 30%, transparent)",
+                      }}
+                      aria-hidden
+                    />
+                    <span className="vm-data text-base" style={{ color: "var(--menu-texto)" }}>
+                      {precioMenu(producto.precio)}
+                    </span>
+                  </div>
 
-                <Modificadores producto={producto} />
+                  {producto.descripcion && (
+                    <p
+                      className="mt-1 max-w-prose text-sm leading-relaxed"
+                      style={{ color: "var(--menu-texto-suave)" }}
+                    >
+                      {producto.descripcion}
+                    </p>
+                  )}
+
+                  <Modificadores producto={producto} />
+                </div>
               </li>
             ))}
           </ul>
