@@ -88,34 +88,48 @@ function Pastillas({
   );
 }
 
-type ItemClasico = { nombre: string; precio: string; modificador?: string };
+type ItemClasico = { nombre: string; precio: string; modificador?: string; foto?: string };
 
-/** El nombre nunca lleva el modificador — va debajo, en gris, como en el formato real. */
+/**
+ * El nombre nunca lleva el modificador — va debajo, en gris, como en el formato real.
+ * La miniatura es opcional (como en el formato real): reproduce que Clasico ya
+ * muestra fotos chicas junto al platillo, sin alargar el renglon de texto.
+ */
 function ListaClasico({ items }: { items: ItemClasico[] }) {
   return (
     <ul className="space-y-2.5">
       {items.map((item) => (
-        <li key={item.nombre}>
-          <div className="flex items-baseline gap-1.5">
-            <span
-              className="text-[11px] font-medium"
-              style={{ color: CARBON, fontFamily: "Georgia, serif" }}
-            >
-              {item.nombre}
-            </span>
-            <span
-              className="min-w-0 flex-1 border-b border-dotted"
-              style={{ borderColor: "#00000033" }}
+        <li key={item.nombre} className="flex items-start gap-1.5">
+          {item.foto && (
+            <img
+              src={item.foto}
+              alt=""
+              loading="lazy"
+              className="mt-0.5 size-5 shrink-0 rounded object-cover"
             />
-            <span className="vm-data text-[11px]" style={{ color: CARBON }}>
-              ${item.precio}
-            </span>
-          </div>
-          {item.modificador && (
-            <p className="mt-0.5 text-[8px] leading-tight" style={{ color: MODIFICADOR }}>
-              {item.modificador}
-            </p>
           )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="text-[11px] font-medium"
+                style={{ color: CARBON, fontFamily: "Georgia, serif" }}
+              >
+                {item.nombre}
+              </span>
+              <span
+                className="min-w-0 flex-1 border-b border-dotted"
+                style={{ borderColor: "#00000033" }}
+              />
+              <span className="vm-data text-[11px]" style={{ color: CARBON }}>
+                ${item.precio}
+              </span>
+            </div>
+            {item.modificador && (
+              <p className="mt-0.5 text-[8px] leading-tight" style={{ color: MODIFICADOR }}>
+                {item.modificador}
+              </p>
+            )}
+          </div>
         </li>
       ))}
     </ul>
@@ -124,9 +138,14 @@ function ListaClasico({ items }: { items: ItemClasico[] }) {
 
 function Clasico({ variant }: { variant: VariantMockup }) {
   const cafeteria: ItemClasico[] = [
-    { nombre: "Flat White", precio: "65", modificador: "Leche: Entera · Avena (+$8)" },
-    { nombre: "Cold Brew", precio: "58" },
-    { nombre: "Cappuccino", precio: "55" },
+    {
+      nombre: "Flat White",
+      precio: "65",
+      modificador: "Leche: Entera · Avena (+$8)",
+      foto: FOTOS[0],
+    },
+    { nombre: "Cold Brew", precio: "58", foto: FOTOS[3] },
+    { nombre: "Cappuccino", precio: "55", foto: FOTOS[7] },
     { nombre: "Latte de Vainilla", precio: "62" },
     { nombre: "Chai Latte", precio: "60" },
   ];
@@ -135,19 +154,25 @@ function Clasico({ variant }: { variant: VariantMockup }) {
       nombre: "Avocado Toast",
       precio: "120",
       modificador: "Extra: Aguacate (+$15) · Huevo (+$18)",
+      foto: FOTOS[1],
     },
-    { nombre: "Chilaquiles", precio: "135", modificador: "Salsa: Verde · Roja" },
-    { nombre: "Huevos Rancheros", precio: "110" },
+    { nombre: "Chilaquiles", precio: "135", modificador: "Salsa: Verde · Roja", foto: FOTOS[5] },
+    { nombre: "Huevos Rancheros", precio: "110", foto: FOTOS[4] },
     { nombre: "Hotcakes de Nuez", precio: "95" },
     { nombre: "Molletes", precio: "89" },
   ];
 
   if (variant === "mobile") {
     const items: ItemClasico[] = [
-      { nombre: "Flat White", precio: "65", modificador: "Leche: Entera · Avena (+$8)" },
-      { nombre: "Cold Brew", precio: "58" },
-      { nombre: "Avocado Toast", precio: "120" },
-      { nombre: "Chilaquiles", precio: "135", modificador: "Salsa: Verde · Roja" },
+      {
+        nombre: "Flat White",
+        precio: "65",
+        modificador: "Leche: Entera · Avena (+$8)",
+        foto: FOTOS[0],
+      },
+      { nombre: "Cold Brew", precio: "58", foto: FOTOS[3] },
+      { nombre: "Avocado Toast", precio: "120", foto: FOTOS[1] },
+      { nombre: "Chilaquiles", precio: "135", modificador: "Salsa: Verde · Roja", foto: FOTOS[5] },
     ];
     return (
       <div className="h-full w-full p-5" style={{ background: CREMA }}>
