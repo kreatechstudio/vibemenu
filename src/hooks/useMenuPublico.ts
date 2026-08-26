@@ -68,6 +68,25 @@ export async function obtenerMenuPublicoPorDominio(host: string): Promise<MenuPu
   return armarMenuPublico(tenantRow);
 }
 
+/**
+ * Igual que `obtenerMenuPublicoPorDominio`, pero para una sucursal especifica.
+ * La usa `routes/sucursal.$sucursalSlug.tsx` -- el equivalente, bajo dominio
+ * propio, de `$slug.sucursal.$sucursalSlug.tsx`.
+ */
+export async function obtenerSucursalPublicaPorDominio(
+  host: string,
+  sucursalSlug: string,
+): Promise<MenuPublico | null> {
+  const { data: tenantRow, error: errorTenant } = await supabase
+    .from("tenants")
+    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
+    .eq("dominio_personalizado", host)
+    .maybeSingle();
+
+  if (errorTenant) throw errorTenant;
+  return armarMenuPublico(tenantRow, sucursalSlug);
+}
+
 async function armarMenuPublico(
   tenantRow:
     | (Tenant & { plan: Pick<Plan, "marca_agua" | "menu_independiente_por_sucursal"> | null })

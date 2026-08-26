@@ -1,0 +1,23 @@
+name: Verificar dominios pendientes
+
+# Diario. Revisa los tenants con dominio_estado = 'pendiente' contra la API
+# de Vercel y los pasa a 'verificado' en cuanto el DNS ya resuelve -- ver
+# supabase/functions/verificar-dominios-pendientes.
+on:
+  schedule:
+    - cron: "30 10 * * *"
+  workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar a verificar-dominios-pendientes
+        run: |
+          curl --fail-with-body -sS -X POST \
+            "https://iaiiwtqqiaqxnzxjqcnt.supabase.co/functions/v1/verificar-dominios-pendientes" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "x-cron-secret: ${{ secrets.DOMINIO_CRON_SECRET }}"
+
+# Si este job falla, GitHub le manda correo solo al dueño del repo -- mismo
+# criterio que procesar-trials.yml y backup-db.yml.

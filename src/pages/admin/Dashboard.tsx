@@ -137,11 +137,10 @@ function Contenido() {
         <Metrica label="FORMATO ACTIVO" valor={nombreFormato(ctx.tenant.formato_activo)} />
       </div>
 
-      {/* La tabla de visitas llega con la migración 007. Sin ella, no hay números que pintar. */}
       {sinVisitas ? (
         <p className="mt-8 flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-sm text-vm-body">
           <Eye className="size-3.5 shrink-0" aria-hidden />
-          Las métricas de visitas necesitan la última migración de la base de datos.
+          No pudimos cargar las visitas por menú. Intenta de nuevo más tarde.
         </p>
       ) : (
         visitas && <VisitasPorSucursal visitas={visitas} sucursales={sucursales ?? []} />

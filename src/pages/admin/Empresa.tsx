@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { AlertTriangle, Check, ImagePlus, Loader2, Lock, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
+import PhoneInput from "@/components/ui/phone-input";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { useActualizarTenant } from "@/hooks/useActualizarTenant";
 import { borrarImagen, subirImagen } from "@/hooks/useCarta";
@@ -11,6 +13,7 @@ import { useDominioDisponible } from "@/hooks/useDominioDisponible";
 import { traducirError } from "@/lib/errores";
 import { esUrlValida } from "@/lib/url";
 import { avisarGuardado } from "@/lib/avisos";
+import { supabase } from "@/lib/supabase";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { MENSAJE_ERROR_DOMINIO, normalizarDominio } from "@/lib/dominio";
 import { BOTONES, ESTADOS } from "@/lib/copy";
@@ -165,6 +168,15 @@ function Contenido() {
       if (logoOriginal && logoOriginal !== logoUrl) await borrarImagen(logoOriginal);
 
       avisarGuardado();
+
+      // Fire and forget: si guardar el dominio en tenants ya tuvo exito, no
+      // debe fallar el formulario porque Vercel este lento o caido. El cron
+      // de verificar-dominios-pendientes reintenta solo despues.
+      if (permiteDominio && cambioDominio && dominio.trim()) {
+        void supabase.functions
+          .invoke("agregar-dominio-vercel", { body: { tenant_id: tenantId } })
+          .catch(() => {});
+      }
     } catch (err) {
       setError(traducirError(err as Error).mensaje);
     }
@@ -172,6 +184,8 @@ function Contenido() {
 
   return (
     <form onSubmit={alGuardar}>
+      <PillTabs pestanas={PESTANAS_NEGOCIO} />
+
       <h1 className="text-2xl">Datos de tu negocio</h1>
       <p className="mt-1 max-w-prose text-sm text-vm-body">
         Es lo que ve el comensal al abrir tu menú, y lo que se imprime en tu QR.
@@ -372,28 +386,45 @@ function Contenido() {
               )}
 
               {dominio.trim().length > 0 && !dominioInvalido && (
-                <div className="mt-4 rounded-lg bg-vm-bg-soft px-4 py-3 text-xs text-vm-body">
-                  <p className="font-medium text-vm-ink">Configura tu DNS</p>
-                  {dominio.split(".").length > 2 ? (
-                    <p className="mt-1">
-                      En el proveedor donde compraste tu dominio, crea un registro{" "}
-                      <span className="vm-data font-medium">CNAME</span> que apunte{" "}
-                      <span className="vm-data font-medium">{dominio}</span> a{" "}
-                      <span className="vm-data font-medium">cname.vercel-dns.com</span>.
-                    </p>
-                  ) : (
-                    <p className="mt-1">
-                      Como es un dominio raíz (sin "www" ni otro prefijo), crea un registro{" "}
-                      <span className="vm-data font-medium">A</span> que apunte{" "}
-                      <span className="vm-data font-medium">{dominio}</span> a{" "}
-                      <span className="vm-data font-medium">76.76.21.21</span>.
+                <>
+                  {!cambioDominio && tenant.dominio_estado && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs">
+                      {tenant.dominio_estado === "verificado" ? (
+                        <>
+                          <Check className="size-3.5 shrink-0 text-vm-success" aria-hidden />
+                          <span className="text-vm-success">Verificado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="size-3.5 shrink-0 text-vm-body" aria-hidden />
+                          <span className="text-vm-body">Pendiente de verificar</span>
+                        </>
+                      )}
                     </p>
                   )}
-                  <p className="mt-2">
-                    Después de guardar, avísanos: activar tu dominio del lado del servidor es un
-                    paso manual que hacemos una sola vez.
-                  </p>
-                </div>
+                  <div className="mt-4 rounded-lg bg-vm-bg-soft px-4 py-3 text-xs text-vm-body">
+                    <p className="font-medium text-vm-ink">Configura tu DNS</p>
+                    {dominio.split(".").length > 2 ? (
+                      <p className="mt-1">
+                        En el proveedor donde compraste tu dominio, crea un registro{" "}
+                        <span className="vm-data font-medium">CNAME</span> que apunte{" "}
+                        <span className="vm-data font-medium">{dominio}</span> a{" "}
+                        <span className="vm-data font-medium">cname.vercel-dns.com</span>.
+                      </p>
+                    ) : (
+                      <p className="mt-1">
+                        Como es un dominio raíz (sin "www" ni otro prefijo), crea un registro{" "}
+                        <span className="vm-data font-medium">A</span> que apunte{" "}
+                        <span className="vm-data font-medium">{dominio}</span> a{" "}
+                        <span className="vm-data font-medium">76.76.21.21</span>.
+                      </p>
+                    )}
+                    <p className="mt-2">
+                      En cuanto tu DNS esté configurado, lo detectamos solos — no hace falta que nos
+                      avises.
+                    </p>
+                  </div>
+                </>
               )}
             </>
           ) : (
@@ -417,26 +448,22 @@ function Contenido() {
               <label htmlFor="e-tel" className="text-sm font-medium text-vm-ink">
                 Teléfono
               </label>
-              <input
+              <PhoneInput
                 id="e-tel"
-                type="tel"
                 value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                placeholder="+52 55 1234 5678"
-                className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+                onChange={setTelefono}
+                placeholder="55 1234 5678"
               />
             </div>
             <div>
               <label htmlFor="e-wa" className="text-sm font-medium text-vm-ink">
                 WhatsApp
               </label>
-              <input
+              <PhoneInput
                 id="e-wa"
-                type="tel"
                 value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="+52 55 1234 5678"
-                className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+                onChange={setWhatsapp}
+                placeholder="55 1234 5678"
               />
             </div>
           </div>

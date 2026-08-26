@@ -1,24 +1,25 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, Navigate, useLocation } from "@tanstack/react-router";
 import {
   Building2,
   ExternalLink,
   LayoutDashboard,
   Link2,
-  Lock,
   LogOut,
-  Menu as MenuIcon,
   Palette,
   QrCode,
-  SlidersHorizontal,
-  Store,
   UtensilsCrossed,
-  Users,
-  Wallet,
-  X,
 } from "lucide-react";
 import Logo from "@/components/marca/Logo";
 import AvatarUsuario from "@/components/ui/avatar-usuario";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useSesion, cerrarSesion } from "@/hooks/useSesion";
 import { useTenantActual, type ContextoTenant } from "@/hooks/useTenantActual";
 import { NOMBRE_FORMATO, NOMBRE_PLAN, type FormatoMenu, type NombrePlan } from "@/types/database";
@@ -29,33 +30,36 @@ type ItemNav = {
   a: string;
   etiqueta: string;
   icono: typeof LayoutDashboard;
-  /** Devuelve el motivo del candado, o null si esta disponible. */
-  bloqueado?: (ctx: ContextoTenant) => string | null;
+  /** Otras rutas que cuelgan de esta sección (sus propias pestañas), para que sigan marcando el item activo. */
+  cubre?: string[];
 };
 
+/**
+ * Cinco secciones, no nueve: Modificadores vive dentro de Mi carta y
+ * Sucursales/Equipo/Suscripción dentro de Mi negocio, cada una accesible ahí
+ * con pills (ver `PillTabs`). Menos entradas también es lo que permite que la
+ * barra inferior de móvil quepa todo de una vez, estilo app.
+ */
 const NAV: ItemNav[] = [
   { a: "/admin", etiqueta: "Resumen", icono: LayoutDashboard },
-  { a: "/admin/menu", etiqueta: "Mi carta", icono: UtensilsCrossed },
-  { a: "/admin/modificadores", etiqueta: "Modificadores", icono: SlidersHorizontal },
-  { a: "/admin/sucursales", etiqueta: "Sucursales", icono: Store },
-  { a: "/admin/empresa", etiqueta: "Mi negocio", icono: Building2 },
+  {
+    a: "/admin/menu",
+    etiqueta: "Mi carta",
+    icono: UtensilsCrossed,
+    cubre: ["/admin/modificadores"],
+  },
+  {
+    a: "/admin/empresa",
+    etiqueta: "Mi negocio",
+    icono: Building2,
+    cubre: ["/admin/sucursales", "/admin/equipo", "/admin/suscripcion"],
+  },
   { a: "/admin/diseno", etiqueta: "Diseño", icono: Palette },
   { a: "/admin/qr", etiqueta: "QR", icono: QrCode },
-  {
-    a: "/admin/equipo",
-    etiqueta: "Equipo",
-    icono: Users,
-    // El candado sale de la tabla `planes`, no de una lista de planes en el codigo.
-    bloqueado: (ctx) =>
-      ctx.plan.permite_multiusuario ? null : "El trabajo en equipo es parte de Pro.",
-  },
-  {
-    a: "/admin/suscripcion",
-    etiqueta: "Suscripción",
-    icono: Wallet,
-    bloqueado: (ctx) => (ctx.esOwner ? null : "Solo el dueño administra la facturación."),
-  },
 ];
+
+const esActivo = (item: ItemNav, pathname: string) =>
+  pathname === item.a || (item.cubre?.includes(pathname) ?? false);
 
 const COLOR_ESTADO: Record<string, string> = {
   trial: "bg-vm-warning-soft text-vm-warning",
@@ -64,7 +68,7 @@ const COLOR_ESTADO: Record<string, string> = {
   cancelado: "bg-vm-danger-soft text-vm-danger",
 };
 
-function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => void }) {
+function Sidebar({ ctx }: { ctx: ContextoTenant }) {
   const { pathname } = useLocation();
   const { user } = useSesion();
 
@@ -75,30 +79,14 @@ function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => vo
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {NAV.map(({ a, etiqueta, icono: Icono, bloqueado }) => {
-          const motivo = bloqueado?.(ctx) ?? null;
-          const activo = pathname === a;
-
-          if (motivo) {
-            return (
-              <span
-                key={a}
-                title={motivo}
-                aria-disabled="true"
-                className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-vm-body/50"
-              >
-                <Icono className="size-4" aria-hidden />
-                <span className="flex-1">{etiqueta}</span>
-                <Lock className="size-3.5" aria-hidden />
-              </span>
-            );
-          }
+        {NAV.map((item) => {
+          const activo = esActivo(item, pathname);
+          const Icono = item.icono;
 
           return (
             <Link
-              key={a}
-              to={a}
-              onClick={alNavegar}
+              key={item.a}
+              to={item.a}
               className={cn(
                 "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 activo
@@ -107,7 +95,7 @@ function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => vo
               )}
             >
               <Icono className="size-4" aria-hidden />
-              {etiqueta}
+              {item.etiqueta}
             </Link>
           );
         })}
@@ -149,6 +137,81 @@ function Sidebar({ ctx, alNavegar }: { ctx: ContextoTenant; alNavegar?: () => vo
   );
 }
 
+/**
+ * En escritorio la cuenta vive al pie de la barra lateral. En móvil, sin esa
+ * barra, el avatar del header abre esto: mismos datos, en un menú chico.
+ */
+function MenuCuenta({ ctx }: { ctx: ContextoTenant }) {
+  const { user } = useSesion();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="lg:hidden" aria-label="Tu cuenta">
+        <AvatarUsuario nombre={nombreDeUsuario(user)} avatarUrl={avatarDeUsuario(user)} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-64">
+        <DropdownMenuLabel className="font-normal">
+          <p className="truncate text-sm font-medium text-vm-ink">{nombreDeUsuario(user)}</p>
+          {user?.email && <p className="truncate text-xs text-vm-body">{user.email}</p>}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="font-normal">
+          <p className="truncate text-sm text-vm-ink">{ctx.tenant.nombre_negocio}</p>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <span className="rounded-full bg-vm-primary/10 px-2 py-0.5 text-[11px] font-medium text-vm-primary">
+              {NOMBRE_PLAN[ctx.plan.nombre as NombrePlan]}
+            </span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[11px] font-medium capitalize",
+                COLOR_ESTADO[ctx.tenant.estado] ?? "bg-vm-bg-soft text-vm-body",
+              )}
+            >
+              {ctx.tenant.estado}
+            </span>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => void cerrarSesion()} className="gap-2 text-vm-danger">
+          <LogOut className="size-3.5" aria-hidden />
+          Cerrar sesión
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Barra de navegación estilo app, fija abajo. Solo en móvil: en escritorio manda la barra lateral. */
+function BarraInferior() {
+  const { pathname } = useLocation();
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-white/95 backdrop-blur-sm lg:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {NAV.map((item) => {
+        const activo = esActivo(item, pathname);
+        const Icono = item.icono;
+
+        return (
+          <Link
+            key={item.a}
+            to={item.a}
+            className={cn(
+              "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+              activo ? "text-vm-primary" : "text-vm-body",
+            )}
+          >
+            <Icono className="size-5" aria-hidden />
+            {item.etiqueta}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 function Cargando() {
   return <div className="min-h-screen animate-pulse bg-vm-bg-soft" aria-busy="true" />;
 }
@@ -161,7 +224,6 @@ function Cargando() {
  * de localStorage antes de confirmar su correo.
  */
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [menuAbierto, setMenuAbierto] = useState(false);
   const { user, cargando } = useSesion();
   const { data: ctx, isLoading } = useTenantActual();
 
@@ -197,25 +259,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </aside>
 
-      {menuAbierto && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMenuAbierto(false)} />
-          <div className="absolute inset-y-0 left-0 w-64 border-r">
-            <Sidebar ctx={ctx} alNavegar={() => setMenuAbierto(false)} />
-          </div>
-        </div>
-      )}
-
       <div className="flex min-w-0 flex-col">
         <header className="flex h-16 items-center gap-3 border-b px-4 md:px-6">
-          <button
-            type="button"
-            onClick={() => setMenuAbierto((v) => !v)}
-            className="lg:hidden"
-            aria-label="Abrir menú"
-          >
-            {menuAbierto ? <X className="size-5" /> : <MenuIcon className="size-5" />}
-          </button>
+          <MenuCuenta ctx={ctx} />
 
           <div className="flex-1" />
 
@@ -239,8 +285,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </a>
         </header>
 
-        <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
+        <main className="min-w-0 flex-1 p-4 pb-24 md:p-8 md:pb-24 lg:pb-8">{children}</main>
       </div>
+
+      <BarraInferior />
     </div>
   );
 }

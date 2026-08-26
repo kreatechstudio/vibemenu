@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ExternalLink, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
 import EditorSucursal from "@/components/admin/EditorSucursal";
 import ModalLimite from "@/components/admin/ModalLimite";
 import { DialogoConfirmar } from "@/components/ui/dialogo";
@@ -38,6 +39,8 @@ function Contenido() {
 
   return (
     <>
+      <PillTabs pestanas={PESTANAS_NEGOCIO} />
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl">Sucursales</h1>

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { ExternalLink, LogOut, Search } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import Logo from "@/components/marca/Logo";
 import { useSesion, cerrarSesion } from "@/hooks/useSesion";
+import { supabase } from "@/lib/supabase";
 import {
   calcularMrr,
   nombrePlanDeTenant,
@@ -12,6 +14,7 @@ import {
 } from "@/hooks/useSuperAdmin";
 import { formatearPrecio } from "@/lib/plan";
 import { COLOR_ESTADO, FECHA } from "@/lib/superadmin";
+import { avisarError } from "@/lib/avisos";
 import {
   NOMBRE_PLAN,
   type EstadoTenant,
@@ -67,8 +70,26 @@ export default function SuperAdmin() {
   const { data: esAdmin, isLoading: cargandoAdmin } = useEsSuperAdmin();
   const { data: tenants, isLoading: cargandoTenants } = useTenantsSuperAdmin(esAdmin === true);
 
+  const qc = useQueryClient();
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<EstadoTenant | "todos">("todos");
+  const [verificandoId, setVerificandoId] = useState<string | null>(null);
+
+  async function verificarDominio(tenantId: string) {
+    setVerificandoId(tenantId);
+    try {
+      const { error } = await supabase.functions.invoke("verificar-dominios-pendientes", {
+        body: { tenant_id: tenantId },
+      });
+      if (error) {
+        avisarError("No se pudo verificar el dominio. Intenta de nuevo.");
+        return;
+      }
+      await qc.invalidateQueries({ queryKey: ["super-admin-tenants"] });
+    } finally {
+      setVerificandoId(null);
+    }
+  }
 
   if (cargandoSesion || cargandoAdmin) return <Cargando />;
   if (!user) return <Navigate to="/login" />;
@@ -235,12 +256,29 @@ export default function SuperAdmin() {
                       </td>
                       <td className="px-4 py-3.5">
                         {t.dominio_personalizado ? (
-                          <span
-                            className="rounded-full bg-vm-warning-soft px-2.5 py-1 text-xs font-medium text-vm-warning"
-                            title="Falta darlo de alta en Vercel (Project → Settings → Domains) si aún no se hizo."
-                          >
-                            {t.dominio_personalizado}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "rounded-full px-2.5 py-1 text-xs font-medium",
+                                t.dominio_estado === "verificado"
+                                  ? "bg-vm-success-soft text-vm-success"
+                                  : "bg-vm-warning-soft text-vm-warning",
+                              )}
+                            >
+                              {t.dominio_personalizado}
+                              {t.dominio_estado === "verificado" ? " · verificado" : " · pendiente"}
+                            </span>
+                            {t.dominio_estado !== "verificado" && (
+                              <button
+                                type="button"
+                                onClick={() => void verificarDominio(t.id)}
+                                disabled={verificandoId === t.id}
+                                className="text-xs font-medium text-vm-primary hover:underline disabled:opacity-50"
+                              >
+                                {verificandoId === t.id ? "Revisando…" : "Verificar ahora"}
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-vm-body">—</span>
                         )}

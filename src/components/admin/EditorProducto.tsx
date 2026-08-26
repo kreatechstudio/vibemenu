@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { ImagePlus, Loader2, Lock, Store, Trash2, X } from "lucide-react";
+import Modal from "@/components/ui/modal";
 import {
   borrarImagen,
   subirFotoProducto,
@@ -22,7 +22,7 @@ import type { Categoria, Producto, Sucursal } from "@/types/database";
 import { cn } from "@/lib/utils";
 
 /**
- * Editor de producto. Panel lateral que se desliza, no modal centrado.
+ * Editor de producto, en un modal centrado que aprovecha casi toda la pantalla.
  *
  * Una sola foto por producto en todos los planes: es el mayor riesgo de costo de
  * Storage. El video no se sube, solo se guarda su URL embebida.
@@ -183,27 +183,20 @@ export default function EditorProducto({
   const nombreDe = (id: string) => sucursales.find((s) => s.id === id)?.nombre ?? "esa sucursal";
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40" onClick={alCerrar} aria-hidden />
+    <Modal
+      alCerrar={alCerrar}
+      etiqueta={esNuevo ? "Añadir producto" : `Editar ${producto.nombre}`}
+      anchoMaximo="sm:max-w-4xl"
+    >
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-5 py-4">
+        <h2 className="text-lg">{esNuevo ? "Añadir producto" : "Editar producto"}</h2>
+        <button type="button" onClick={alCerrar} aria-label="Cerrar" className="text-vm-body">
+          <X className="size-5" />
+        </button>
+      </header>
 
-      <motion.aside
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative flex h-full w-full max-w-lg flex-col overflow-y-auto bg-white"
-        role="dialog"
-        aria-modal="true"
-        aria-label={esNuevo ? "Añadir producto" : `Editar ${producto.nombre}`}
-      >
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-5 py-4">
-          <h2 className="text-lg">{esNuevo ? "Añadir producto" : "Editar producto"}</h2>
-          <button type="button" onClick={alCerrar} aria-label="Cerrar" className="text-vm-body">
-            <X className="size-5" />
-          </button>
-        </header>
-
-        <form onSubmit={alGuardar} className="flex-1 space-y-5 p-5">
+      <form onSubmit={alGuardar} className="flex-1 space-y-5 p-5">
+        <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
           <div>
             <label htmlFor="p-nombre" className="text-sm font-medium text-vm-ink">
               Nombre
@@ -215,19 +208,6 @@ export default function EditorProducto({
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Flat White Especial"
               className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="p-desc" className="text-sm font-medium text-vm-ink">
-              Descripción
-            </label>
-            <textarea
-              id="p-desc"
-              rows={3}
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              className="mt-2 w-full resize-none rounded-lg border p-3 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
             />
           </div>
 
@@ -246,85 +226,98 @@ export default function EditorProducto({
               className="vm-data mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
             />
             {puedeVariarPrecio && (
-              <p className="mt-1.5 text-xs text-vm-body">
-                El que cobran todas las sucursales, salvo las que ajustes abajo.
-              </p>
+              <p className="mt-1.5 text-xs text-vm-body">Salvo las sucursales que ajustes abajo.</p>
             )}
           </div>
+        </div>
 
-          {/* Dónde se vende. Solo tiene sentido si el negocio tiene sucursales. */}
-          {sucursales.length > 0 && (
-            <div>
-              <p className="flex items-center gap-1.5 text-sm font-medium text-vm-ink">
-                <Store className="size-3.5 text-vm-body" aria-hidden />
-                Dónde se vende
-                {!permiteIndependiente && !forzada && (
-                  <Lock className="size-3 text-vm-body" aria-hidden />
-                )}
-              </p>
+        <div>
+          <label htmlFor="p-desc" className="text-sm font-medium text-vm-ink">
+            Descripción
+          </label>
+          <textarea
+            id="p-desc"
+            rows={3}
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            className="mt-2 w-full resize-none rounded-lg border p-3 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+          />
+        </div>
 
-              {forzada ? (
-                <p className="mt-2 rounded-lg bg-vm-bg-soft px-3.5 py-3 text-xs text-vm-body">
-                  Solo en <strong className="text-vm-ink">{nombreDe(forzada)}</strong>, porque la
-                  categoría «{categoria.nombre}» es exclusiva de esa sucursal.
-                </p>
-              ) : (
-                <>
-                  <select
-                    value={sucursalId ?? ""}
-                    disabled={!permiteIndependiente}
-                    onChange={(e) => setSucursalId(e.target.value || null)}
-                    className="mt-2 h-12 w-full rounded-lg border bg-white px-3.5 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20 disabled:cursor-not-allowed disabled:bg-vm-bg-soft disabled:text-vm-body"
-                  >
-                    <option value="">En todas las sucursales</option>
-                    {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        Solo en {s.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  {!permiteIndependiente && (
-                    <p className="mt-1.5 text-xs text-vm-body">
-                      Tu plan solo admite un menú compartido entre sucursales.
-                    </p>
-                  )}
-                </>
+        {/* Dónde se vende. Solo tiene sentido si el negocio tiene sucursales. */}
+        {sucursales.length > 0 && (
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-vm-ink">
+              <Store className="size-3.5 text-vm-body" aria-hidden />
+              Dónde se vende
+              {!permiteIndependiente && !forzada && (
+                <Lock className="size-3 text-vm-body" aria-hidden />
               )}
-            </div>
-          )}
+            </p>
 
-          {/* Precios sobrescritos: un producto, un precio por local. */}
-          {puedeVariarPrecio && (
-            <div>
-              <p className="text-sm font-medium text-vm-ink">Precio por sucursal</p>
-              <p className="text-xs text-vm-body">
-                Déjalo vacío y esa sucursal cobra {precioMenu(Number(precio) || 0)}.
+            {forzada ? (
+              <p className="mt-2 rounded-lg bg-vm-bg-soft px-3.5 py-3 text-xs text-vm-body">
+                Solo en <strong className="text-vm-ink">{nombreDe(forzada)}</strong>, porque la
+                categoría «{categoria.nombre}» es exclusiva de esa sucursal.
               </p>
+            ) : (
+              <>
+                <select
+                  value={sucursalId ?? ""}
+                  disabled={!permiteIndependiente}
+                  onChange={(e) => setSucursalId(e.target.value || null)}
+                  className="mt-2 h-12 w-full rounded-lg border bg-white px-3.5 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20 disabled:cursor-not-allowed disabled:bg-vm-bg-soft disabled:text-vm-body"
+                >
+                  <option value="">En todas las sucursales</option>
+                  {sucursales.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      Solo en {s.nombre}
+                    </option>
+                  ))}
+                </select>
+                {!permiteIndependiente && (
+                  <p className="mt-1.5 text-xs text-vm-body">
+                    Tu plan solo admite un menú compartido entre sucursales.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
-              <ul className="mt-3 space-y-2">
-                {sucursales.map((s) => (
-                  <li key={s.id} className="flex items-center gap-3">
-                    <label htmlFor={`ps-${s.id}`} className="min-w-0 flex-1 truncate text-sm">
-                      {s.nombre}
-                    </label>
-                    <input
-                      id={`ps-${s.id}`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      disabled={!datosListos}
-                      value={preciosVisibles[s.id] ?? ""}
-                      onChange={(e) => setPrecios({ ...preciosVisibles, [s.id]: e.target.value })}
-                      placeholder={String(Number(precio) || 0)}
-                      className="vm-data h-11 w-32 rounded-lg border px-3 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20 disabled:bg-vm-bg-soft"
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* Precios sobrescritos: un producto, un precio por local. */}
+        {puedeVariarPrecio && (
+          <div>
+            <p className="text-sm font-medium text-vm-ink">Precio por sucursal</p>
+            <p className="text-xs text-vm-body">
+              Déjalo vacío y esa sucursal cobra {precioMenu(Number(precio) || 0)}.
+            </p>
 
+            <ul className="mt-3 space-y-2">
+              {sucursales.map((s) => (
+                <li key={s.id} className="flex items-center gap-3">
+                  <label htmlFor={`ps-${s.id}`} className="min-w-0 flex-1 truncate text-sm">
+                    {s.nombre}
+                  </label>
+                  <input
+                    id={`ps-${s.id}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    disabled={!datosListos}
+                    value={preciosVisibles[s.id] ?? ""}
+                    onChange={(e) => setPrecios({ ...preciosVisibles, [s.id]: e.target.value })}
+                    placeholder={String(Number(precio) || 0)}
+                    className="vm-data h-11 w-32 rounded-lg border px-3 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20 disabled:bg-vm-bg-soft"
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <p className="text-sm font-medium text-vm-ink">Foto</p>
             <p className="text-xs text-vm-body">Una por producto. Se guarda comprimida en WebP.</p>
@@ -382,79 +375,79 @@ export default function EditorProducto({
               se muestra la foto.
             </p>
           </div>
+        </div>
 
-          <div>
-            <p className="text-sm font-medium text-vm-ink">Modificadores</p>
-            <p className="text-xs text-vm-body">
-              Los grupos que apliquen a este producto. Se administran en Modificadores.
+        <div>
+          <p className="text-sm font-medium text-vm-ink">Modificadores</p>
+          <p className="text-xs text-vm-body">
+            Los grupos que apliquen a este producto. Se administran en Modificadores.
+          </p>
+
+          {!grupos?.length ? (
+            <p className="mt-3 rounded-lg border border-dashed px-3.5 py-3 text-xs text-vm-body">
+              Todavía no tienes grupos de modificadores.
             </p>
-
-            {!grupos?.length ? (
-              <p className="mt-3 rounded-lg border border-dashed px-3.5 py-3 text-xs text-vm-body">
-                Todavía no tienes grupos de modificadores.
-              </p>
-            ) : (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {grupos.map((g) => {
-                  const activo = asignados.has(g.id);
-                  return (
-                    <button
-                      key={g.id}
-                      type="button"
-                      disabled={!datosListos}
-                      onClick={() => alternarGrupo(g.id)}
-                      aria-pressed={activo}
-                      className={cn(
-                        "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
-                        activo
-                          ? "border-vm-primary bg-vm-primary text-white"
-                          : "text-vm-body hover:bg-vm-bg-soft",
-                        !datosListos && "opacity-50",
-                      )}
-                    >
-                      {g.nombre}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <p className="rounded-lg bg-vm-danger-soft px-3.5 py-2.5 text-sm text-vm-danger">
-              {error}
-            </p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {grupos.map((g) => {
+                const activo = asignados.has(g.id);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    disabled={!datosListos}
+                    onClick={() => alternarGrupo(g.id)}
+                    aria-pressed={activo}
+                    className={cn(
+                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                      activo
+                        ? "border-vm-primary bg-vm-primary text-white"
+                        : "text-vm-body hover:bg-vm-bg-soft",
+                      !datosListos && "opacity-50",
+                    )}
+                  >
+                    {g.nombre}
+                  </button>
+                );
+              })}
+            </div>
           )}
+        </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={guardar.isPending || subiendo || !datosListos}
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-vm-primary text-sm font-medium text-white hover:bg-vm-primary-hover disabled:opacity-50"
-            >
-              {(guardar.isPending || !datosListos) && (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              )}
-              {BOTONES.guardarCambios}
-            </button>
+        {error && (
+          <p className="rounded-lg bg-vm-danger-soft px-3.5 py-2.5 text-sm text-vm-danger">
+            {error}
+          </p>
+        )}
 
-            {!esNuevo && (
-              <button
-                type="button"
-                onClick={async () => {
-                  await borrar.mutateAsync(producto.id);
-                  await borrarImagen(producto.imagen_url);
-                  alCerrar();
-                }}
-                aria-label="Eliminar producto"
-                className="inline-flex size-12 items-center justify-center rounded-lg border text-vm-danger hover:bg-vm-danger-soft"
-              >
-                <Trash2 className="size-4" />
-              </button>
+        <div className="flex gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={guardar.isPending || subiendo || !datosListos}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-vm-primary text-sm font-medium text-white hover:bg-vm-primary-hover disabled:opacity-50"
+          >
+            {(guardar.isPending || !datosListos) && (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
             )}
-          </div>
-        </form>
-      </motion.aside>
-    </div>
+            {BOTONES.guardarCambios}
+          </button>
+
+          {!esNuevo && (
+            <button
+              type="button"
+              onClick={async () => {
+                await borrar.mutateAsync(producto.id);
+                await borrarImagen(producto.imagen_url);
+                alCerrar();
+              }}
+              aria-label="Eliminar producto"
+              className="inline-flex size-12 items-center justify-center rounded-lg border text-vm-danger hover:bg-vm-danger-soft"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          )}
+        </div>
+      </form>
+    </Modal>
   );
 }
