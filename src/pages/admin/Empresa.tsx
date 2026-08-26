@@ -58,7 +58,13 @@ function Bloque({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border p-5 sm:p-6">
+    <section className="min-w-0 rounded-xl border p-5 sm:p-6">
+      {/* min-w-0 overrides CSS Grid's default min-width: auto, preventing this
+          grid item from stretching to fit its content's minimum width (e.g.,
+          flex rows with shrink-0 labels and inputs). Without it, content that
+          has intrinsic min-widths (like the "vibemenu.com.mx/" label + input
+          in Tu enlace público) can force the entire grid to overflow its
+          container on mobile. */}
       <h2 className="text-sm font-medium text-vm-ink">{titulo}</h2>
       {nota && <p className="mt-1 max-w-prose text-xs text-vm-body">{nota}</p>}
       <div className="mt-5">{children}</div>
