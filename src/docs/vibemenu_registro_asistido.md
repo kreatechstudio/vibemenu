@@ -30,11 +30,14 @@ Fuera de este documento (explícitamente **no** se construye ahora):
 - **Dominio personalizado.** No se pide en el wizard — deja de funcionar en cuanto vence la
   prueba si el tenant baja a Free, así que no tiene sentido pedirlo en el alta. Se sigue
   gestionando solo desde "Mi negocio", como hoy.
-- **Redes sociales y descripción del negocio.** Hoy `tenants` tiene estas columnas pero la
-  política RLS actual (`grant update` en `src/docs/vibemenu_base-datos.md:460-467`) no las
-  incluye en la lista de columnas editables desde el cliente. Agregarlas requeriría una
-  migración de RLS aparte — se deja fuera para no mezclarla con esta feature. Se siguen
-  editando solo desde "Mi negocio".
+- **Redes sociales y descripción del negocio.** *(Corrección tras revisar las migraciones
+  reales: `vibemenu_migracion_empresa.sql` y `vibemenu_migracion_redes_visitas.sql` ya
+  otorgan `grant update` sobre estas columnas a `authenticated` — la nota original de que
+  hacía falta tocar RLS estaba basada en `vibemenu_base-datos.md`, que está desactualizado en
+  este punto.)* Se dejan fuera de todas formas, por decisión de producto: son las preguntas
+  que más se sentirían como "papeleo" y el dueño del producto ya pidió mantener el wizard
+  corto. Se siguen editando desde "Mi negocio", sin bloqueo técnico si más adelante se quiere
+  sumar un paso opcional para ellas.
 
 ---
 
@@ -46,13 +49,17 @@ Un solo componente de wizard, sin rutas nuevas — estado interno + progreso per
 
 | # | Paso | Campos | Obligatorio |
 |---|------|--------|--------------|
-| 0 | Bienvenida | — (solo copy + CTA) | — |
-| 1 | Cuenta | email, password, captcha | Sí (se omite si ya hay sesión — caso OAuth) |
+| 0 | Cuenta | email, password, captcha | Sí (se omite si ya hay sesión — caso OAuth) |
+| 1 | Bienvenida | — (solo copy + CTA, "Tu cuenta ya está lista…") | — |
 | 2 | Tu negocio | nombre del negocio, giro¹, dirección del menú (slug) | Sí |
 | 3 | Contacto | teléfono (con lada), WhatsApp (con lada) | Sí |
 | 4 | Logo | imagen de logo | No — "Lo hago después" |
 | 5 | Cuéntanos más | 3 preguntas de opción única | No — "Omitir" salta las 3 |
 | 6 | Felicidades | resumen + CTA "Ir a mi panel" | — |
+
+El copy de Bienvenida ("Tu cuenta ya está lista…") solo tiene sentido DESPUÉS de que la cuenta
+existe, así que Cuenta va primero cuando aplica. En el caso OAuth (`arrancaEnCuenta={false}`)
+la sesión ya existe al entrar: el wizard arranca directo en Bienvenida, sin mostrar el paso 0.
 
 ¹ `giro` es opcional dentro del paso — mismo comportamiento que tiene hoy `Registro.tsx`
 (`src/pages/Registro.tsx:58`). "Sí/No" en la tabla indica si el PASO se puede saltar
@@ -183,17 +190,19 @@ Jsonb en vez de columnas fijas: si se agregan/quitan preguntas más adelante no 
 migración — justo lo que pidió el dueño del producto ("que tú determines las preguntas... no
 quiero que sean demasiadas").
 
-Migración a crear como `src/docs/vibemenu_migracion_onboarding_respuestas.sql`, aplicada con
-la tool `apply_migration` del MCP de Supabase — mismo patrón que
-`vibemenu_migracion_dominio_estado.sql`.
+Migración a crear como `src/docs/vibemenu_migracion_onboarding_respuestas.sql` (migración 019
+— sigue en número a la 018, `dominio_estado`). Se ejecuta COMPLETA en el SQL Editor de
+Supabase — mismo patrón que usan casi todas las migraciones existentes (el MCP de Supabase de
+este entorno no está autorizado ahora mismo; si se autoriza más adelante, se puede aplicar con
+la tool `apply_migration` en su lugar, mismo archivo).
 
 ---
 
 ## 5. Fuera de alcance (recordatorio)
 
 - Dominio personalizado — no se pide en el wizard (ver §1).
-- Redes sociales / descripción del negocio — quedan en "Mi negocio", requieren migración RLS
-  aparte que no es parte de esta feature.
+- Redes sociales / descripción del negocio — quedan en "Mi negocio". Ya son editables por RLS
+  hoy (ver corrección en §1); se excluyen del wizard por longitud, no por bloqueo técnico.
 - Subida de logo con recorte/edición de imagen — se sube tal cual, igual que la imagen de
   fondo en Diseño hoy. Sin editor de imagen.
 - Reenvío ni edición posterior de las respuestas de `onboarding_respuestas` desde la UI — es
