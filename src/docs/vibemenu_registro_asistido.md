@@ -84,9 +84,22 @@ wizard. Es el mismo comportamiento de hoy (registro mínimo + completar después
 negocio"), solo que ahora el wizard le ofrece completarlo en el momento en vez de mandarlo
 directo al panel.
 
-**Draft en localStorage:** solo cubre los pasos previos a la creación del tenant (0, 1, 2) —
-mismo alcance que el `guardarTenantPendiente` actual, sin cambios de formato más allá de
-agregar `giro` si no estuviera ya.
+**Sin borrador en localStorage — ya no hace falta.** Como Cuenta (paso 0) ya no recolecta
+`nombre_negocio`/`giro`/`slug` (eso pasó al paso 2), en el momento del `signUp` no hay nada
+que guardar todavía. Si Supabase exige confirmar correo, el wizard simplemente muestra "Confirma
+tu correo" (igual que hoy) y termina ahí — sin sesión no hay nada más que hacer. Cuando el
+usuario confirma y entra (por `/login`, que sigue llamando a `asegurarTenantDelUsuario` sin
+tocarlo), cae en `/admin` sin tenant, ve el mensaje "Aún no tienes un menú" que ya existe en
+`AdminLayout.tsx:233-250`, y el botón "Terminar de configurar" lo manda a `/onboarding` — que
+ahora arranca el wizard directo en Bienvenida, sesión ya puesta. Es el mismo mecanismo que ya
+usan hoy los usuarios de Google, reutilizado tal cual — no se toca `Login.tsx`,
+`RestablecerContrasena.tsx` ni `AdminLayout.tsx`.
+
+`guardarTenantPendiente` / `leerTenantPendiente` / `limpiarTenantPendiente` /
+`asegurarTenantDelUsuario` se quedan sin cambios en `src/lib/registro.ts` — dejan de recibir
+borradores nuevos (nadie los llama ya) pero se mantienen porque `Login.tsx` y
+`RestablecerContrasena.tsx` los siguen invocando tras cada login; sin borrador que leer, son
+no-op seguro, igual que hoy para cualquier usuario que entra por Google.
 
 ### 2.1 Paso 3 — Contacto: lada de país
 
@@ -146,11 +159,18 @@ src/components/registro/
 src/lib/paises.ts           # lista curada de lada de país (§2.1)
 ```
 
-- `src/pages/Registro.tsx` (ruta `/registro`) → wrapper delgado: `<RegistroAsistido arrancaEnCuenta />`.
-- `src/pages/Onboarding.tsx` (ruta `/onboarding`) → wrapper delgado: `<RegistroAsistido arrancaEnCuenta={false} />` (ya hay sesión, arranca en "Tu negocio").
+- `RegistroAsistido` no recibe props: decide su propio paso inicial con `useSesion()` — con
+  sesión ya puesta (caso OAuth, o alguien que recarga después de crear su cuenta) arranca en
+  Bienvenida; sin sesión arranca en Cuenta. Con `useTenantActual()`, si ya hay tenant,
+  redirige a `/admin` (mismo guard que hoy tiene `Onboarding.tsx:73`, ahora también cubre
+  `/registro`).
+- `src/pages/Registro.tsx` (ruta `/registro`) → wrapper delgado: `<Layout><RegistroAsistido /></Layout>`.
+- `src/pages/Onboarding.tsx` (ruta `/onboarding`) → wrapper delgado, mismo cuerpo.
 - `src/lib/registro.ts`:
   - `crearTenant()` se mantiene igual (nombre, giro, slug) — el resto de campos se agregan
     después vía `UPDATE`, no en el insert inicial.
+  - `guardarTenantPendiente` / `leerTenantPendiente` / `limpiarTenantPendiente` /
+    `asegurarTenantDelUsuario` se quedan igual, sin llamadas nuevas (ver arriba).
   - Nueva función `guardarRespuestasOnboarding(tenantId, respuestas)` — insert best-effort en
     `onboarding_respuestas`, igual patrón fire-and-forget que ya usa el envío de
     `enviar-bienvenida` (línea 50): si falla, no bloquea ni se le muestra error al usuario.
