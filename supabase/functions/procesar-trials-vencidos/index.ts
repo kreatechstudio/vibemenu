@@ -253,6 +253,14 @@ Deno.serve(async (req) => {
     if (!error) suspendidos++;
   }
 
+  // ---- 4. Retencion de eventos_stripe ----------------------------------
+  // Limpieza: Stripe reintenta ~3 dias, asi que un evento de hace 30 dias ya no
+  // sirve para deduplicar. Se purga para que eventos_stripe no crezca sin limite.
+  await db
+    .from("eventos_stripe")
+    .delete()
+    .lt("recibido_at", new Date(ahora - 30 * msPorDia).toISOString());
+
   return new Response(JSON.stringify({ ok: true, avisados, bajados, suspendidos }), {
     headers: { "Content-Type": "application/json" },
   });

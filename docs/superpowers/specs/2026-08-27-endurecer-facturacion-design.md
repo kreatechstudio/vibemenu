@@ -158,6 +158,8 @@ Swap `using (pertenece_a_tenant(tenant_id))` → `using (tenant_puede_escribir(t
 
 > Nota: `precios_sucursal` se omitió en la migración `facturacion_estado` original y se agregó como migración de seguimiento `facturacion_estado_precios` (`src/docs/vibemenu_migracion_facturacion_estado_precios.sql`).
 
+> Nota: la policy de **INSERT** de `storage.objects` (`vibemenu_media_insert_miembros`, bucket público `vibemenu-media`) también seguía en `pertenece_a_tenant` y se pasó a `tenant_puede_escribir` en la migración de seguimiento `facturacion_estado_media` (`src/docs/vibemenu_migracion_facturacion_estado_media.sql`) — las imágenes son contenido del menú, así que un tenant suspendido tampoco puede subir archivos al CDN. La policy de **DELETE** de media (`vibemenu_media_delete_miembros`) se deja deliberadamente en `pertenece_a_tenant`: borrar imágenes propias no es un vector de abuso y bloquearlo solo deja archivos huérfanos.
+
 - Lecturas públicas (`*_select_publico`) **sin cambios** — el menú del comensal sigue leyendo todo.
 - `suscripciones_select_owner` / `pagos` sin cambios (escritura ya es solo service_role).
 - `tenant_usuarios`: **sin cambios** — bloquear su `insert` rompería el onboarding (`crear_owner_al_registrar_tenant`), y un tenant suspendido gestionando su equipo no es un riesgo de cobro.
@@ -185,6 +187,8 @@ Tarea final del plan, manual, en modo test de Stripe:
 
 1. `vibemenu_migracion_eventos_stripe.sql` — tabla `eventos_stripe`.
 2. `vibemenu_migracion_facturacion_estado.sql` — columnas `pago_fallido_desde`, `cancela_al_terminar`; función `tenant_puede_escribir`; swap de las policies de escritura de contenido.
+3. `vibemenu_migracion_facturacion_estado_precios.sql` — swap de la policy de escritura de `precios_sucursal` (omitida en la #2).
+4. `vibemenu_migracion_facturacion_estado_media.sql` — swap de la policy **INSERT** de `storage.objects` (`vibemenu_media_insert_miembros`) a `tenant_puede_escribir`; la policy DELETE de media se deja como está.
 
 ## Entrega manual (fuera del repo)
 

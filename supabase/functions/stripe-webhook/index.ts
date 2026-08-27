@@ -399,21 +399,37 @@ Deno.serve(async (req) => {
 
         const { tenant_id, plan_id, moneda } = s.metadata ?? {};
 
+        // La logica de gracia/cancelacion resuelve el tenant por metadata, pero
+        // una suscripcion creada antes de que existiera esa metadata (o recreada
+        // desde el dashboard de Stripe) no la trae. Se cae a la fila de
+        // suscripciones, que siempre tiene el stripe_subscription_id.
+        let tenantId = tenant_id;
+        if (!tenantId) {
+          const { data: filaSub } = await db
+            .from("suscripciones")
+            .select("tenant_id")
+            .eq("stripe_subscription_id", s.id)
+            .eq("estado", "activa")
+            .maybeSingle();
+          tenantId = filaSub?.tenant_id;
+          if (tenantId) console.warn("suscripcion sin metadata.tenant_id:", s.id);
+        }
+
         // --- Estado de cobro del tenant --------------------------------------
-        if (tenant_id) {
+        if (tenantId) {
           if (s.status === "past_due" || s.status === "unpaid") {
             // Empieza (o continua) el periodo de gracia. No se pisa una fecha
             // ya puesta -- el conteo de 7 dias arranca en el PRIMER fallo.
             const { data: t } = await db
               .from("tenants")
               .select("pago_fallido_desde")
-              .eq("id", tenant_id)
+              .eq("id", tenantId)
               .single();
             if (t && !t.pago_fallido_desde) {
               await db
                 .from("tenants")
                 .update({ pago_fallido_desde: new Date().toISOString() })
-                .eq("id", tenant_id);
+                .eq("id", tenantId);
             }
           } else if (s.status === "active") {
             // Recuperado: se limpia la gracia y se reactiva el panel si estaba
@@ -421,14 +437,14 @@ Deno.serve(async (req) => {
             await db
               .from("tenants")
               .update({ pago_fallido_desde: null, estado: "activo" })
-              .eq("id", tenant_id);
+              .eq("id", tenantId);
           }
 
           // El tenant pidio cancelar (o deshizo la cancelacion) desde el portal.
           await db
             .from("tenants")
             .update({ cancela_al_terminar: Boolean(s.cancel_at_period_end) })
-            .eq("id", tenant_id);
+            .eq("id", tenantId);
         }
 
         // --- Cambio de plan sobre una suscripcion ya activa -----------------
@@ -542,11 +558,13 @@ Deno.serve(async (req) => {
     // el reintento de Stripe vuelva a entrar y complete la operacion. La
     // ventana de doble-proceso por dos reintentos concurrentes es mucho menos
     // probable que una excepcion del handler, y abrirPeriodo/bajarAFree ya
-    // comprueban el estado vigente. El fallo de este delete no debe tapar el 500.
-    try {
-      await db.from("eventos_stripe").delete().eq("id", evento.id);
-    } catch (_) {
-      /* se ignora: prevalece el 500 original */
+    // comprueban el estado vigente. Este delete devuelve { error }, no lanza:
+    // si falla, el evento queda marcado como procesado y el reintento de Stripe
+    // recibiria { duplicado: true } -- se pierde la operacion en silencio. Por
+    // eso se registra el fallo aunque prevalezca el 500 original.
+    const { error: errorLimpieza } = await db.from("eventos_stripe").delete().eq("id", evento.id);
+    if (errorLimpieza) {
+      console.error("no se pudo borrar evento_stripe para el reintento", evento.id, errorLimpieza);
     }
 
     return new Response(`error procesando: ${(e as Error).message}`, { status: 500 });
