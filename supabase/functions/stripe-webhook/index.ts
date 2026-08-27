@@ -471,6 +471,18 @@ Deno.serve(async (req) => {
   } catch (e) {
     // 500 hace que Stripe reintente. Es lo que queremos ante un fallo transitorio.
     console.error(evento.type, e);
+
+    // El handler fallo a medias: se borra el registro de idempotencia para que
+    // el reintento de Stripe vuelva a entrar y complete la operacion. La
+    // ventana de doble-proceso por dos reintentos concurrentes es mucho menos
+    // probable que una excepcion del handler, y abrirPeriodo/bajarAFree ya
+    // comprueban el estado vigente. El fallo de este delete no debe tapar el 500.
+    try {
+      await db.from("eventos_stripe").delete().eq("id", evento.id);
+    } catch (_) {
+      /* se ignora: prevalece el 500 original */
+    }
+
     return new Response(`error procesando: ${(e as Error).message}`, { status: 500 });
   }
 
