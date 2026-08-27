@@ -295,6 +295,25 @@ Deno.serve(async (req) => {
     return new Response(`firma invalida: ${(e as Error).message}`, { status: 400 });
   }
 
+  // Idempotencia: Stripe entrega cada evento "al menos una vez". Se registra el
+  // evento.id al llegar; si ya estaba, este es un reintento y no se vuelve a
+  // procesar. Guia oficial de Stripe: responder 200 rapido y deduplicar por id.
+  const { error: errorDedup } = await db
+    .from("eventos_stripe")
+    .insert({ id: evento.id, tipo: evento.type });
+
+  // 23505 = unique_violation: ya lo procesamos.
+  if (errorDedup?.code === "23505") {
+    return new Response(JSON.stringify({ duplicado: true }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (errorDedup) {
+    // Fallo real de DB (no un duplicado): 500 para que Stripe reintente.
+    console.error("no se pudo registrar evento_stripe", evento.id, errorDedup);
+    return new Response(`error registrando evento: ${errorDedup.message}`, { status: 500 });
+  }
+
   try {
     switch (evento.type) {
       case "checkout.session.completed": {
