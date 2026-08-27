@@ -44,11 +44,13 @@ Tailwind (tokens `vm-*` del proyecto), bun:test.
 ### Task 1: Migración SQL + tipos TypeScript de `onboarding_respuestas`
 
 **Files:**
+
 - Create: `src/docs/vibemenu_migracion_onboarding_respuestas.sql`
 - Modify: `src/types/database.ts:245-246` (insertar bloque nuevo justo antes de
   `opciones_modificador: {` — alfabéticamente entre `notas_internas` y `opciones_modificador`)
 
 **Interfaces:**
+
 - Produces: tabla Postgres `onboarding_respuestas (id, tenant_id, respuestas, created_at)` +
   el tipo TS `Tables<"onboarding_respuestas">` que usará `guardarRespuestasOnboarding` (Task 3).
 
@@ -163,10 +165,12 @@ Task 3), así que el código sigue funcionando pero no guarda nada hasta correr 
 ### Task 2: `src/lib/paises.ts` — lista de ladas + combinar teléfono
 
 **Files:**
+
 - Create: `src/lib/paises.ts`
 - Create: `src/lib/paises.test.ts`
 
 **Interfaces:**
+
 - Produces: `PAISES_LADA: PaisLada[]`, `LADA_DEFAULT: string`, `combinarTelefono(lada: string, numero: string): string | null` — los consume `PasoContacto.tsx` (Task 7).
 
 - [ ] **Step 1: Escribir el test primero**
@@ -283,10 +287,12 @@ git commit -m "feat: agrega lista de ladas de pais para telefono/whatsapp"
 ### Task 3: `src/lib/registro.ts` — `crearTenant` devuelve el id + `guardarRespuestasOnboarding`
 
 **Files:**
+
 - Modify: `src/lib/registro.ts`
 - Create: `src/lib/registro.test.ts`
 
 **Interfaces:**
+
 - Consumes: tabla `onboarding_respuestas` (Task 1).
 - Produces: `crearTenant(t: TenantPendiente): Promise<{ id: string }>` (antes no devolvía nada) — lo consume `PasoNegocio.tsx` (Task 6). `guardarRespuestasOnboarding(tenantId: string, respuestas: Record<string, string>): Promise<void>` — lo consume `PasoMetricas.tsx` (Task 9).
 
@@ -404,9 +410,11 @@ git commit -m "feat: crearTenant devuelve el id, agrega guardarRespuestasOnboard
 ### Task 4: `PasoCuenta.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoCuenta.tsx`
 
 **Interfaces:**
+
 - Consumes: `Captcha`, `captchaHabilitado`, `TurnstileInstance` (`@/components/ui/captcha`); `BotonGoogle` (`@/components/ui/boton-google`); `traducirError` (`@/lib/errores`); `supabase` (`@/lib/supabase`).
 - Produces: `PasoCuentaProps = { onListo: () => void; onConfirmarCorreo: (email: string) => void }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -568,9 +576,11 @@ git commit -m "feat: agrega PasoCuenta al registro asistido"
 ### Task 5: `PasoBienvenida.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoBienvenida.tsx`
 
 **Interfaces:**
+
 - Consumes: `REGISTRO` (`@/lib/copy`).
 - Produces: `PasoBienvenidaProps = { onContinuar: () => void }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -596,8 +606,8 @@ export default function PasoBienvenida({ onContinuar }: PasoBienvenidaProps) {
       <div>
         <h1 className="text-2xl text-vm-ink">Bienvenido a Vibemenu</h1>
         <p className="mt-3 text-sm leading-relaxed text-vm-body">
-          Tu cuenta ya está lista. Ahora vamos a armar tu negocio paso a paso — en unos minutos
-          tu menú digital estará listo para tus clientes.
+          Tu cuenta ya está lista. Ahora vamos a armar tu negocio paso a paso — en unos minutos tu
+          menú digital estará listo para tus clientes.
         </p>
       </div>
 
@@ -632,9 +642,11 @@ git commit -m "feat: agrega PasoBienvenida al registro asistido"
 ### Task 6: `PasoNegocio.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoNegocio.tsx`
 
 **Interfaces:**
+
 - Consumes: `crearTenant` con firma `(t: TenantPendiente) => Promise<{ id: string }>` (Task 3); `useSlugDisponible`, `EstadoSlug` (`@/hooks/useSlugDisponible`); `MENSAJE_ERROR_SLUG`, `normalizarSlug` (`@/lib/slug`); `EMPRESA` (`@/lib/legal`); `trackEvent` (`@/lib/analytics`); `cn` (`@/lib/utils`).
 - Produces: `PasoNegocioProps = { onCreado: (tenant: { id: string; nombreNegocio: string }) => void; onAtras: () => void }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -737,9 +749,7 @@ export default function PasoNegocio({ onCreado, onAtras }: PasoNegocioProps) {
   return (
     <div>
       <h1 className="text-2xl text-vm-ink">¿Cómo se llama tu negocio?</h1>
-      <p className="mt-2 text-sm text-vm-body">
-        Así es como lo van a ver tus clientes en tu menú.
-      </p>
+      <p className="mt-2 text-sm text-vm-body">Así es como lo van a ver tus clientes en tu menú.</p>
 
       <form onSubmit={alEnviar} className="mt-6 space-y-5">
         <div>
@@ -869,9 +879,11 @@ git commit -m "feat: agrega PasoNegocio al registro asistido"
 ### Task 7: `PasoContacto.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoContacto.tsx`
 
 **Interfaces:**
+
 - Consumes: `useActualizarTenant` (`@/hooks/useActualizarTenant`); `combinarTelefono`, `LADA_DEFAULT`, `PAISES_LADA` (`@/lib/paises`, Task 2); `traducirError` (`@/lib/errores`).
 - Produces: `PasoContactoProps = { tenantId: string; onContinuar: () => void }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -1024,9 +1036,11 @@ git commit -m "feat: agrega PasoContacto (con lada de pais) al registro asistido
 ### Task 8: `PasoLogo.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoLogo.tsx`
 
 **Interfaces:**
+
 - Consumes: `useActualizarTenant` (`@/hooks/useActualizarTenant`); `subirImagen` (`@/hooks/useCarta`); `ESTADOS.errorImagen` (`@/lib/copy`).
 - Produces: `PasoLogoProps = { tenantId: string; onContinuar: () => void }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -1072,8 +1086,8 @@ export default function PasoLogo({ tenantId, onContinuar }: PasoLogoProps) {
     <div>
       <h1 className="text-2xl text-vm-ink">Dale cara a tu negocio</h1>
       <p className="mt-2 text-sm text-vm-body">
-        Un logo ayuda a que tu menú se vea profesional. Puedes agregarlo después si no lo tienes
-        a la mano.
+        Un logo ayuda a que tu menú se vea profesional. Puedes agregarlo después si no lo tienes a
+        la mano.
       </p>
 
       <label
@@ -1145,9 +1159,11 @@ git commit -m "feat: agrega PasoLogo al registro asistido"
 ### Task 9: `PasoMetricas.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoMetricas.tsx`
 
 **Interfaces:**
+
 - Consumes: `guardarRespuestasOnboarding` con firma `(tenantId: string, respuestas: Record<string, string>) => Promise<void>` (Task 3); `cn` (`@/lib/utils`).
 - Produces: `PasoMetricasProps = { tenantId: string; onContinuar: () => void }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -1335,9 +1351,11 @@ git commit -m "feat: agrega PasoMetricas al registro asistido"
 ### Task 10: `PasoFelicidades.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/pasos/PasoFelicidades.tsx`
 
 **Interfaces:**
+
 - Consumes: `useNavigate` (`@tanstack/react-router`).
 - Produces: `PasoFelicidadesProps = { nombreNegocio: string }` — lo consume `RegistroAsistido.tsx` (Task 11).
 
@@ -1365,8 +1383,8 @@ export default function PasoFelicidades({ nombreNegocio }: PasoFelicidadesProps)
       <div>
         <h1 className="text-2xl text-vm-ink">¡Felicidades! {nombreNegocio} ya está en Vibemenu</h1>
         <p className="mt-3 text-sm leading-relaxed text-vm-body">
-          Tu menú digital está listo para compartirse. Tienes 14 días de prueba con el plan Pro
-          para explorar personalización, modificadores, códigos QR y más.
+          Tu menú digital está listo para compartirse. Tienes 14 días de prueba con el plan Pro para
+          explorar personalización, modificadores, códigos QR y más.
         </p>
       </div>
 
@@ -1403,11 +1421,13 @@ git commit -m "feat: agrega PasoFelicidades al registro asistido"
 ### Task 11: `RegistroAsistido.tsx` — ensamblar el wizard + reemplazar `Registro.tsx`/`Onboarding.tsx`
 
 **Files:**
+
 - Create: `src/components/registro/RegistroAsistido.tsx`
 - Modify: `src/pages/Registro.tsx` (reemplazo completo)
 - Modify: `src/pages/Onboarding.tsx` (reemplazo completo)
 
 **Interfaces:**
+
 - Consumes: los 7 `Paso*` de las Tasks 4-10 con las props ya definidas ahí; `useSesion` (`@/hooks/useSesion`); `useTenantActual` (`@/hooks/useTenantActual`); `Navigate` (`@tanstack/react-router`); `AnimatePresence`, `motion` (`framer-motion`).
 - Produces: `RegistroAsistido` sin props, usado por ambas páginas.
 
@@ -1465,8 +1485,8 @@ export default function RegistroAsistido() {
         <h1 className="mt-5 text-2xl">Confirma tu correo</h1>
         <p className="mt-3 text-sm leading-relaxed text-vm-body">
           Te enviamos un enlace a{" "}
-          <span className="font-medium text-vm-ink">{correoConfirmacion}</span>. Ábrelo desde
-          este dispositivo para seguir armando tu negocio.
+          <span className="font-medium text-vm-ink">{correoConfirmacion}</span>. Ábrelo desde este
+          dispositivo para seguir armando tu negocio.
         </p>
       </div>
     );

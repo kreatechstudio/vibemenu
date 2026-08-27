@@ -8,9 +8,10 @@ import type { TablesInsert } from "@/types/database";
  * exige auth.uid(), y el trigger `trg_crear_owner` inserta la fila de owner con ese
  * mismo uid. Ademas el trigger `trg_tenants_10_plan_default` lo pone en el plan free.
  *
- * Si Supabase Auth tiene la confirmacion de correo ACTIVADA (que es el default),
- * signUp no devuelve sesion. En ese caso no se puede crear el tenant todavia:
- * se guarda el borrador y se crea en el primer login confirmado.
+ * El registro asistido (RegistroAsistido) crea el tenant en el paso PasoNegocio,
+ * ya con sesion activa (por correo confirmado en el momento u OAuth). Si un
+ * usuario confirmado llega a /admin sin tenant, AdminLayout lo manda a
+ * /onboarding para que retome el wizard y lo cree ahi.
  *
  * La configuracion de Auth se toca desde el Dashboard de Supabase, nunca desde aqui.
  */
@@ -41,8 +42,8 @@ export function limpiarTenantPendiente() {
   window.localStorage.removeItem(CLAVE);
 }
 
-export async function crearTenant(t: TenantPendiente) {
-  const { error } = await supabase.from("tenants").insert(t);
+export async function crearTenant(t: TenantPendiente): Promise<{ id: string }> {
+  const { data, error } = await supabase.from("tenants").insert(t).select("id").single();
   if (error) throw error;
   limpiarTenantPendiente();
 
@@ -50,6 +51,8 @@ export async function crearTenant(t: TenantPendiente) {
   // registro. trg_crear_owner ya corrio dentro del insert de arriba, asi que
   // la funcion ya encuentra el tenant_usuarios al consultarlo.
   void supabase.functions.invoke("enviar-bienvenida").catch(() => {});
+
+  return data;
 }
 
 /**
@@ -75,4 +78,26 @@ export async function asegurarTenantDelUsuario(userId: string): Promise<boolean>
 
   await crearTenant(pendiente);
   return true;
+}
+
+/**
+ * Guarda las respuestas de las 3 preguntas rápidas del paso "Cuéntanos más" del
+ * registro asistido. Best-effort a propósito: si falla, no debe bloquear al
+ * usuario ni mostrarle un error — es dato de producto, no algo que el negocio
+ * necesite para funcionar. Si `respuestas` viene vacío (el usuario omitió las
+ * 3 preguntas), no inserta nada.
+ */
+export async function guardarRespuestasOnboarding(
+  tenantId: string,
+  respuestas: Record<string, string>,
+): Promise<void> {
+  if (Object.keys(respuestas).length === 0) return;
+
+  const { error } = await supabase
+    .from("onboarding_respuestas")
+    .insert({ tenant_id: tenantId, respuestas });
+
+  if (error) {
+    console.error("[onboarding_respuestas] no se pudo guardar:", error);
+  }
 }
