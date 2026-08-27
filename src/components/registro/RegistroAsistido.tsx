@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "@tanstack/react-router";
+import { Link, Navigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { MailCheck } from "lucide-react";
 import { useSesion } from "@/hooks/useSesion";
@@ -38,7 +38,11 @@ export default function RegistroAsistido() {
     setPaso(user ? "bienvenida" : "cuenta");
   }, [cargandoSesion, user, paso]);
 
-  if (!cargandoTenant && ctx) return <Navigate to="/admin" />;
+  // Solo redirige si el tenant ya existía ANTES de esta sesión del wizard
+  // (p.ej. OAuth con tenant previo). Una vez que PasoNegocio crea el tenant
+  // localmente (tenantId), cualquier tenant que aparezca en la cache es obra
+  // de este mismo wizard — no debe expulsar al usuario a mitad de flujo.
+  if (!tenantId && !cargandoTenant && ctx) return <Navigate to="/admin" />;
 
   if (correoConfirmacion) {
     return (
@@ -50,6 +54,12 @@ export default function RegistroAsistido() {
           <span className="font-medium text-vm-ink">{correoConfirmacion}</span>. Ábrelo desde
           este dispositivo para seguir armando tu negocio.
         </p>
+        <Link
+          to="/login"
+          className="mt-7 inline-flex h-12 w-full items-center justify-center rounded-lg border text-sm font-medium text-vm-ink hover:bg-vm-bg-soft"
+        >
+          Ir a entrar
+        </Link>
       </div>
     );
   }
