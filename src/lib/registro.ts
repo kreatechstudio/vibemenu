@@ -8,9 +8,10 @@ import type { TablesInsert } from "@/types/database";
  * exige auth.uid(), y el trigger `trg_crear_owner` inserta la fila de owner con ese
  * mismo uid. Ademas el trigger `trg_tenants_10_plan_default` lo pone en el plan free.
  *
- * Si Supabase Auth tiene la confirmacion de correo ACTIVADA (que es el default),
- * signUp no devuelve sesion. En ese caso no se puede crear el tenant todavia:
- * se guarda el borrador y se crea en el primer login confirmado.
+ * El registro asistido (RegistroAsistido) crea el tenant en el paso PasoNegocio,
+ * ya con sesion activa (por correo confirmado en el momento u OAuth). Si un
+ * usuario confirmado llega a /admin sin tenant, AdminLayout lo manda a
+ * /onboarding para que retome el wizard y lo cree ahi.
  *
  * La configuracion de Auth se toca desde el Dashboard de Supabase, nunca desde aqui.
  */

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { useSesion } from "@/hooks/useSesion";
 import { useSlugDisponible, type EstadoSlug } from "@/hooks/useSlugDisponible";
 import { crearTenant } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
 import { EMPRESA } from "@/lib/legal";
+import { ESTADOS } from "@/lib/copy";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +33,7 @@ function AvisoSlug({ estado }: { estado: EstadoSlug }) {
       return (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-vm-danger">
           <AlertCircle className="size-3.5" aria-hidden />
-          Ese nombre ya está en uso — prueba con otra variante.
+          {ESTADOS.slugNoDisponible}
         </p>
       );
     case "invalido":
@@ -52,6 +54,7 @@ type PasoNegocioProps = {
 };
 
 export default function PasoNegocio({ onCreado, onAtras }: PasoNegocioProps) {
+  const { user } = useSesion();
   const [nombre, setNombre] = useState("");
   const [giro, setGiro] = useState<string | null>(null);
   const [giroOtro, setGiroOtro] = useState("");
@@ -80,7 +83,8 @@ export default function PasoNegocio({ onCreado, onAtras }: PasoNegocioProps) {
         slug: slug.trim(),
         giro: giroFinal?.trim() || null,
       });
-      trackEvent("sign_up", { method: "email" });
+      const metodo = user?.app_metadata?.provider === "google" ? "google" : "email";
+      trackEvent("sign_up", { method: metodo });
       onCreado({ id: tenant.id, nombreNegocio: nombre.trim() });
     } catch (err) {
       setError(traducirError(err as Error).mensaje);

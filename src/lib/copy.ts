@@ -138,7 +138,6 @@ export const FACTURACION = {
 } as const;
 
 export const BOTONES = {
-  registro: "Prueba gratis, sin tarjeta",
   verDemo: "Ver demo en vivo",
   descargarQR: "Descargar mi QR",
   cambiarFormato: "Cambiar formato de menú",

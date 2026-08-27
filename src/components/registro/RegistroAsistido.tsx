@@ -21,6 +21,10 @@ const PROGRESO: Partial<Record<Paso, number>> = {
   metricas: 4,
 };
 
+function Cargando() {
+  return <div className="min-h-screen animate-pulse bg-vm-bg-soft" aria-busy="true" />;
+}
+
 export default function RegistroAsistido() {
   const { user, cargando: cargandoSesion } = useSesion();
   const { data: ctx, isLoading: cargandoTenant } = useTenantActual();
@@ -64,7 +68,7 @@ export default function RegistroAsistido() {
     );
   }
 
-  if (cargandoSesion || cargandoTenant || paso === null) return null;
+  if (cargandoSesion || cargandoTenant || paso === null) return <Cargando />;
 
   const progreso = PROGRESO[paso];
 

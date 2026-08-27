@@ -37,7 +37,7 @@ function GrupoOpciones({
   pregunta: string;
   opciones: string[];
   valor: string | null;
-  alElegir: (opcion: string) => void;
+  alElegir: (opcion: string | null) => void;
 }) {
   return (
     <div>
@@ -47,7 +47,7 @@ function GrupoOpciones({
           <button
             key={opcion}
             type="button"
-            onClick={() => alElegir(opcion === valor ? "" : opcion)}
+            onClick={() => alElegir(opcion === valor ? null : opcion)}
             className={cn(
               "h-9 rounded-lg border px-3 text-xs transition-colors",
               valor === opcion
