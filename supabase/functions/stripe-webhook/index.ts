@@ -44,8 +44,8 @@ const SITIO = "https://vibemenu.com.mx";
 /**
  * Aviso de pago fallido. Se dispara en `invoice.payment_failed` -- la señal
  * mas temprana, antes de que Stripe agote sus reintentos y la suscripcion
- * pase a `past_due`/`unpaid` (eso lo maneja `cerrarPeriodo`, que ya suspende
- * el tenant; este correo NO cambia estado, solo avisa).
+ * pase a `past_due`/`unpaid` (eso lo maneja `customer.subscription.updated`,
+ * que abre el periodo de gracia; este correo NO cambia estado, solo avisa).
  */
 async function avisarPagoFallido(tenantId: string, negocioNombre: string) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
@@ -229,7 +229,14 @@ async function abrirPeriodo(opciones: {
   if (errorTenant) throw errorTenant;
 }
 
-async function cerrarPeriodo(stripeSubscriptionId: string, estado: "cancelada" | "vencida") {
+/**
+ * Baja ordenada a Free cuando Stripe borra la suscripcion (cancelacion
+ * voluntaria al fin del periodo, o cancelacion automatica de Stripe tras
+ * agotar el dunning). NUNCA deja al tenant en 'suspendido': el menu sigue
+ * vivo con los limites de Free, igual que cuando vence un trial. El corte
+ * por impago con gracia vencida lo hace el cron, no este webhook.
+ */
+async function bajarAFree(stripeSubscriptionId: string) {
   const { data: fila } = await db
     .from("suscripciones")
     .select("id, tenant_id")
@@ -241,13 +248,26 @@ async function cerrarPeriodo(stripeSubscriptionId: string, estado: "cancelada" |
   await db
     .from("suscripciones")
     .update({
-      estado,
+      estado: "cancelada",
       fecha_fin: new Date().toISOString(),
-      motivo_cambio: estado === "cancelada" ? "cancelacion" : "vencimiento",
+      motivo_cambio: "cancelacion",
     })
     .eq("id", fila.id);
 
-  await db.from("tenants").update({ estado: "suspendido" }).eq("id", fila.tenant_id);
+  const { data: planFree } = await db
+    .from("planes")
+    .select("id")
+    .eq("nombre", "free")
+    .single();
+
+  const patch: Record<string, unknown> = {
+    estado: "activo",
+    cancela_al_terminar: false,
+    pago_fallido_desde: null,
+  };
+  if (planFree) patch.plan_id = planFree.id; // dispara el recorte de formatos/tema
+
+  await db.from("tenants").update(patch).eq("id", fila.tenant_id);
 }
 
 const iso = (segundos: number | null | undefined) =>
@@ -368,16 +388,45 @@ Deno.serve(async (req) => {
           .eq("stripe_subscription_id", s.id)
           .eq("estado", "activa");
 
-        if (s.status === "past_due" || s.status === "unpaid") {
-          await cerrarPeriodo(s.id, "vencida");
+        const { tenant_id, plan_id, moneda } = s.metadata ?? {};
+
+        // --- Estado de cobro del tenant --------------------------------------
+        if (tenant_id) {
+          if (s.status === "past_due" || s.status === "unpaid") {
+            // Empieza (o continua) el periodo de gracia. No se pisa una fecha
+            // ya puesta -- el conteo de 7 dias arranca en el PRIMER fallo.
+            const { data: t } = await db
+              .from("tenants")
+              .select("pago_fallido_desde")
+              .eq("id", tenant_id)
+              .single();
+            if (t && !t.pago_fallido_desde) {
+              await db
+                .from("tenants")
+                .update({ pago_fallido_desde: new Date().toISOString() })
+                .eq("id", tenant_id);
+            }
+          } else if (s.status === "active") {
+            // Recuperado: se limpia la gracia y se reactiva el panel si estaba
+            // suspendido.
+            await db
+              .from("tenants")
+              .update({ pago_fallido_desde: null, estado: "activo" })
+              .eq("id", tenant_id);
+          }
+
+          // El tenant pidio cancelar (o deshizo la cancelacion) desde el portal.
+          await db
+            .from("tenants")
+            .update({ cancela_al_terminar: Boolean(s.cancel_at_period_end) })
+            .eq("id", tenant_id);
         }
 
-        // Cambio de plan sobre una suscripcion ya activa (ver crear-checkout):
-        // la metadata trae el plan nuevo. Si difiere del vigente en la base,
-        // se congela el precio de lista de HOY con el mismo stripe_subscription_id
-        // -- no es un alta, es la misma suscripcion cambiando de item. Idempotente:
-        // tras la primera corrida vigente.plan_id ya coincide y un reintento no-op.
-        const { tenant_id, plan_id, moneda } = s.metadata ?? {};
+        // --- Cambio de plan sobre una suscripcion ya activa -----------------
+        // (ver crear-checkout) la metadata trae el plan nuevo. Si difiere del
+        // vigente en la base, se congela el precio de lista de HOY con el mismo
+        // stripe_subscription_id. Idempotente: tras la primera corrida
+        // vigente.plan_id ya coincide y un reintento no-op.
         if (tenant_id && plan_id) {
           const { data: vigente } = await db
             .from("suscripciones")
@@ -400,7 +449,7 @@ Deno.serve(async (req) => {
       }
 
       case "customer.subscription.deleted": {
-        await cerrarPeriodo(evento.data.object.id, "cancelada");
+        await bajarAFree(evento.data.object.id);
         break;
       }
 
@@ -438,6 +487,14 @@ Deno.serve(async (req) => {
           { onConflict: "stripe_invoice_id", ignoreDuplicates: true },
         );
         if (error) throw error;
+
+        // Pago al corriente: si venia de un fallo, se limpia la gracia y se
+        // reactiva el panel. Cubre el caso de que customer.subscription.updated
+        // con status 'active' no llegue o llegue despues.
+        await db
+          .from("tenants")
+          .update({ pago_fallido_desde: null, estado: "activo" })
+          .eq("id", fila.tenant_id);
         break;
       }
 
