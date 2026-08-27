@@ -235,6 +235,10 @@ async function abrirPeriodo(opciones: {
  * agotar el dunning). NUNCA deja al tenant en 'suspendido': el menu sigue
  * vivo con los limites de Free, igual que cuando vence un trial. El corte
  * por impago con gracia vencida lo hace el cron, no este webhook.
+ *
+ * Orden: primero el tenant, despues se cierra el periodo. Si el tenant falla,
+ * el 500 hace que Stripe reintente con la fila aun 'activa' y la baja se
+ * completa; al reves, una fila ya cerrada bloquearia el reintento.
  */
 async function bajarAFree(stripeSubscriptionId: string) {
   const { data: fila } = await db
@@ -245,21 +249,15 @@ async function bajarAFree(stripeSubscriptionId: string) {
     .maybeSingle();
   if (!fila) return;
 
-  await db
-    .from("suscripciones")
-    .update({
-      estado: "cancelada",
-      fecha_fin: new Date().toISOString(),
-      motivo_cambio: "cancelacion",
-    })
-    .eq("id", fila.id);
-
   const { data: planFree } = await db
     .from("planes")
     .select("id")
     .eq("nombre", "free")
-    .single();
+    .maybeSingle();
 
+  // Primero el tenant: si esto falla, el 500 hace que Stripe reintente y la
+  // fila de suscripciones sigue 'activa', asi que el reintento vuelve a entrar
+  // y completa la baja. Al reves, una fila ya cerrada bloquearia el reintento.
   const patch: Record<string, unknown> = {
     estado: "activo",
     cancela_al_terminar: false,
@@ -267,7 +265,21 @@ async function bajarAFree(stripeSubscriptionId: string) {
   };
   if (planFree) patch.plan_id = planFree.id; // dispara el recorte de formatos/tema
 
-  await db.from("tenants").update(patch).eq("id", fila.tenant_id);
+  const { error: errorTenant } = await db
+    .from("tenants")
+    .update(patch)
+    .eq("id", fila.tenant_id);
+  if (errorTenant) throw errorTenant;
+
+  const { error: errorSusc } = await db
+    .from("suscripciones")
+    .update({
+      estado: "cancelada",
+      fecha_fin: new Date().toISOString(),
+      motivo_cambio: "cancelacion",
+    })
+    .eq("id", fila.id);
+  if (errorSusc) throw errorSusc;
 }
 
 const iso = (segundos: number | null | undefined) =>
