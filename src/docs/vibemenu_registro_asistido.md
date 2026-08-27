@@ -30,11 +30,11 @@ Fuera de este documento (explícitamente **no** se construye ahora):
 - **Dominio personalizado.** No se pide en el wizard — deja de funcionar en cuanto vence la
   prueba si el tenant baja a Free, así que no tiene sentido pedirlo en el alta. Se sigue
   gestionando solo desde "Mi negocio", como hoy.
-- **Redes sociales y descripción del negocio.** *(Corrección tras revisar las migraciones
+- **Redes sociales y descripción del negocio.** _(Corrección tras revisar las migraciones
   reales: `vibemenu_migracion_empresa.sql` y `vibemenu_migracion_redes_visitas.sql` ya
   otorgan `grant update` sobre estas columnas a `authenticated` — la nota original de que
   hacía falta tocar RLS estaba basada en `vibemenu_base-datos.md`, que está desactualizado en
-  este punto.)* Se dejan fuera de todas formas, por decisión de producto: son las preguntas
+  este punto.)_ Se dejan fuera de todas formas, por decisión de producto: son las preguntas
   que más se sentirían como "papeleo" y el dueño del producto ya pidió mantener el wizard
   corto. Se siguen editando desde "Mi negocio", sin bloqueo técnico si más adelante se quiere
   sumar un paso opcional para ellas.
@@ -47,15 +47,15 @@ Un solo componente de wizard, sin rutas nuevas — estado interno + progreso per
 `localStorage` (extiende el patrón que ya existe en `src/lib/registro.ts` con
 `guardarTenantPendiente`).
 
-| # | Paso | Campos | Obligatorio |
-|---|------|--------|--------------|
-| 0 | Cuenta | email, password, captcha | Sí (se omite si ya hay sesión — caso OAuth) |
-| 1 | Bienvenida | — (solo copy + CTA, "Tu cuenta ya está lista…") | — |
-| 2 | Tu negocio | nombre del negocio, giro¹, dirección del menú (slug) | Sí |
-| 3 | Contacto | teléfono (con lada), WhatsApp (con lada) | Sí |
-| 4 | Logo | imagen de logo | No — "Lo hago después" |
-| 5 | Cuéntanos más | 3 preguntas de opción única | No — "Omitir" salta las 3 |
-| 6 | Felicidades | resumen + CTA "Ir a mi panel" | — |
+| #   | Paso          | Campos                                               | Obligatorio                                 |
+| --- | ------------- | ---------------------------------------------------- | ------------------------------------------- |
+| 0   | Cuenta        | email, password, captcha                             | Sí (se omite si ya hay sesión — caso OAuth) |
+| 1   | Bienvenida    | — (solo copy + CTA, "Tu cuenta ya está lista…")      | —                                           |
+| 2   | Tu negocio    | nombre del negocio, giro¹, dirección del menú (slug) | Sí                                          |
+| 3   | Contacto      | teléfono (con lada), WhatsApp (con lada)             | Sí                                          |
+| 4   | Logo          | imagen de logo                                       | No — "Lo hago después"                      |
+| 5   | Cuéntanos más | 3 preguntas de opción única                          | No — "Omitir" salta las 3                   |
+| 6   | Felicidades   | resumen + CTA "Ir a mi panel"                        | —                                           |
 
 El copy de Bienvenida ("Tu cuenta ya está lista…") solo tiene sentido DESPUÉS de que la cuenta
 existe, así que Cuenta va primero cuando aplica. En el caso OAuth (`arrancaEnCuenta={false}`)
@@ -136,11 +136,11 @@ el paso 2):
 
 2. **¿Cuál es tu mayor dolor de cabeza con tu menú actual?**
    Actualizar precios es lento · No se ve profesional · Batallo para tomar pedidos ·
-   Los clientes no ven fotos u opciones claras · Otro *(al elegir "Otro" aparece un campo de
-   texto libre corto)*
+   Los clientes no ven fotos u opciones claras · Otro _(al elegir "Otro" aparece un campo de
+   texto libre corto)_
 
 3. **¿Cómo nos conociste?**
-   Redes sociales · Recomendación · Búsqueda en Google · Otro *(mismo campo de texto libre)*
+   Redes sociales · Recomendación · Búsqueda en Google · Otro _(mismo campo de texto libre)_
 
 "Omitir" salta las 3 sin guardar nada. Si contestó al menos una, se guarda solo lo contestado
 (no se fuerza a completar las 3 para poder avanzar).

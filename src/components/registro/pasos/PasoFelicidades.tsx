@@ -17,8 +17,8 @@ export default function PasoFelicidades({ nombreNegocio }: PasoFelicidadesProps)
       <div>
         <h1 className="text-2xl text-vm-ink">¡Felicidades! {nombreNegocio} ya está en Vibemenu</h1>
         <p className="mt-3 text-sm leading-relaxed text-vm-body">
-          Tu menú digital está listo para compartirse. Tienes 14 días de prueba con el plan Pro
-          para explorar personalización, modificadores, códigos QR y más.
+          Tu menú digital está listo para compartirse. Tienes 14 días de prueba con el plan Pro para
+          explorar personalización, modificadores, códigos QR y más.
         </p>
       </div>
 

@@ -50,7 +50,7 @@ Confirmado en vivo: en `/admin/qr` a 390px de viewport,
 `document.documentElement.scrollWidth` = **1016px** contra un
 `clientWidth` de 390px — 626px de desbordamiento horizontal real, en toda
 la página (arrastra la barra lateral, el header, todo). Visualmente el QR
-*se ve* del tamaño correcto (porque el `scale()` sí funciona para el
+_se ve_ del tamaño correcto (porque el `scale()` sí funciona para el
 pintado), pero la página entera se vuelve horizontalmente scrolleable en
 cualquier pantalla angosta, lo cual es exactamente el tipo de bug que se
 reportó.

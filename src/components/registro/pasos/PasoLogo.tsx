@@ -35,8 +35,8 @@ export default function PasoLogo({ tenantId, onContinuar }: PasoLogoProps) {
     <div>
       <h1 className="text-2xl text-vm-ink">Dale cara a tu negocio</h1>
       <p className="mt-2 text-sm text-vm-body">
-        Un logo ayuda a que tu menú se vea profesional. Puedes agregarlo después si no lo tienes
-        a la mano.
+        Un logo ayuda a que tu menú se vea profesional. Puedes agregarlo después si no lo tienes a
+        la mano.
       </p>
 
       <label

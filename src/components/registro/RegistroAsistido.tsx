@@ -51,8 +51,8 @@ export default function RegistroAsistido() {
         <h1 className="mt-5 text-2xl">Confirma tu correo</h1>
         <p className="mt-3 text-sm leading-relaxed text-vm-body">
           Te enviamos un enlace a{" "}
-          <span className="font-medium text-vm-ink">{correoConfirmacion}</span>. Ábrelo desde
-          este dispositivo para seguir armando tu negocio.
+          <span className="font-medium text-vm-ink">{correoConfirmacion}</span>. Ábrelo desde este
+          dispositivo para seguir armando tu negocio.
         </p>
         <Link
           to="/login"

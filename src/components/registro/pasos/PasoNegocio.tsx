@@ -92,9 +92,7 @@ export default function PasoNegocio({ onCreado, onAtras }: PasoNegocioProps) {
   return (
     <div>
       <h1 className="text-2xl text-vm-ink">¿Cómo se llama tu negocio?</h1>
-      <p className="mt-2 text-sm text-vm-body">
-        Así es como lo van a ver tus clientes en tu menú.
-      </p>
+      <p className="mt-2 text-sm text-vm-body">Así es como lo van a ver tus clientes en tu menú.</p>
 
       <form onSubmit={alEnviar} className="mt-6 space-y-5">
         <div>

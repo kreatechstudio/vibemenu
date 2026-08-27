@@ -15,8 +15,8 @@ export default function PasoBienvenida({ onContinuar }: PasoBienvenidaProps) {
       <div>
         <h1 className="text-2xl text-vm-ink">Bienvenido a Vibemenu</h1>
         <p className="mt-3 text-sm leading-relaxed text-vm-body">
-          Tu cuenta ya está lista. Ahora vamos a armar tu negocio paso a paso — en unos minutos
-          tu menú digital estará listo para tus clientes.
+          Tu cuenta ya está lista. Ahora vamos a armar tu negocio paso a paso — en unos minutos tu
+          menú digital estará listo para tus clientes.
         </p>
       </div>
 
