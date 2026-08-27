@@ -1,8 +1,7 @@
 // Edge Function: procesar-trials-vencidos
 //
 // Tarea diaria (ver .github/workflows/procesar-trials.yml), no un endpoint de
-// usuario: no la llama el frontend. Hace dos cosas sobre los tenants en
-// `estado = 'trial'` que siguen en el plan Pro (nunca pagaron):
+// usuario: no la llama el frontend. Hace tres cosas:
 //
 //   1. Aviso: entre 11 y 14 dias desde `trial_iniciado_at`, manda un correo
 //      una sola vez (marca `aviso_trial_enviado_at`).
@@ -11,6 +10,11 @@
 //      trg_tenants_25_tema): recortan formatos/tema en silencio, igual que
 //      si el dueño hubiera bajado de plan a mano. `estado` sigue en 'trial'
 //      -- nunca pago, asi que sigue siendo verdad.
+//   3. Suspende (estado='suspendido') a los tenants con pago fallido cuya
+//      gracia de 7 dias ya vencio (pago_fallido_desde lo pone stripe-webhook).
+//
+// Las cosas 1 y 2 solo aplican a tenants en `estado = 'trial'` que siguen en el
+// plan Pro (nunca pagaron).
 //
 // Protegida con un secreto compartido (no con sesion de usuario: nadie tiene
 // sesion en un cron). `verify_jwt=true` a nivel de plataforma exige ademas
@@ -223,7 +227,41 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, avisados, bajados }), {
+  // ---- 3. Pago fallido: suspender tras 7 dias de gracia -----------------
+  // stripe-webhook pone pago_fallido_desde en el PRIMER past_due/unpaid y lo
+  // limpia si el tenant se pone al corriente. Aqui se corta a los que llevan
+  // >= 7 dias sin regularizar. La suscripcion de Stripe NO se toca: sigue su
+  // propio dunning; si al final Stripe la borra, cae en subscription.deleted
+  // -> baja a Free. Ver docs/superpowers/specs/2026-08-27-endurecer-facturacion-design.md
+  const DIAS_GRACIA = 7;
+  const limiteGracia = new Date(ahora - DIAS_GRACIA * msPorDia).toISOString();
+
+  const { data: enGracia, error: errorGracia } = await db
+    .from("tenants")
+    .select("id")
+    .lt("pago_fallido_desde", limiteGracia)
+    .neq("estado", "suspendido");
+
+  if (errorGracia) {
+    console.error("error consultando gracia vencida:", errorGracia);
+    return new Response(JSON.stringify({ error: errorGracia.message }), { status: 500 });
+  }
+
+  let suspendidos = 0;
+  for (const t of enGracia ?? []) {
+    const { error } = await db.from("tenants").update({ estado: "suspendido" }).eq("id", t.id);
+    if (!error) suspendidos++;
+  }
+
+  // ---- 4. Retencion de eventos_stripe ----------------------------------
+  // Limpieza: Stripe reintenta ~3 dias, asi que un evento de hace 30 dias ya no
+  // sirve para deduplicar. Se purga para que eventos_stripe no crezca sin limite.
+  await db
+    .from("eventos_stripe")
+    .delete()
+    .lt("recibido_at", new Date(ahora - 30 * msPorDia).toISOString());
+
+  return new Response(JSON.stringify({ ok: true, avisados, bajados, suspendidos }), {
     headers: { "Content-Type": "application/json" },
   });
 });

@@ -397,6 +397,14 @@ function Contenido() {
                     Se renueva el {fecha(activa.fecha_renovacion)}.
                   </p>
                 )}
+                {tenant.cancela_al_terminar && (
+                  <p className="mt-2 rounded-lg bg-vm-warning-soft px-3.5 py-2.5 text-xs text-vm-warning">
+                    Cancelaste la renovación. El{" "}
+                    {activa?.fecha_renovacion ? fecha(activa.fecha_renovacion) : "fin del periodo"}{" "}
+                    tu plan baja a Free automáticamente. Puedes reactivarlo desde “Administrar
+                    facturación” antes de esa fecha.
+                  </p>
+                )}
               </>
             ) : (
               <p className="mt-2 max-w-md text-xs text-vm-body">

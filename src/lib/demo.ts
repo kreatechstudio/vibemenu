@@ -40,6 +40,8 @@ export const TENANT_DEMO: Tenant = {
   },
   plan_id: null,
   estado: "activo",
+  pago_fallido_desde: null,
+  cancela_al_terminar: false,
   trial_iniciado_at: new Date().toISOString(),
   stripe_customer_id: null,
   created_at: new Date().toISOString(),

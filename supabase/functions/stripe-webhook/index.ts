@@ -44,8 +44,8 @@ const SITIO = "https://vibemenu.com.mx";
 /**
  * Aviso de pago fallido. Se dispara en `invoice.payment_failed` -- la señal
  * mas temprana, antes de que Stripe agote sus reintentos y la suscripcion
- * pase a `past_due`/`unpaid` (eso lo maneja `cerrarPeriodo`, que ya suspende
- * el tenant; este correo NO cambia estado, solo avisa).
+ * pase a `past_due`/`unpaid` (eso lo maneja `customer.subscription.updated`,
+ * que abre el periodo de gracia; este correo NO cambia estado, solo avisa).
  */
 async function avisarPagoFallido(tenantId: string, negocioNombre: string) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
@@ -229,7 +229,18 @@ async function abrirPeriodo(opciones: {
   if (errorTenant) throw errorTenant;
 }
 
-async function cerrarPeriodo(stripeSubscriptionId: string, estado: "cancelada" | "vencida") {
+/**
+ * Baja ordenada a Free cuando Stripe borra la suscripcion (cancelacion
+ * voluntaria al fin del periodo, o cancelacion automatica de Stripe tras
+ * agotar el dunning). NUNCA deja al tenant en 'suspendido': el menu sigue
+ * vivo con los limites de Free, igual que cuando vence un trial. El corte
+ * por impago con gracia vencida lo hace el cron, no este webhook.
+ *
+ * Orden: primero el tenant, despues se cierra el periodo. Si el tenant falla,
+ * el 500 hace que Stripe reintente con la fila aun 'activa' y la baja se
+ * completa; al reves, una fila ya cerrada bloquearia el reintento.
+ */
+async function bajarAFree(stripeSubscriptionId: string) {
   const { data: fila } = await db
     .from("suscripciones")
     .select("id, tenant_id")
@@ -238,16 +249,34 @@ async function cerrarPeriodo(stripeSubscriptionId: string, estado: "cancelada" |
     .maybeSingle();
   if (!fila) return;
 
-  await db
+  const { data: planFree } = await db
+    .from("planes")
+    .select("id")
+    .eq("nombre", "free")
+    .maybeSingle();
+
+  // Primero el tenant: si esto falla, el 500 hace que Stripe reintente y la
+  // fila de suscripciones sigue 'activa', asi que el reintento vuelve a entrar
+  // y completa la baja. Al reves, una fila ya cerrada bloquearia el reintento.
+  const patch: Record<string, unknown> = {
+    estado: "activo",
+    cancela_al_terminar: false,
+    pago_fallido_desde: null,
+  };
+  if (planFree) patch.plan_id = planFree.id; // dispara el recorte de formatos/tema
+
+  const { error: errorTenant } = await db.from("tenants").update(patch).eq("id", fila.tenant_id);
+  if (errorTenant) throw errorTenant;
+
+  const { error: errorSusc } = await db
     .from("suscripciones")
     .update({
-      estado,
+      estado: "cancelada",
       fecha_fin: new Date().toISOString(),
-      motivo_cambio: estado === "cancelada" ? "cancelacion" : "vencimiento",
+      motivo_cambio: "cancelacion",
     })
     .eq("id", fila.id);
-
-  await db.from("tenants").update({ estado: "suspendido" }).eq("id", fila.tenant_id);
+  if (errorSusc) throw errorSusc;
 }
 
 const iso = (segundos: number | null | undefined) =>
@@ -293,6 +322,25 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     return new Response(`firma invalida: ${(e as Error).message}`, { status: 400 });
+  }
+
+  // Idempotencia: Stripe entrega cada evento "al menos una vez". Se registra el
+  // evento.id al llegar; si ya estaba, este es un reintento y no se vuelve a
+  // procesar. Guia oficial de Stripe: responder 200 rapido y deduplicar por id.
+  const { error: errorDedup } = await db
+    .from("eventos_stripe")
+    .insert({ id: evento.id, tipo: evento.type });
+
+  // 23505 = unique_violation: ya lo procesamos.
+  if (errorDedup?.code === "23505") {
+    return new Response(JSON.stringify({ duplicado: true }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (errorDedup) {
+    // Fallo real de DB (no un duplicado): 500 para que Stripe reintente.
+    console.error("no se pudo registrar evento_stripe", evento.id, errorDedup);
+    return new Response(`error registrando evento: ${errorDedup.message}`, { status: 500 });
   }
 
   try {
@@ -349,16 +397,61 @@ Deno.serve(async (req) => {
           .eq("stripe_subscription_id", s.id)
           .eq("estado", "activa");
 
-        if (s.status === "past_due" || s.status === "unpaid") {
-          await cerrarPeriodo(s.id, "vencida");
+        const { tenant_id, plan_id, moneda } = s.metadata ?? {};
+
+        // La logica de gracia/cancelacion resuelve el tenant por metadata, pero
+        // una suscripcion creada antes de que existiera esa metadata (o recreada
+        // desde el dashboard de Stripe) no la trae. Se cae a la fila de
+        // suscripciones, que siempre tiene el stripe_subscription_id.
+        let tenantId = tenant_id;
+        if (!tenantId) {
+          const { data: filaSub } = await db
+            .from("suscripciones")
+            .select("tenant_id")
+            .eq("stripe_subscription_id", s.id)
+            .eq("estado", "activa")
+            .maybeSingle();
+          tenantId = filaSub?.tenant_id;
+          if (tenantId) console.warn("suscripcion sin metadata.tenant_id:", s.id);
         }
 
-        // Cambio de plan sobre una suscripcion ya activa (ver crear-checkout):
-        // la metadata trae el plan nuevo. Si difiere del vigente en la base,
-        // se congela el precio de lista de HOY con el mismo stripe_subscription_id
-        // -- no es un alta, es la misma suscripcion cambiando de item. Idempotente:
-        // tras la primera corrida vigente.plan_id ya coincide y un reintento no-op.
-        const { tenant_id, plan_id, moneda } = s.metadata ?? {};
+        // --- Estado de cobro del tenant --------------------------------------
+        if (tenantId) {
+          if (s.status === "past_due" || s.status === "unpaid") {
+            // Empieza (o continua) el periodo de gracia. No se pisa una fecha
+            // ya puesta -- el conteo de 7 dias arranca en el PRIMER fallo.
+            const { data: t } = await db
+              .from("tenants")
+              .select("pago_fallido_desde")
+              .eq("id", tenantId)
+              .single();
+            if (t && !t.pago_fallido_desde) {
+              await db
+                .from("tenants")
+                .update({ pago_fallido_desde: new Date().toISOString() })
+                .eq("id", tenantId);
+            }
+          } else if (s.status === "active") {
+            // Recuperado: se limpia la gracia y se reactiva el panel si estaba
+            // suspendido.
+            await db
+              .from("tenants")
+              .update({ pago_fallido_desde: null, estado: "activo" })
+              .eq("id", tenantId);
+          }
+
+          // El tenant pidio cancelar (o deshizo la cancelacion) desde el portal.
+          await db
+            .from("tenants")
+            .update({ cancela_al_terminar: Boolean(s.cancel_at_period_end) })
+            .eq("id", tenantId);
+        }
+
+        // --- Cambio de plan sobre una suscripcion ya activa -----------------
+        // (ver crear-checkout) la metadata trae el plan nuevo. Si difiere del
+        // vigente en la base, se congela el precio de lista de HOY con el mismo
+        // stripe_subscription_id. Idempotente: tras la primera corrida
+        // vigente.plan_id ya coincide y un reintento no-op.
         if (tenant_id && plan_id) {
           const { data: vigente } = await db
             .from("suscripciones")
@@ -381,7 +474,7 @@ Deno.serve(async (req) => {
       }
 
       case "customer.subscription.deleted": {
-        await cerrarPeriodo(evento.data.object.id, "cancelada");
+        await bajarAFree(evento.data.object.id);
         break;
       }
 
@@ -419,6 +512,14 @@ Deno.serve(async (req) => {
           { onConflict: "stripe_invoice_id", ignoreDuplicates: true },
         );
         if (error) throw error;
+
+        // Pago al corriente: si venia de un fallo, se limpia la gracia y se
+        // reactiva el panel. Cubre el caso de que customer.subscription.updated
+        // con status 'active' no llegue o llegue despues.
+        await db
+          .from("tenants")
+          .update({ pago_fallido_desde: null, estado: "activo" })
+          .eq("id", fila.tenant_id);
         break;
       }
 
@@ -452,6 +553,20 @@ Deno.serve(async (req) => {
   } catch (e) {
     // 500 hace que Stripe reintente. Es lo que queremos ante un fallo transitorio.
     console.error(evento.type, e);
+
+    // El handler fallo a medias: se borra el registro de idempotencia para que
+    // el reintento de Stripe vuelva a entrar y complete la operacion. La
+    // ventana de doble-proceso por dos reintentos concurrentes es mucho menos
+    // probable que una excepcion del handler, y abrirPeriodo/bajarAFree ya
+    // comprueban el estado vigente. Este delete devuelve { error }, no lanza:
+    // si falla, el evento queda marcado como procesado y el reintento de Stripe
+    // recibiria { duplicado: true } -- se pierde la operacion en silencio. Por
+    // eso se registra el fallo aunque prevalezca el 500 original.
+    const { error: errorLimpieza } = await db.from("eventos_stripe").delete().eq("id", evento.id);
+    if (errorLimpieza) {
+      console.error("no se pudo borrar evento_stripe para el reintento", evento.id, errorLimpieza);
+    }
+
     return new Response(`error procesando: ${(e as Error).message}`, { status: 500 });
   }
 
