@@ -10,6 +10,7 @@ import {
   QrCode,
   UtensilsCrossed,
 } from "lucide-react";
+import BannerFacturacion from "@/components/layout/BannerFacturacion";
 import PanelBloqueado from "@/components/layout/PanelBloqueado";
 import Logo from "@/components/marca/Logo";
 import AvatarUsuario from "@/components/ui/avatar-usuario";
@@ -289,6 +290,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <span className="hidden sm:inline">Ver mi menú</span>
           </a>
         </header>
+
+        <BannerFacturacion ctx={ctx} />
 
         <main className="min-w-0 flex-1 p-4 pb-24 md:p-8 md:pb-24 lg:pb-8">{children}</main>
       </div>
