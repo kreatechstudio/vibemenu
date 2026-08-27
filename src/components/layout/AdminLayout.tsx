@@ -10,6 +10,7 @@ import {
   QrCode,
   UtensilsCrossed,
 } from "lucide-react";
+import PanelBloqueado from "@/components/layout/PanelBloqueado";
 import Logo from "@/components/marca/Logo";
 import AvatarUsuario from "@/components/ui/avatar-usuario";
 import {
@@ -247,6 +248,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </main>
     );
+  }
+
+  if (ctx.tenant.estado === "suspendido") {
+    return <PanelBloqueado tenantId={ctx.tenant.id} />;
   }
 
   const urlMenu = `/${ctx.tenant.slug}`;
