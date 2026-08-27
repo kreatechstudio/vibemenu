@@ -154,7 +154,9 @@ as $$
 $$;
 ```
 
-Swap `using (pertenece_a_tenant(tenant_id))` → `using (tenant_puede_escribir(tenant_id))` (y el `with check` equivalente) en las policies de escritura de: `sucursales`, `horarios` (vía subquery), `categorias`, `productos`, `grupos_modificadores`, `opciones_modificador` (vía subquery), `producto_modificadores` (vía subquery), y `tenants` (update).
+Swap `using (pertenece_a_tenant(tenant_id))` → `using (tenant_puede_escribir(tenant_id))` (y el `with check` equivalente) en las policies de escritura de: `sucursales`, `horarios` (vía subquery), `categorias`, `productos`, `grupos_modificadores`, `opciones_modificador` (vía subquery), `producto_modificadores` (vía subquery), `precios_sucursal` (vía subquery), y `tenants` (update).
+
+> Nota: `precios_sucursal` se omitió en la migración `facturacion_estado` original y se agregó como migración de seguimiento `facturacion_estado_precios` (`src/docs/vibemenu_migracion_facturacion_estado_precios.sql`).
 
 - Lecturas públicas (`*_select_publico`) **sin cambios** — el menú del comensal sigue leyendo todo.
 - `suscripciones_select_owner` / `pagos` sin cambios (escritura ya es solo service_role).
