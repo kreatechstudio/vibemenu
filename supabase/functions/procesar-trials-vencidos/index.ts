@@ -249,10 +249,7 @@ Deno.serve(async (req) => {
 
   let suspendidos = 0;
   for (const t of enGracia ?? []) {
-    const { error } = await db
-      .from("tenants")
-      .update({ estado: "suspendido" })
-      .eq("id", t.id);
+    const { error } = await db.from("tenants").update({ estado: "suspendido" }).eq("id", t.id);
     if (!error) suspendidos++;
   }
 

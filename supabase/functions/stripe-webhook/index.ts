@@ -265,10 +265,7 @@ async function bajarAFree(stripeSubscriptionId: string) {
   };
   if (planFree) patch.plan_id = planFree.id; // dispara el recorte de formatos/tema
 
-  const { error: errorTenant } = await db
-    .from("tenants")
-    .update(patch)
-    .eq("id", fila.tenant_id);
+  const { error: errorTenant } = await db.from("tenants").update(patch).eq("id", fila.tenant_id);
   if (errorTenant) throw errorTenant;
 
   const { error: errorSusc } = await db
