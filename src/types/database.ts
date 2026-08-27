@@ -721,6 +721,7 @@ export type Database = {
       tenants: {
         Row: {
           aviso_trial_enviado_at: string | null;
+          cancela_al_terminar: boolean;
           created_at: string;
           descripcion: string | null;
           dominio_estado: string | null;
@@ -735,6 +736,7 @@ export type Database = {
           instagram_url: string | null;
           logo_url: string | null;
           nombre_negocio: string;
+          pago_fallido_desde: string | null;
           plan_id: string | null;
           slug: string;
           stripe_customer_id: string | null;
@@ -747,6 +749,7 @@ export type Database = {
         };
         Insert: {
           aviso_trial_enviado_at?: string | null;
+          cancela_al_terminar?: boolean;
           created_at?: string;
           descripcion?: string | null;
           dominio_estado?: string | null;
@@ -761,6 +764,7 @@ export type Database = {
           instagram_url?: string | null;
           logo_url?: string | null;
           nombre_negocio: string;
+          pago_fallido_desde?: string | null;
           plan_id?: string | null;
           slug: string;
           stripe_customer_id?: string | null;
@@ -773,6 +777,7 @@ export type Database = {
         };
         Update: {
           aviso_trial_enviado_at?: string | null;
+          cancela_al_terminar?: boolean;
           created_at?: string;
           descripcion?: string | null;
           dominio_estado?: string | null;
@@ -787,6 +792,7 @@ export type Database = {
           instagram_url?: string | null;
           logo_url?: string | null;
           nombre_negocio?: string;
+          pago_fallido_desde?: string | null;
           plan_id?: string | null;
           slug?: string;
           stripe_customer_id?: string | null;
