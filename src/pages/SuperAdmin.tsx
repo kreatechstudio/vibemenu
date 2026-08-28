@@ -259,16 +259,17 @@ export default function SuperAdmin() {
                         {t.dominio_personalizado ? (
                           (() => {
                             const problema = motivoProblemaDNS(
-                              (t.dominio_diagnostico as DominioDiagnostico | null) ?? null,
+                              (t.dominio_diagnostico as unknown as DominioDiagnostico | null) ??
+                                null,
                             );
                             const listo = t.dominio_estado === "listo";
-                            const verificado = t.dominio_estado === "verificado";
+                            const verificado = t.dominio_estado === "verificado" && !problema;
                             const etiqueta = listo
                               ? "listo"
-                              : verificado
-                                ? "verificado"
-                                : problema
-                                  ? "problema DNS"
+                              : problema
+                                ? "problema DNS"
+                                : verificado
+                                  ? "verificado"
                                   : "pendiente";
                             return (
                               <div className="flex items-center gap-2">

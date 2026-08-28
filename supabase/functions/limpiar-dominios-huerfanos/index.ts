@@ -128,6 +128,7 @@ Deno.serve(async (req) => {
       );
 
       if (resp.ok || resp.status === 404) {
+        await resp.body?.cancel();
         await db
           .from("dominios_huerfanos")
           .update({ borrado_at: new Date().toISOString() })

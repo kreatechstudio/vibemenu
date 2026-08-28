@@ -404,7 +404,15 @@ function Contenido() {
                 <>
                   {!cambioDominio && tenant.dominio_estado && (
                     <p className="mt-2 flex items-center gap-1.5 text-xs">
-                      {tenant.dominio_estado === "listo" ? (
+                      {problemaDNS ? (
+                        <>
+                          <AlertTriangle
+                            className="mt-px size-3.5 shrink-0 text-vm-danger"
+                            aria-hidden
+                          />
+                          <span className="text-vm-danger">Revisa tu DNS</span>
+                        </>
+                      ) : tenant.dominio_estado === "listo" ? (
                         <>
                           <Check className="size-3.5 shrink-0 text-vm-success" aria-hidden />
                           <span className="text-vm-success">Verificado y sirviendo tráfico</span>
@@ -428,7 +436,7 @@ function Contenido() {
                     </p>
                   )}
 
-                  {problemaDNS && !cambioDominio && (
+                  {problemaDNS && (
                     <div className="mt-3 rounded-lg border border-vm-danger bg-vm-danger-soft px-4 py-3 text-xs text-vm-danger">
                       <p className="font-medium">Hay un problema con tu DNS</p>
                       <p className="mt-1">{problemaDNS}</p>

@@ -58,6 +58,17 @@ describe("instruccionesDNS", () => {
       { tipo: "CNAME", nombre: "menu", valor: "cname.vercel-dns.com" },
     ]);
   });
+
+  test("subdominio de dos niveles -> el nombre del registro sale de apexName", () => {
+    const diag: DominioDiagnostico = {
+      ...diagBase,
+      name: "menu.sucursales.tienda.com",
+      apexName: "tienda.com",
+    };
+    expect(instruccionesDNS("menu.sucursales.tienda.com", diag)).toEqual([
+      { tipo: "CNAME", nombre: "menu.sucursales", valor: "cname.vercel-dns.com" },
+    ]);
+  });
 });
 
 describe("motivoProblemaDNS", () => {
@@ -76,6 +87,17 @@ describe("motivoProblemaDNS", () => {
     const diag: DominioDiagnostico = {
       ...diagBase,
       misconfigured: true,
+      verification: [
+        { type: "TXT", domain: "_vercel.tienda.com.mx", value: "abc", reason: "pending" },
+      ],
+    };
+    expect(motivoProblemaDNS(diag)).toContain("_vercel.tienda.com.mx");
+  });
+
+  test("reto de verification pendiente aunque misconfigured sea false", () => {
+    const diag: DominioDiagnostico = {
+      ...diagBase,
+      misconfigured: false,
       verification: [
         { type: "TXT", domain: "_vercel.tienda.com.mx", value: "abc", reason: "pending" },
       ],

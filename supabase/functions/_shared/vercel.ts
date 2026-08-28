@@ -46,7 +46,7 @@ export async function fetchVercelConReintento(
     }
     const espera = Number(resp.headers.get("Retry-After")) || 5;
     await resp.body?.cancel();
-    await dormir(Math.min(espera, 30) * 1000);
+    await dormir(Math.max(1, Math.min(espera, 30)) * 1000);
   }
 }
 

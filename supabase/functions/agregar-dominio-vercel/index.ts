@@ -122,29 +122,40 @@ Deno.serve(async (req) => {
       );
     }
 
-    const respConfig = (await fetchVercelConReintento(
-      urlConfigDominio(vercelProject, vercelTeam, tenant.dominio_personalizado),
-      { headers: { Authorization: `Bearer ${vercelToken}` } },
-    ).then((r) => (r.ok ? r.json() : {}))) as {
-      misconfigured?: boolean;
-      recommendedIPv4?: unknown;
-      recommendedCNAME?: unknown;
-    };
+    // Solo se persiste el diagnostico si el alta trajo name/apexName reales.
+    // En el camino idempotente (400 "ya existe") el body es un error sin esos
+    // campos: un fallback name===apexName===dominio haria ver cualquier
+    // subdominio como apex. Se deja null; el cron de verificar-dominios lo llena
+    // con la respuesta de /verify (que si trae apexName).
+    if (respAlta.name && respAlta.apexName) {
+      const respConfig = await fetchVercelConReintento(
+        urlConfigDominio(vercelProject, vercelTeam, tenant.dominio_personalizado),
+        { headers: { Authorization: `Bearer ${vercelToken}` } },
+      );
+      const configOk = respConfig.ok;
+      const respConfigBody = (
+        configOk ? await respConfig.json() : (await respConfig.body?.cancel(), {})
+      ) as {
+        misconfigured?: boolean;
+        recommendedIPv4?: unknown;
+        recommendedCNAME?: unknown;
+      };
 
-    const diagnostico = {
-      name: respAlta.name ?? tenant.dominio_personalizado,
-      apexName: respAlta.apexName ?? tenant.dominio_personalizado,
-      misconfigured: Boolean(respConfig.misconfigured),
-      verification: Array.isArray(respAlta.verification) ? respAlta.verification : [],
-      recommendedIPv4: normalizarRecomendados(respConfig.recommendedIPv4),
-      recommendedCNAME: normalizarRecomendados(respConfig.recommendedCNAME),
-      revisado_at: new Date().toISOString(),
-    };
-    const { error: errDiag } = await db
-      .from("tenants")
-      .update({ dominio_diagnostico: diagnostico })
-      .eq("id", tenantId);
-    if (errDiag) console.error("no se pudo guardar dominio_diagnostico para", tenantId, errDiag);
+      const diagnostico = {
+        name: respAlta.name,
+        apexName: respAlta.apexName,
+        misconfigured: Boolean(respConfigBody.misconfigured),
+        verification: Array.isArray(respAlta.verification) ? respAlta.verification : [],
+        recommendedIPv4: normalizarRecomendados(respConfigBody.recommendedIPv4),
+        recommendedCNAME: normalizarRecomendados(respConfigBody.recommendedCNAME),
+        revisado_at: new Date().toISOString(),
+      };
+      const { error: errDiag } = await db
+        .from("tenants")
+        .update({ dominio_diagnostico: diagnostico })
+        .eq("id", tenantId);
+      if (errDiag) console.error("no se pudo guardar dominio_diagnostico para", tenantId, errDiag);
+    }
   } catch (e) {
     if (e instanceof RateLimitError) {
       console.warn("vercel 429 al dar de alta/leer config de", tenant.dominio_personalizado);

@@ -61,9 +61,11 @@ type Diagnostico = {
   revisado_at: string;
 };
 
-/** Misma logica que src/lib/dominio.ts motivoProblemaDNS, replicada para el runtime Deno. */
+// Mismo orden que src/lib/dominio.ts motivoProblemaDNS (reto de verification
+// primero, luego generico), replicado para el runtime Deno. Aqui siempre hay
+// problema -- solo se llama desde la rama 3b -- asi que no tiene la salida null.
 function motivoLegible(diag: Diagnostico): string {
-  const conReason = diag.verification.find((v) => v.reason && v.domain);
+  const conReason = (diag.verification ?? []).find((v) => v.reason && v.domain);
   if (conReason) {
     return `Falta el registro ${conReason.type} en ${conReason.domain}. Créalo con el valor que ves en tu panel y vuelve a intentar.`;
   }
@@ -284,6 +286,7 @@ async function verificarUno(
 
   if (respVerify.status === 404) {
     // Nunca se registro: re-alta y que la proxima corrida lo agarre.
+    await respVerify.body?.cancel();
     await fetchVercelConReintento(urlAgregarDominio(vercelProject, vercelTeam), {
       method: "POST",
       headers: { ...auth, "Content-Type": "application/json" },
@@ -292,36 +295,62 @@ async function verificarUno(
     return "pendiente";
   }
 
-  const verifyData = respVerify.ok
-    ? ((await respVerify.json()) as {
-        verified?: boolean;
-        name?: string;
-        apexName?: string;
-        verification?: unknown[];
-      })
-    : {};
+  if (!respVerify.ok) {
+    // Vercel fallo (5xx / token vencido / 4xx): NO tocar el diagnostico previo --
+    // un fallback name===apexName===dominio haria ver cualquier subdominio como apex.
+    console.error(
+      `vercel_verify_fallo (${respVerify.status}) para ${t.dominio_personalizado}:`,
+      await respVerify.text(),
+    );
+    return "pendiente";
+  }
 
-  // 2. Config: registros recomendados + misconfigured.
-  const configData = (await fetchVercelConReintento(
+  const verifyData = (await respVerify.json()) as {
+    verified?: boolean;
+    name?: string;
+    apexName?: string;
+    verification?: unknown[];
+  };
+
+  // 2. Config: registros recomendados + misconfigured. Un RateLimitError se
+  // propaga (corta la corrida en el loop); si /config falla por otra razon se
+  // conservan los campos de config del diagnostico anterior.
+  const respConfig = await fetchVercelConReintento(
     urlConfigDominio(vercelProject, vercelTeam, t.dominio_personalizado),
     { headers: auth },
-  )
-    .then((r) => (r.ok ? r.json() : {}))
-    .catch(() => ({}))) as {
+  );
+  const configOk = respConfig.ok;
+  const configData = (
+    configOk ? await respConfig.json() : (await respConfig.body?.cancel(), {})
+  ) as {
     misconfigured?: boolean;
     recommendedIPv4?: unknown;
     recommendedCNAME?: unknown;
   };
 
+  let prev: Partial<Diagnostico> = {};
+  if (!configOk) {
+    const { data: filaPrev } = await db
+      .from("tenants")
+      .select("dominio_diagnostico")
+      .eq("id", t.id)
+      .maybeSingle();
+    prev = (filaPrev?.dominio_diagnostico ?? {}) as Partial<Diagnostico>;
+  }
+
   const diagnostico: Diagnostico = {
     name: verifyData.name ?? t.dominio_personalizado,
     apexName: verifyData.apexName ?? t.dominio_personalizado,
-    misconfigured: Boolean(configData.misconfigured),
+    misconfigured: configOk ? Boolean(configData.misconfigured) : (prev.misconfigured ?? false),
     verification: (Array.isArray(verifyData.verification)
       ? verifyData.verification
       : []) as Diagnostico["verification"],
-    recommendedIPv4: normalizarRecomendados(configData.recommendedIPv4),
-    recommendedCNAME: normalizarRecomendados(configData.recommendedCNAME),
+    recommendedIPv4: configOk
+      ? normalizarRecomendados(configData.recommendedIPv4)
+      : (prev.recommendedIPv4 ?? []),
+    recommendedCNAME: configOk
+      ? normalizarRecomendados(configData.recommendedCNAME)
+      : (prev.recommendedCNAME ?? []),
     revisado_at: new Date().toISOString(),
   };
   await db.from("tenants").update({ dominio_diagnostico: diagnostico }).eq("id", t.id);
@@ -358,11 +387,10 @@ async function verificarUno(
     return "listo";
   }
 
-  // 3b. Sigue mal: correo de recordatorio a las 72h, una sola vez.
-  // `respVerify.ok` exige que Vercel realmente haya respondido "no verificado" --
-  // no mandamos el correo si la API de Vercel fallo (5xx / red).
+  // 3b. Sigue mal: correo de recordatorio a las 72h, una sola vez. Aqui ya
+  // sabemos que Vercel respondio ok pero el dominio no verifico (si /verify
+  // hubiera fallado se retorno arriba sin tocar nada).
   if (
-    respVerify.ok &&
     t.dominio_estado === "pendiente" &&
     t.dominio_asignado_at &&
     !t.dominio_aviso_error_at &&

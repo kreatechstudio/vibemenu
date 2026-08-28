@@ -72,7 +72,8 @@ begin
   if tg_op = 'UPDATE' and old.dominio_personalizado is not null then
     insert into dominios_huerfanos (dominio, tenant_id)
       values (old.dominio_personalizado, old.id)
-      on conflict (dominio) do update set borrado_at = null, creado_at = now();
+      on conflict (dominio) do update
+        set borrado_at = null, creado_at = now(), tenant_id = excluded.tenant_id;
   end if;
 
   v_dominio := nullif(lower(trim(new.dominio_personalizado)), '');

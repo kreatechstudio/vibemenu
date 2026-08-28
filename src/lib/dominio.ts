@@ -72,9 +72,18 @@ function esApexPorHeuristica(dominio: string): boolean {
   return d.split(".").length === labelsSufijo + 1;
 }
 
-/** El label a la izquierda del apex ("menu" en "menu.tienda.com.mx"), o "@" si es apex. */
-function nombreRegistro(dominio: string, esApex: boolean): string {
+/**
+ * El nombre del registro: "@" si es apex, si no todo lo que queda a la izquierda
+ * del apex ("menu.sucursales" en "menu.sucursales.tienda.com"). Cuando hay
+ * `apexName` de Vercel se deriva de ahi; sin el, cae al primer label.
+ */
+function nombreRegistro(dominio: string, apexName: string | null, esApex: boolean): string {
   if (esApex) return "@";
+  const d = dominio.toLowerCase();
+  const apex = apexName?.toLowerCase();
+  if (apex && d.endsWith(`.${apex}`)) {
+    return dominio.slice(0, dominio.length - apex.length - 1);
+  }
   return dominio.split(".")[0];
 }
 
@@ -84,7 +93,7 @@ function nombreRegistro(dominio: string, esApex: boolean): string {
  */
 export function instruccionesDNS(dominio: string, diag: DominioDiagnostico | null): RegistroDNS[] {
   const esApex = diag ? esApexSegunVercel(diag.name, diag.apexName) : esApexPorHeuristica(dominio);
-  const nombre = nombreRegistro(dominio, esApex);
+  const nombre = nombreRegistro(dominio, diag?.apexName ?? null, esApex);
 
   if (esApex) {
     return [{ tipo: "A", nombre, valor: diag?.recommendedIPv4?.[0] ?? IPV4_VERCEL }];
@@ -92,12 +101,17 @@ export function instruccionesDNS(dominio: string, diag: DominioDiagnostico | nul
   return [{ tipo: "CNAME", nombre, valor: diag?.recommendedCNAME?.[0] ?? CNAME_VERCEL }];
 }
 
-/** Motivo legible del problema de DNS, o null si no hay problema. */
+/**
+ * Motivo legible del problema de DNS, o null si no hay problema.
+ * Hay problema si `misconfigured` (registros A/CNAME) O si hay un reto de
+ * `verification` pendiente (TXT de propiedad) — son campos independientes.
+ */
 export function motivoProblemaDNS(diag: DominioDiagnostico | null): string | null {
-  if (!diag || !diag.misconfigured) return null;
-  const conReason = diag.verification.find((v) => v.reason && v.domain);
+  if (!diag) return null;
+  const conReason = (diag.verification ?? []).find((v) => v.reason && v.domain);
   if (conReason) {
     return `Falta el registro ${conReason.type} en ${conReason.domain}. Créalo con el valor de abajo y vuelve a intentar.`;
   }
+  if (!diag.misconfigured) return null;
   return "No encontramos el registro DNS, o apunta a otro lado. Revisa que coincida exactamente con lo de abajo.";
 }

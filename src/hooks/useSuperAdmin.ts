@@ -5,6 +5,7 @@ import type { MiembroEquipo } from "@/hooks/useEquipo";
 import type {
   EstadoTenant,
   Invitacion,
+  Json,
   NombrePlan,
   NotaInterna,
   Pago,
@@ -56,7 +57,7 @@ type FilaTenantSuperAdmin = {
   /* Migración 018 — estado del dominio (verificado, pendiente, etc). */
   dominio_estado: string | null;
   /* Migración 019 — ultimo diagnostico de Vercel (misconfigured, reasons). */
-  dominio_diagnostico: unknown | null;
+  dominio_diagnostico: Json | null;
   plan: Pick<Plan, "nombre"> | null;
   suscripciones: SuscripcionResumen[];
 };

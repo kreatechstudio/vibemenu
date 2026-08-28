@@ -111,7 +111,9 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
   }
 
   const motivoDominio = detalle
-    ? motivoProblemaDNS((detalle.tenant.dominio_diagnostico as DominioDiagnostico | null) ?? null)
+    ? motivoProblemaDNS(
+        (detalle.tenant.dominio_diagnostico as unknown as DominioDiagnostico | null) ?? null,
+      )
     : null;
 
   return (
