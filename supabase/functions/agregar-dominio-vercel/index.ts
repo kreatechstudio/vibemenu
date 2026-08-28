@@ -17,6 +17,13 @@
 //           VERCEL_API_TOKEN, VERCEL_PROJECT_ID, VERCEL_TEAM_ID
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  fetchVercelConReintento,
+  normalizarRecomendados,
+  RateLimitError,
+  urlAgregarDominio,
+  urlConfigDominio,
+} from "../_shared/vercel.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -87,28 +94,64 @@ Deno.serve(async (req) => {
     return json({ error: "falta_configuracion_vercel" }, 500);
   }
 
-  const resp = await fetch(
-    `https://api.vercel.com/v10/projects/${vercelProject}/domains?teamId=${vercelTeam}`,
-    {
+  // No se propaga como error al cliente en ningun caso -- fire and forget.
+  // Si Vercel dice "ya existe" (400: el dominio se agrego antes, a mano o por un
+  // guardado previo) tambien cuenta como exito: el objetivo ya esta cumplido.
+  // De paso se guarda el diagnostico (registros DNS recomendados + misconfigured)
+  // para que Empresa.tsx muestre lo que Vercel realmente pide, no una heuristica local.
+  let vercelStatus = 0;
+  try {
+    const resp = await fetchVercelConReintento(urlAgregarDominio(vercelProject, vercelTeam), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${vercelToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ name: tenant.dominio_personalizado }),
-    },
-  );
+    });
+    vercelStatus = resp.status;
+    const respAlta = (await resp.json().catch(() => ({}))) as {
+      name?: string;
+      apexName?: string;
+      verification?: unknown[];
+    };
+    if (!resp.ok) {
+      console.error(
+        `vercel_add_domain_fallo (${resp.status}) para ${tenant.dominio_personalizado}:`,
+        JSON.stringify(respAlta),
+      );
+    }
 
-  // No se propaga como error al cliente en ningun caso -- fire and forget.
-  // Si Vercel dice "ya existe" (el dominio se agrego antes, a mano o por un
-  // guardado previo) tambien cuenta como exito: el objetivo ya esta cumplido.
-  const cuerpo = await resp.text();
-  if (!resp.ok) {
-    console.error(
-      `vercel_add_domain_fallo (${resp.status}) para ${tenant.dominio_personalizado}:`,
-      cuerpo,
-    );
+    const respConfig = (await fetchVercelConReintento(
+      urlConfigDominio(vercelProject, vercelTeam, tenant.dominio_personalizado),
+      { headers: { Authorization: `Bearer ${vercelToken}` } },
+    ).then((r) => (r.ok ? r.json() : {}))) as {
+      misconfigured?: boolean;
+      recommendedIPv4?: unknown;
+      recommendedCNAME?: unknown;
+    };
+
+    const diagnostico = {
+      name: respAlta.name ?? tenant.dominio_personalizado,
+      apexName: respAlta.apexName ?? tenant.dominio_personalizado,
+      misconfigured: Boolean(respConfig.misconfigured),
+      verification: Array.isArray(respAlta.verification) ? respAlta.verification : [],
+      recommendedIPv4: normalizarRecomendados(respConfig.recommendedIPv4),
+      recommendedCNAME: normalizarRecomendados(respConfig.recommendedCNAME),
+      revisado_at: new Date().toISOString(),
+    };
+    const { error: errDiag } = await db
+      .from("tenants")
+      .update({ dominio_diagnostico: diagnostico })
+      .eq("id", tenantId);
+    if (errDiag) console.error("no se pudo guardar dominio_diagnostico para", tenantId, errDiag);
+  } catch (e) {
+    if (e instanceof RateLimitError) {
+      console.warn("vercel 429 al dar de alta/leer config de", tenant.dominio_personalizado);
+    } else {
+      console.error("error dando de alta dominio en vercel para", tenantId, e);
+    }
   }
 
-  return json({ ok: true, vercel_status: resp.status });
+  return json({ ok: true, vercel_status: vercelStatus });
 });
