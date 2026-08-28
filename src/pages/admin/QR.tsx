@@ -25,6 +25,11 @@ const routeApi = getRouteApi("/admin/qr");
 
 const PASOS_TOUR_QR: PasoTour[] = [
   {
+    elemento: '[data-tour="qr-sucursal"]',
+    titulo: "Una por sucursal",
+    descripcion: "Si tienes varias sucursales, cada una puede tener su propio QR.",
+  },
+  {
     elemento: '[data-tour="qr-preview"]',
     titulo: "Tu código QR",
     descripcion: "Este es el código QR de tu menú, listo para compartir.",
@@ -45,11 +50,6 @@ const PASOS_TOUR_QR: PasoTour[] = [
     titulo: "Personalízalo",
     descripcion:
       "Decide qué información se ve en la tarjeta: descripción, colores, tipografía, tu logo o tu imagen de fondo.",
-  },
-  {
-    elemento: '[data-tour="qr-sucursal"]',
-    titulo: "Una por sucursal",
-    descripcion: "Si tienes varias sucursales, cada una puede tener su propio QR.",
   },
 ];
 
