@@ -753,8 +753,12 @@ export type Database = {
           cancela_al_terminar: boolean;
           created_at: string;
           descripcion: string | null;
+          dominio_asignado_at: string | null;
+          dominio_aviso_error_at: string | null;
+          dominio_diagnostico: Json | null;
           dominio_estado: string | null;
           dominio_personalizado: string | null;
+          dominio_revocado_por_plan: boolean;
           estado: string;
           facebook_url: string | null;
           formato_activo: string;
@@ -781,8 +785,12 @@ export type Database = {
           cancela_al_terminar?: boolean;
           created_at?: string;
           descripcion?: string | null;
+          dominio_asignado_at?: string | null;
+          dominio_aviso_error_at?: string | null;
+          dominio_diagnostico?: Json | null;
           dominio_estado?: string | null;
           dominio_personalizado?: string | null;
+          dominio_revocado_por_plan?: boolean;
           estado?: string;
           facebook_url?: string | null;
           formato_activo?: string;
@@ -809,8 +817,12 @@ export type Database = {
           cancela_al_terminar?: boolean;
           created_at?: string;
           descripcion?: string | null;
+          dominio_asignado_at?: string | null;
+          dominio_aviso_error_at?: string | null;
+          dominio_diagnostico?: Json | null;
           dominio_estado?: string | null;
           dominio_personalizado?: string | null;
+          dominio_revocado_por_plan?: boolean;
           estado?: string;
           facebook_url?: string | null;
           formato_activo?: string;
