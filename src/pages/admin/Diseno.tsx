@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ExternalLink, ImagePlus, Link2, Loader2, Lock, Trash2 } from "lucide-react";
@@ -26,11 +26,16 @@ import { BOTONES, ESTADOS } from "@/lib/copy";
 import { avisarGuardado } from "@/lib/avisos";
 import { FORMATOS, NOMBRE_FORMATO, type FormatoMenu } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { crearTour, type PasoTour } from "@/lib/tour";
+import { useIniciarTour, type PasoTour } from "@/lib/tour";
 
 const routeApi = getRouteApi("/admin/diseno");
 
 const PASOS_TOUR_DISENO: PasoTour[] = [
+  {
+    elemento: '[data-tour="diseno-preview"]',
+    titulo: "Vista previa",
+    descripcion: "Aquí ves los cambios en tiempo real antes de guardar.",
+  },
   {
     elemento: '[data-tour="diseno-formatos"]',
     titulo: "Elige tu formato",
@@ -50,11 +55,6 @@ const PASOS_TOUR_DISENO: PasoTour[] = [
     elemento: '[data-tour="diseno-fondo"]',
     titulo: "Imagen de fondo",
     descripcion: "Sube o cambia la imagen de fondo para darle más personalidad a tu menú.",
-  },
-  {
-    elemento: '[data-tour="diseno-preview"]',
-    titulo: "Vista previa",
-    descripcion: "Aquí ves los cambios en tiempo real antes de guardar.",
   },
   {
     elemento: '[data-tour="diseno-guardar"]',
@@ -97,14 +97,8 @@ function Contenido() {
 
   const { tour } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const tourIniciado = useRef(false);
 
-  useEffect(() => {
-    if (!tour || !ctx || tourIniciado.current) return;
-    tourIniciado.current = true;
-    requestAnimationFrame(() => crearTour(PASOS_TOUR_DISENO).drive());
-    void navigate({ search: {}, replace: true });
-  }, [tour, ctx, navigate]);
+  useIniciarTour(Boolean(tour), true, PASOS_TOUR_DISENO, navigate);
 
   if (!ctx) return null;
 

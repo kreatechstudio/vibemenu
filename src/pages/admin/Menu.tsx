@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import { FolderPlus, ImageOff, Lock, Plus, Store, Trash2 } from "lucide-react";
@@ -23,7 +23,7 @@ import { avisarExito } from "@/lib/avisos";
 import { alcanzoLimite, permiteMenuPorSucursal } from "@/lib/plan";
 import type { Producto, Sucursal } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { crearTour, type PasoTour } from "@/lib/tour";
+import { useIniciarTour, type PasoTour } from "@/lib/tour";
 
 const routeApi = getRouteApi("/admin/menu");
 
@@ -164,7 +164,6 @@ function Contenido() {
 
   const { tour } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const tourIniciado = useRef(false);
 
   const [ambito, setAmbito] = useState<string | null>(null);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
@@ -192,12 +191,12 @@ function Contenido() {
     if (!seleccionada || !ids.includes(seleccionada)) setSeleccionada(ids[0]);
   }, [idsVisibles, seleccionada]);
 
-  useEffect(() => {
-    if (!tour || !ctx || tourIniciado.current) return;
-    tourIniciado.current = true;
-    requestAnimationFrame(() => crearTour(PASOS_TOUR_CARTA).drive());
-    void navigate({ search: {}, replace: true });
-  }, [tour, ctx, navigate]);
+  useIniciarTour(
+    Boolean(tour),
+    categorias !== undefined && productos !== undefined,
+    PASOS_TOUR_CARTA,
+    navigate,
+  );
 
   if (!ctx) return null;
 

@@ -116,10 +116,10 @@ export default function TutorialAyuda() {
                       <button
                         type="button"
                         onClick={iniciarTour}
-                        className="group -m-1.5 flex w-full items-start gap-3 rounded-lg p-1.5 text-left transition-colors hover:bg-vm-bg-soft"
+                        className="group -m-1.5 flex w-full items-start gap-3 rounded-lg p-1.5 text-left transition-colors hover:bg-vm-bg-soft focus-visible:bg-vm-bg-soft"
                       >
                         {contenido}
-                        <span className="mt-1 flex shrink-0 items-center gap-0.5 text-xs font-medium text-vm-primary opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="mt-1 flex shrink-0 items-center gap-0.5 text-xs font-medium text-vm-primary opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 group-focus-visible:opacity-100">
                           Ver tour
                           <ChevronRight className="size-3.5" aria-hidden />
                         </span>

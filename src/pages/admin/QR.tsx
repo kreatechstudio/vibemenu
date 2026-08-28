@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { Check, Copy, Download, Loader2, Lock } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -15,7 +15,7 @@ import {
   svgSerializado,
   type OpcionesTarjeta,
 } from "@/lib/qr";
-import { crearTour, type PasoTour } from "@/lib/tour";
+import { useIniciarTour, type PasoTour } from "@/lib/tour";
 import { BOTONES } from "@/lib/copy";
 import { EMPRESA } from "@/lib/legal";
 import type { FormatoMenu } from "@/types/database";
@@ -126,14 +126,8 @@ function Contenido() {
 
   const { tour } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
-  const tourIniciado = useRef(false);
 
-  useEffect(() => {
-    if (!tour || !ctx || tourIniciado.current) return;
-    tourIniciado.current = true;
-    requestAnimationFrame(() => crearTour(PASOS_TOUR_QR).drive());
-    void navigate({ search: {}, replace: true });
-  }, [tour, ctx, navigate]);
+  useIniciarTour(Boolean(tour), sucursales !== undefined, PASOS_TOUR_QR, navigate);
 
   if (!ctx) return null;
 
