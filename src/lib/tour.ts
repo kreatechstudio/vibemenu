@@ -80,9 +80,11 @@ export function useIniciarTour(
     if (!activo || !listo || iniciado.current) return;
     iniciado.current = true;
 
-    const tour = crearTour(pasos);
-    instanciaRef.current = tour;
-    frameRef.current = requestAnimationFrame(() => tour.drive());
+    frameRef.current = requestAnimationFrame(() => {
+      const tour = crearTour(pasos);
+      instanciaRef.current = tour;
+      tour.drive();
+    });
     void navigate({ search: {}, replace: true });
   }, [activo, listo, pasos, navigate]);
 
