@@ -16,6 +16,7 @@ import { useVisitas } from "@/hooks/useVisitas";
 import { formatearPrecio } from "@/lib/plan";
 import { avisarError, avisarExito } from "@/lib/avisos";
 import { COLOR_ESTADO, FECHA, FECHA_HORA, NOMBRE_ESTADO } from "@/lib/superadmin";
+import { motivoProblemaDNS, type DominioDiagnostico } from "@/lib/dominio";
 import { EMPRESA } from "@/lib/legal";
 import {
   NOMBRE_PLAN,
@@ -109,6 +110,10 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
     }
   }
 
+  const motivoDominio = detalle
+    ? motivoProblemaDNS((detalle.tenant.dominio_diagnostico as DominioDiagnostico | null) ?? null)
+    : null;
+
   return (
     <div className="min-h-screen bg-white">
       <header className="flex h-16 items-center gap-3 border-b px-4 md:px-6">
@@ -183,7 +188,20 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
                   <dd className="vm-data text-vm-ink">{detalle.tenant.slug}</dd>
                   <dt className="text-vm-body">Dominio propio</dt>
                   <dd className="vm-data text-vm-ink">
-                    {detalle.tenant.dominio_personalizado ?? "—"}
+                    {detalle.tenant.dominio_personalizado ? (
+                      <>
+                        {detalle.tenant.dominio_personalizado}
+                        <span className="text-vm-body">
+                          {" · "}
+                          {detalle.tenant.dominio_estado ?? "pendiente"}
+                        </span>
+                        {motivoDominio && (
+                          <span className="mt-1 block text-xs text-vm-danger">{motivoDominio}</span>
+                        )}
+                      </>
+                    ) : (
+                      "—"
+                    )}
                   </dd>
                   <dt className="text-vm-body">Giro</dt>
                   <dd className="text-vm-ink">{detalle.tenant.giro ?? "—"}</dd>
