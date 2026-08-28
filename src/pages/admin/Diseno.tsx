@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Check, ExternalLink, ImagePlus, Link2, Loader2, Lock, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -26,6 +26,42 @@ import { BOTONES, ESTADOS } from "@/lib/copy";
 import { avisarGuardado } from "@/lib/avisos";
 import { FORMATOS, NOMBRE_FORMATO, type FormatoMenu } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { crearTour, type PasoTour } from "@/lib/tour";
+
+const routeApi = getRouteApi("/admin/diseno");
+
+const PASOS_TOUR_DISENO: PasoTour[] = [
+  {
+    elemento: '[data-tour="diseno-formatos"]',
+    titulo: "Elige tu formato",
+    descripcion: "Elige cómo se ve tu menú: Clásico, Pinterest, Instagram o TikTok.",
+  },
+  {
+    elemento: '[data-tour="diseno-tipografia"]',
+    titulo: "Tipografía",
+    descripcion: "Elige la tipografía que combine con tu marca.",
+  },
+  {
+    elemento: '[data-tour="diseno-colores"]',
+    titulo: "Colores",
+    descripcion: "Personaliza los colores de acento, fondo, texto y modificadores.",
+  },
+  {
+    elemento: '[data-tour="diseno-fondo"]',
+    titulo: "Imagen de fondo",
+    descripcion: "Sube o cambia la imagen de fondo para darle más personalidad a tu menú.",
+  },
+  {
+    elemento: '[data-tour="diseno-preview"]',
+    titulo: "Vista previa",
+    descripcion: "Aquí ves los cambios en tiempo real antes de guardar.",
+  },
+  {
+    elemento: '[data-tour="diseno-guardar"]',
+    titulo: "No olvides guardar",
+    descripcion: "Guarda tus cambios para que se vean en tu menú público.",
+  },
+];
 
 export default function Diseno() {
   return (
@@ -58,6 +94,17 @@ function Contenido() {
   const [tema, setTema] = useState<TemaTenant>((ctx?.tenant.tema ?? {}) as TemaTenant);
   // Solo se borra la imagen vieja si el guardado sale bien.
   const fondoOriginal = useRef(((ctx?.tenant.tema ?? {}) as TemaTenant).imagen_fondo_url ?? null);
+
+  const { tour } = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
+  const tourIniciado = useRef(false);
+
+  useEffect(() => {
+    if (!tour || !ctx || tourIniciado.current) return;
+    tourIniciado.current = true;
+    requestAnimationFrame(() => crearTour(PASOS_TOUR_DISENO).drive());
+    void navigate({ search: {}, replace: true });
+  }, [tour, ctx, navigate]);
 
   if (!ctx) return null;
 
@@ -150,7 +197,10 @@ function Contenido() {
         {/* ── Vista previa ─────────────────────────────────────
             En móvil queda pegada arriba mientras bajas por las opciones.
             En escritorio vive en la columna derecha, también pegada. */}
-        <aside className="sticky top-0 z-20 -mx-4 mb-6 border-b bg-white/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8 xl:order-2 xl:mx-0 xl:mb-0 xl:self-start xl:border-0 xl:bg-transparent xl:px-0 xl:py-0 xl:backdrop-blur-none">
+        <aside
+          data-tour="diseno-preview"
+          className="sticky top-0 z-20 -mx-4 mb-6 border-b bg-white/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8 xl:order-2 xl:mx-0 xl:mb-0 xl:self-start xl:border-0 xl:bg-transparent xl:px-0 xl:py-0 xl:backdrop-blur-none"
+        >
           <div className="mx-auto flex max-w-[220px] items-center justify-between gap-3 xl:max-w-none">
             <p className="text-xs font-medium text-vm-ink xl:text-sm">Vista previa</p>
             <span className="rounded-full bg-vm-bg-soft px-2 py-0.5 text-[11px] text-vm-body">
@@ -183,7 +233,10 @@ function Contenido() {
             </div>
 
             {/* Carrusel táctil en móvil, rejilla desde md. */}
-            <div className="tira-scroll -mx-4 mt-4 flex gap-3 px-4 pb-3 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 2xl:grid-cols-4">
+            <div
+              data-tour="diseno-formatos"
+              className="tira-scroll -mx-4 mt-4 flex gap-3 px-4 pb-3 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 2xl:grid-cols-4"
+            >
               {FORMATOS.map((f) => {
                 const fuera = !pool.includes(f);
                 const esActivo = activo === f;
@@ -254,7 +307,7 @@ function Contenido() {
               </p>
             </div>
 
-            <div className="mt-4">
+            <div data-tour="diseno-tipografia" className="mt-4">
               <SelectorFuente
                 valor={preview.fuente}
                 permitidas={fuentesPermitidas}
@@ -277,7 +330,7 @@ function Contenido() {
             <h2 className="text-lg">Colores</h2>
             {/* Horizontal, bajando de línea si no cabe.
                 Cada color: etiqueta arriba, muestra en medio, hexadecimal abajo. */}
-            <div className="mt-4 flex flex-wrap gap-4">
+            <div data-tour="diseno-colores" className="mt-4 flex flex-wrap gap-4">
               {(
                 [
                   ["color_primario", "Acento", true],
@@ -357,7 +410,7 @@ function Contenido() {
                 />
 
                 {tema.imagen_fondo_url ? (
-                  <div className="mt-4 flex items-center gap-3">
+                  <div data-tour="diseno-fondo" className="mt-4 flex items-center gap-3">
                     <img
                       src={tema.imagen_fondo_url}
                       alt=""
@@ -375,6 +428,7 @@ function Contenido() {
                 ) : (
                   <button
                     type="button"
+                    data-tour="diseno-fondo"
                     onClick={() => inputImagen.current?.click()}
                     disabled={subiendo}
                     className="mt-4 flex h-28 w-full max-w-md flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-sm text-vm-body hover:bg-vm-bg-soft"
@@ -474,6 +528,7 @@ function Contenido() {
           <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t bg-white/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
             <button
               type="submit"
+              data-tour="diseno-guardar"
               disabled={actualizar.isPending || subiendo}
               className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-vm-primary px-6 text-sm font-medium text-white hover:bg-vm-primary-hover disabled:opacity-50 sm:flex-none"
             >
