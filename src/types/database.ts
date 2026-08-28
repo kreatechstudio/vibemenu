@@ -592,6 +592,7 @@ export type Database = {
           activa: boolean;
           created_at: string;
           direccion: string | null;
+          google_reviews_url: string | null;
           id: string;
           maps_url: string | null;
           nombre: string;
@@ -605,6 +606,7 @@ export type Database = {
           activa?: boolean;
           created_at?: string;
           direccion?: string | null;
+          google_reviews_url?: string | null;
           id?: string;
           maps_url?: string | null;
           nombre: string;
@@ -618,6 +620,7 @@ export type Database = {
           activa?: boolean;
           created_at?: string;
           direccion?: string | null;
+          google_reviews_url?: string | null;
           id?: string;
           maps_url?: string | null;
           nombre?: string;

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { Loader2 } from "lucide-react";
+import ContactoMenu from "@/components/menu/ContactoMenu";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import MarcaAgua from "@/components/menu/MarcaAgua";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
@@ -217,6 +218,8 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
       ) : (
         <Formato {...propsFormato} />
       )}
+
+      <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
 
       {data.marcaAgua && <MarcaAgua />}
     </>
