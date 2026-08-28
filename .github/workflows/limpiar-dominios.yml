@@ -1,0 +1,22 @@
+name: Limpiar dominios huerfanos
+
+# Nocturno. Borra del proyecto de Vercel los dominios que ya ningun tenant usa
+# -- ver supabase/functions/limpiar-dominios-huerfanos.
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
+
+jobs:
+  limpiar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar a limpiar-dominios-huerfanos
+        run: |
+          curl --fail-with-body -sS -X POST \
+            "https://iaiiwtqqiaqxnzxjqcnt.supabase.co/functions/v1/limpiar-dominios-huerfanos" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "x-cron-secret: ${{ secrets.DOMINIO_CRON_SECRET }}"
+
+# Si este job falla, GitHub le manda correo solo al dueño del repo -- mismo
+# criterio que verificar-dominios.yml y backup-db.yml.
