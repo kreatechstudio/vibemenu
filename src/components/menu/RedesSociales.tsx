@@ -36,20 +36,41 @@ const ENLACES: Enlace[] = [
   { clave: "google_reviews_url", etiqueta: "Reseñas en Google", Icono: Star },
 ];
 
+/**
+ * Href real de cada enlace. Para reseñas, `resenasUrlOverride` (si se pasa,
+ * incluido `null` explícito) manda sobre `tenant.google_reviews_url` — así la
+ * cabecera de una sucursal apunta a las reseñas de ESA sucursal.
+ */
+function hrefDe(
+  tenant: Tenant,
+  clave: Enlace["clave"],
+  resenasUrlOverride: string | null | undefined,
+): string | null {
+  if (clave === "google_reviews_url" && resenasUrlOverride !== undefined) {
+    return resenasUrlOverride;
+  }
+  return tenant[clave] ?? null;
+}
+
 /** Sin ningún enlace, la cabecera no debe reservar espacio para la fila. */
-export const tieneRedes = (tenant: Tenant): boolean =>
-  ENLACES.some(({ clave }) => Boolean(tenant[clave]));
+export const tieneRedes = (tenant: Tenant, resenasUrlOverride?: string | null): boolean =>
+  ENLACES.some(({ clave }) => Boolean(hrefDe(tenant, clave, resenasUrlOverride)));
 
 export default function RedesSociales({
   tenant,
   sobreOscuro = false,
+  resenasUrlOverride,
 }: {
   tenant: Tenant;
   /** En fondo completo el texto ya es blanco: los iconos también. */
   sobreOscuro?: boolean;
+  /** Reseñas de la sucursal activa (o null si no tiene ni ella ni la empresa). */
+  resenasUrlOverride?: string | null;
 }) {
   // Sin la migración 007 estas columnas llegan como `undefined`, no como null.
-  const visibles = ENLACES.filter(({ clave }) => Boolean(tenant[clave]));
+  const visibles = ENLACES.filter(({ clave }) =>
+    Boolean(hrefDe(tenant, clave, resenasUrlOverride)),
+  );
   if (visibles.length === 0) return null;
 
   const estilo = sobreOscuro
@@ -64,7 +85,7 @@ export default function RedesSociales({
       {visibles.map(({ clave, etiqueta, Icono }) => (
         <a
           key={clave}
-          href={tenant[clave]!}
+          href={hrefDe(tenant, clave, resenasUrlOverride)!}
           target="_blank"
           rel="noreferrer noopener"
           aria-label={etiqueta}

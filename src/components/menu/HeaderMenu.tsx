@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { MapPin } from "lucide-react";
 import RedesSociales, { tieneRedes } from "@/components/menu/RedesSociales";
 import { useSucursalAbierta } from "@/hooks/useMenuPublico";
+import { contactoSucursal } from "@/lib/contacto";
 import { enlaceMaps } from "@/lib/maps";
 import { ESTADOS } from "@/lib/copy";
 import type { Sucursal, Tenant } from "@/types/database";
@@ -57,6 +58,7 @@ export default function HeaderMenu({
   abiertaFija?: boolean;
 }) {
   const sucursal = sucursalActiva ?? sucursales[0] ?? null;
+  const resenas = contactoSucursal(sucursal, tenant).googleReviewsUrl;
   const consulta = useSucursalAbierta(abiertaFija === undefined ? sucursal?.id : undefined);
   const abierta = abiertaFija ?? consulta.data;
   const mapa = sucursal ? enlaceMaps(sucursal, tenant.nombre_negocio) : null;
@@ -124,9 +126,9 @@ export default function HeaderMenu({
       </div>
 
       {/* Van justo después del nombre y la dirección. */}
-      {tieneRedes(tenant) && (
+      {tieneRedes(tenant, resenas) && (
         <div className="mx-auto mt-3 flex max-w-2xl">
-          <RedesSociales tenant={tenant} sobreOscuro={sobreOscuro} />
+          <RedesSociales tenant={tenant} sobreOscuro={sobreOscuro} resenasUrlOverride={resenas} />
         </div>
       )}
 
