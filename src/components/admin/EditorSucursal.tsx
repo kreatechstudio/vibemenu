@@ -13,6 +13,7 @@ import {
 import { traducirError, type ErrorTraducido } from "@/lib/errores";
 import { enlaceMaps } from "@/lib/maps";
 import { esUrlValida } from "@/lib/url";
+import { asegurarLada } from "@/lib/whatsapp";
 import { normalizarSlug } from "@/lib/slug";
 import { BOTONES } from "@/lib/copy";
 import { avisarGuardado } from "@/lib/avisos";
@@ -48,6 +49,7 @@ export default function EditorSucursal({
   const [slugTocado, setSlugTocado] = useState(!esNueva);
   const [direccion, setDireccion] = useState(sucursal?.direccion ?? "");
   const [mapsUrl, setMapsUrl] = useState(sucursal?.maps_url ?? "");
+  const [reviewsUrl, setReviewsUrl] = useState(sucursal?.google_reviews_url ?? "");
   const [telefono, setTelefono] = useState(sucursal?.telefono ?? "");
   const [whatsapp, setWhatsapp] = useState(sucursal?.whatsapp ?? "");
   const [timezone, setTimezone] = useState(sucursal?.timezone ?? "America/Mexico_City");
@@ -99,6 +101,12 @@ export default function EditorSucursal({
       return;
     }
 
+    const reviews = reviewsUrl.trim();
+    if (reviews && !esUrlValida(reviews)) {
+      setError("El enlace de reseñas debe empezar por https://");
+      return;
+    }
+
     try {
       await guardar.mutateAsync({
         id: sucursal?.id,
@@ -107,8 +115,9 @@ export default function EditorSucursal({
           slug: slug.trim(),
           direccion: direccion.trim() || null,
           maps_url: maps || null,
-          telefono: telefono.trim() || null,
-          whatsapp: whatsapp.trim() || null,
+          google_reviews_url: reviews || null,
+          telefono: asegurarLada(telefono.trim() || null),
+          whatsapp: asegurarLada(whatsapp.trim() || null),
           timezone,
         },
         horarios: ORDEN_VISUAL.map((d) => filas[d]),
@@ -223,6 +232,25 @@ export default function EditorSucursal({
             )}
           </p>
 
+          <div>
+            <label htmlFor="s-reviews" className="text-sm font-medium text-vm-ink">
+              Reseñas en Google <span className="font-normal text-vm-body">(opcional)</span>
+            </label>
+            <input
+              id="s-reviews"
+              type="url"
+              inputMode="url"
+              value={reviewsUrl}
+              onChange={(e) => setReviewsUrl(e.target.value)}
+              placeholder="https://g.page/r/…/review"
+              className="mt-2 h-12 w-full rounded-lg border px-4 text-sm outline-none focus:border-vm-primary"
+            />
+            <p className="mt-1.5 text-xs text-vm-body">
+              En tu ficha de Google entra a «Pedir reseñas» y copia el enlace corto. Si lo dejas
+              vacío, el menú usa el de tu negocio.
+            </p>
+          </div>
+
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="s-tel" className="text-sm font-medium text-vm-ink">
@@ -247,6 +275,9 @@ export default function EditorSucursal({
               />
             </div>
           </div>
+          <p className="-mt-2 text-xs text-vm-body">
+            Con lada de país — así el botón de «Pedir por WhatsApp» del menú funciona.
+          </p>
 
           <div>
             <label htmlFor="s-tz" className="text-sm font-medium text-vm-ink">
