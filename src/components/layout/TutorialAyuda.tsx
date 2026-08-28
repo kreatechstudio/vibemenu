@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import {
   Building2,
+  ChevronRight,
   HelpCircle,
   LayoutDashboard,
   Palette,
@@ -25,9 +27,31 @@ const ICONOS = [LayoutDashboard, UtensilsCrossed, Building2, Palette, QrCode];
  * persistido. Complementa (no reemplaza) el tour guiado por pestaña que
  * documenta vibemenu_registro_asistido.md §6, pospuesto hasta que Diseño.tsx
  * se estabilice.
+ *
+ * 3 de las 5 secciones (Mi carta, Diseño, QR — índices 1, 3, 4) además
+ * arrancan un recorrido guiado (driver.js) sobre la página real: navega ahí
+ * con `?tour=1` y la propia página lo arranca (ver PASOS_TOUR_* en cada
+ * página). Resumen y Mi negocio (0, 2) se quedan sin esa opción — son de
+ * solo-lectura/datos, no de crear-editar-personalizar.
  */
 export default function TutorialAyuda() {
   const [abierto, setAbierto] = useState(false);
+  const navigate = useNavigate();
+
+  const accionesTour: Partial<Record<number, () => void>> = {
+    1: () => {
+      setAbierto(false);
+      void navigate({ to: "/admin/menu", search: { tour: true } });
+    },
+    3: () => {
+      setAbierto(false);
+      void navigate({ to: "/admin/diseno", search: { tour: true } });
+    },
+    4: () => {
+      setAbierto(false);
+      void navigate({ to: "/admin/qr", search: { tour: true } });
+    },
+  };
 
   return (
     <>
@@ -65,15 +89,41 @@ export default function TutorialAyuda() {
               <ul className="space-y-4">
                 {TUTORIAL.secciones.map((seccion, i) => {
                   const Icono = ICONOS[i];
-                  return (
-                    <li key={seccion.etiqueta} className="flex gap-3">
+                  const iniciarTour = accionesTour[i];
+
+                  const contenido = (
+                    <>
                       <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-vm-primary/10">
                         <Icono className="size-4.5 text-vm-primary" aria-hidden />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-vm-ink">{seccion.etiqueta}</p>
                         <p className="mt-0.5 text-sm text-vm-body">{seccion.descripcion}</p>
                       </div>
+                    </>
+                  );
+
+                  if (!iniciarTour) {
+                    return (
+                      <li key={seccion.etiqueta} className="flex gap-3">
+                        {contenido}
+                      </li>
+                    );
+                  }
+
+                  return (
+                    <li key={seccion.etiqueta}>
+                      <button
+                        type="button"
+                        onClick={iniciarTour}
+                        className="group -m-1.5 flex w-full items-start gap-3 rounded-lg p-1.5 text-left transition-colors hover:bg-vm-bg-soft"
+                      >
+                        {contenido}
+                        <span className="mt-1 flex shrink-0 items-center gap-0.5 text-xs font-medium text-vm-primary opacity-0 transition-opacity group-hover:opacity-100">
+                          Ver tour
+                          <ChevronRight className="size-3.5" aria-hidden />
+                        </span>
+                      </button>
                     </li>
                   );
                 })}
