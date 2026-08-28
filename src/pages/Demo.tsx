@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import ContactoMenu from "@/components/menu/ContactoMenu";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
@@ -104,6 +105,7 @@ export default function Demo() {
                 logoUrl={TENANT_DEMO.logo_url}
                 inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
               />
+              <ContactoMenu tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} />
             </div>
           )}
         </motion.div>
