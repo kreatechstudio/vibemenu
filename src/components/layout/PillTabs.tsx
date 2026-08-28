@@ -11,6 +11,7 @@ export const PESTANAS_NEGOCIO: Pestana[] = [
   { a: "/admin/empresa", etiqueta: "Perfil" },
   { a: "/admin/sucursales", etiqueta: "Sucursales" },
   { a: "/admin/equipo", etiqueta: "Equipo" },
+  { a: "/admin/opiniones", etiqueta: "Opiniones" },
   { a: "/admin/suscripcion", etiqueta: "Suscripción" },
 ];
 

@@ -29,6 +29,7 @@ import { Route as AuthCompletarRouteImport } from './routes/auth.completar'
 import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
 import { Route as AdminSucursalesRouteImport } from './routes/admin.sucursales'
 import { Route as AdminQrRouteImport } from './routes/admin.qr'
+import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
 import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
@@ -136,6 +137,11 @@ const AdminQrRoute = AdminQrRouteImport.update({
   path: '/admin/qr',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminOpinionesRoute = AdminOpinionesRouteImport.update({
+  id: '/admin/opiniones',
+  path: '/admin/opiniones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminModificadoresRoute = AdminModificadoresRouteImport.update({
   id: '/admin/modificadores',
   path: '/admin/modificadores',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/admin/equipo': typeof AdminEquipoRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
+  '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/qr': typeof AdminQrRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/admin/equipo': typeof AdminEquipoRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
+  '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/qr': typeof AdminQrRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/admin/equipo': typeof AdminEquipoRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
+  '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/qr': typeof AdminQrRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/equipo'
     | '/admin/menu'
     | '/admin/modificadores'
+    | '/admin/opiniones'
     | '/admin/qr'
     | '/admin/sucursales'
     | '/admin/suscripcion'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin/equipo'
     | '/admin/menu'
     | '/admin/modificadores'
+    | '/admin/opiniones'
     | '/admin/qr'
     | '/admin/sucursales'
     | '/admin/suscripcion'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/equipo'
     | '/admin/menu'
     | '/admin/modificadores'
+    | '/admin/opiniones'
     | '/admin/qr'
     | '/admin/sucursales'
     | '/admin/suscripcion'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   AdminEquipoRoute: typeof AdminEquipoRoute
   AdminMenuRoute: typeof AdminMenuRoute
   AdminModificadoresRoute: typeof AdminModificadoresRoute
+  AdminOpinionesRoute: typeof AdminOpinionesRoute
   AdminQrRoute: typeof AdminQrRoute
   AdminSucursalesRoute: typeof AdminSucursalesRoute
   AdminSuscripcionRoute: typeof AdminSuscripcionRoute
@@ -510,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminQrRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/opiniones': {
+      id: '/admin/opiniones'
+      path: '/admin/opiniones'
+      fullPath: '/admin/opiniones'
+      preLoaderRoute: typeof AdminOpinionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/modificadores': {
       id: '/admin/modificadores'
       path: '/admin/modificadores'
@@ -584,6 +604,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminEquipoRoute: AdminEquipoRoute,
   AdminMenuRoute: AdminMenuRoute,
   AdminModificadoresRoute: AdminModificadoresRoute,
+  AdminOpinionesRoute: AdminOpinionesRoute,
   AdminQrRoute: AdminQrRoute,
   AdminSucursalesRoute: AdminSucursalesRoute,
   AdminSuscripcionRoute: AdminSuscripcionRoute,
