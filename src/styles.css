@@ -311,3 +311,47 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
+
+/* Tour guiado del panel admin (driver.js) — combina con los tokens vm-*. */
+.vm-tour-popover.driver-popover {
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(11, 11, 15, 0.16);
+  font-family: var(--font-sans);
+  padding: 1.25rem;
+}
+
+.vm-tour-popover .driver-popover-title {
+  color: var(--vm-ink);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vm-tour-popover .driver-popover-description {
+  color: var(--vm-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.vm-tour-popover .driver-popover-progress-text {
+  color: var(--vm-body);
+  font-size: 0.75rem;
+}
+
+.vm-tour-popover .driver-popover-footer-btn {
+  border-radius: 0.5rem;
+  border: none;
+  background: var(--vm-primary);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.5rem 0.875rem;
+  text-shadow: none;
+}
+
+.vm-tour-popover .driver-popover-footer-btn:hover {
+  background: var(--vm-primary-hover);
+}
+
+.vm-tour-popover .driver-popover-close-btn {
+  color: var(--vm-body);
+}
