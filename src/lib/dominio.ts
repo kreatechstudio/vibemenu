@@ -31,3 +31,73 @@ export const MENSAJE_ERROR_DOMINIO: Record<ErrorDominio, string> = {
   formato: "Escribe un dominio válido, como menu.tunegocio.com.",
   reservado: "Ese dominio está reservado para Vibemenu.",
 };
+
+/* -------------------------------------------------------------------------- */
+/*  Ciclo de vida del dominio (migracion 019, spec 2026-08-28)               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Lo ultimo que Vercel dijo del dominio, guardado en `tenants.dominio_diagnostico`.
+ * Lo escriben las Edge Functions agregar-dominio-vercel / verificar-dominios-pendientes;
+ * el frontend solo lo lee. Forma flexible: los helpers toleran campos ausentes.
+ */
+export type DominioDiagnostico = {
+  name: string;
+  apexName: string;
+  misconfigured: boolean;
+  verification: { type: string; domain: string; value: string; reason: string }[];
+  recommendedIPv4: string[];
+  recommendedCNAME: string[];
+  revisado_at: string;
+};
+
+export type RegistroDNS = { tipo: "A" | "CNAME"; nombre: string; valor: string };
+
+/** Sufijos publicos compuestos relevantes para el mercado MX; para el fallback sin datos de Vercel. */
+const SUFIJOS_COMPUESTOS = [".com.mx", ".org.mx", ".net.mx", ".gob.mx", ".edu.mx"];
+
+const IPV4_VERCEL = "76.76.21.21";
+const CNAME_VERCEL = "cname.vercel-dns.com";
+
+/** Vercel dice si el dominio es apex: apexName === name. */
+export function esApexSegunVercel(name: string, apexName: string): boolean {
+  return name.toLowerCase() === apexName.toLowerCase();
+}
+
+/** Fallback sin datos de Vercel: apex si solo queda 1 label sobre el sufijo conocido. */
+function esApexPorHeuristica(dominio: string): boolean {
+  const d = dominio.toLowerCase();
+  const sufijo = SUFIJOS_COMPUESTOS.find((s) => d.endsWith(s));
+  const labelsSufijo = sufijo ? sufijo.split(".").filter(Boolean).length : 1;
+  return d.split(".").length === labelsSufijo + 1;
+}
+
+/** El label a la izquierda del apex ("menu" en "menu.tienda.com.mx"), o "@" si es apex. */
+function nombreRegistro(dominio: string, esApex: boolean): string {
+  if (esApex) return "@";
+  return dominio.split(".")[0];
+}
+
+/**
+ * Registros DNS a mostrarle al dueno, derivados del diagnostico de Vercel.
+ * Si `diag` es null (Vercel aun no respondio) cae a la heuristica + valores estaticos.
+ */
+export function instruccionesDNS(dominio: string, diag: DominioDiagnostico | null): RegistroDNS[] {
+  const esApex = diag ? esApexSegunVercel(diag.name, diag.apexName) : esApexPorHeuristica(dominio);
+  const nombre = nombreRegistro(dominio, esApex);
+
+  if (esApex) {
+    return [{ tipo: "A", nombre, valor: diag?.recommendedIPv4?.[0] ?? IPV4_VERCEL }];
+  }
+  return [{ tipo: "CNAME", nombre, valor: diag?.recommendedCNAME?.[0] ?? CNAME_VERCEL }];
+}
+
+/** Motivo legible del problema de DNS, o null si no hay problema. */
+export function motivoProblemaDNS(diag: DominioDiagnostico | null): string | null {
+  if (!diag || !diag.misconfigured) return null;
+  const conReason = diag.verification.find((v) => v.reason && v.domain);
+  if (conReason) {
+    return `Falta el registro ${conReason.type} en ${conReason.domain}. Créalo con el valor de abajo y vuelve a intentar.`;
+  }
+  return "No encontramos el registro DNS, o apunta a otro lado. Revisa que coincida exactamente con lo de abajo.";
+}
