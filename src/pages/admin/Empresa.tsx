@@ -15,6 +15,7 @@ import { esUrlValida } from "@/lib/url";
 import { avisarGuardado } from "@/lib/avisos";
 import { supabase } from "@/lib/supabase";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
+import { asegurarLada } from "@/lib/whatsapp";
 import {
   MENSAJE_ERROR_DOMINIO,
   normalizarDominio,
@@ -172,8 +173,8 @@ function Contenido() {
         giro: giro.trim() || null,
         descripcion: descripcion.trim() || null,
         slug: slug.trim(),
-        telefono: telefono.trim() || null,
-        whatsapp: whatsapp.trim() || null,
+        telefono: asegurarLada(telefono.trim() || null),
+        whatsapp: asegurarLada(whatsapp.trim() || null),
         logo_url: logoUrl || null,
         dominio_personalizado: permiteDominio ? dominio.trim() || null : undefined,
         ...limpias,
@@ -477,7 +478,7 @@ function Contenido() {
 
         <Bloque
           titulo="Contacto"
-          nota="Los de tu negocio. Cada sucursal puede tener los suyos, y esos mandan en su menú."
+          nota="Se usan cuando una sucursal no tiene los suyos. Si defines contacto en la sucursal, ese manda en su menú."
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
@@ -530,7 +531,7 @@ function Contenido() {
 
           <p className="mt-4 text-xs text-vm-body">
             Para las reseñas, en tu ficha de Google entra a «Pedir reseñas» y copia el enlace corto.
-            Lleva al comensal directo a escribir su calificación.
+            Cada sucursal puede tener el suyo; este es el que se usa cuando no lo tiene.
           </p>
         </Bloque>
 
