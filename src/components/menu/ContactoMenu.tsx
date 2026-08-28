@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { MapPin, MessageCircle, Phone, Star } from "lucide-react";
 import { contactoSucursal } from "@/lib/contacto";
 import { enlaceMaps } from "@/lib/maps";
-import { enlaceWhatsApp } from "@/lib/whatsapp";
+import { enlaceWhatsApp, telefonoParaWaMe } from "@/lib/whatsapp";
 import type { Sucursal, Tenant } from "@/types/database";
 
 type Fila = {
@@ -34,7 +34,8 @@ export default function ContactoMenu({
     tenant.nombre_negocio,
   );
   const wa = enlaceWhatsApp(c.whatsapp);
-  const tel = c.telefono ? `tel:${c.telefono.replace(/[^\d+]/g, "")}` : null;
+  const tel =
+    telefonoParaWaMe(c.telefono) !== null ? `tel:${c.telefono!.replace(/[^\d+]/g, "")}` : null;
 
   const filas: Fila[] = [];
   if (tel) filas.push({ etiqueta: "Llamar", href: tel, externo: false, Icono: Phone });

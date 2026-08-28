@@ -276,7 +276,7 @@ export default function EditorSucursal({
             </div>
           </div>
           <p className="-mt-2 text-xs text-vm-body">
-            Con lada de país — así el botón de «Pedir por WhatsApp» del menú funciona.
+            Con lada de país — así el enlace de WhatsApp del menú lleva al número correcto.
           </p>
 
           <div>

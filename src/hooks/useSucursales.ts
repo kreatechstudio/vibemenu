@@ -79,6 +79,9 @@ function useInvalidar(tenantId: string | undefined) {
  *
  * Dos triggers pueden rechazar esto: `trg_sucursales_10_timezone` si la zona no
  * existe en pg_timezone_names, y `trg_sucursales_20_limite` si el plan ya topo.
+ *
+ * `datos` siempre lleva `google_reviews_url`, así que la migración
+ * `vibemenu_migracion_contacto_sucursal.sql` debe estar aplicada antes del deploy.
  */
 export function useGuardarSucursal(tenantId: string | undefined) {
   const invalidar = useInvalidar(tenantId);
