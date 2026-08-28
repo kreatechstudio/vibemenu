@@ -59,6 +59,7 @@ export const SUCURSAL_DEMO: Sucursal = {
   slug: "centro",
   direccion: "5 de Mayo 120, Centro Histórico",
   maps_url: null,
+  google_reviews_url: null,
   telefono: null,
   whatsapp: null,
   timezone: "America/Mexico_City",
