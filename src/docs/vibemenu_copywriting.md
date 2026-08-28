@@ -133,6 +133,24 @@ tenant puede leerla o escribirla, vía RLS.)_
 
 ---
 
+## Copy — Tutorial rápido (panel admin)
+
+_(Botón de ayuda en el header de `/admin`, abre un modal manual — nunca se abre solo. Cada
+fila corresponde a una de las 5 secciones reales del sidebar del panel.)_
+
+| Elemento          | Texto                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| Título del modal  | Guía rápida de Vibemenu                                                                                         |
+| Intro             | Un vistazo rápido a cada sección de tu panel.                                                                   |
+| Resumen           | Un vistazo a cómo va tu negocio: visitas a tu menú, tu plan y tu estado de cuenta.                              |
+| Mi carta          | Aquí armas tu menú: categorías, productos, precios, fotos y modificadores como tamaños o extras.                |
+| Mi negocio        | Datos de contacto, sucursales, tu equipo y tu plan de suscripción.                                              |
+| Diseño            | Elige el formato visual de tu menú (Clásico, Pinterest, Instagram o TikTok) y personaliza colores y tipografía. |
+| QR                | Descarga el código QR de tu menú, listo para imprimir y poner en tus mesas.                                     |
+| Botón que lo abre | Ayuda                                                                                                           |
+
+---
+
 ## SEO básico
 
 | Campo                | Texto                                                                                                                               |

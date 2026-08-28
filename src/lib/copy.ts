@@ -175,3 +175,39 @@ export const SEO = {
 } as const;
 
 export const MARCA_AGUA = "Hecho con Vibemenu";
+
+/**
+ * Botón de ayuda en el header de /admin — abre un modal manual, nunca se
+ * abre solo. `secciones` va en el mismo orden que `NAV` en AdminLayout.tsx;
+ * los íconos se emparejan por posición ahí, no viven en este archivo.
+ */
+export const TUTORIAL = {
+  boton: "Ayuda",
+  titulo: "Guía rápida de Vibemenu",
+  intro: "Un vistazo rápido a cada sección de tu panel.",
+  secciones: [
+    {
+      etiqueta: "Resumen",
+      descripcion:
+        "Un vistazo a cómo va tu negocio: visitas a tu menú, tu plan y tu estado de cuenta.",
+    },
+    {
+      etiqueta: "Mi carta",
+      descripcion:
+        "Aquí armas tu menú: categorías, productos, precios, fotos y modificadores como tamaños o extras.",
+    },
+    {
+      etiqueta: "Mi negocio",
+      descripcion: "Datos de contacto, sucursales, tu equipo y tu plan de suscripción.",
+    },
+    {
+      etiqueta: "Diseño",
+      descripcion:
+        "Elige el formato visual de tu menú (Clásico, Pinterest, Instagram o TikTok) y personaliza colores y tipografía.",
+    },
+    {
+      etiqueta: "QR",
+      descripcion: "Descarga el código QR de tu menú, listo para imprimir y poner en tus mesas.",
+    },
+  ],
+} as const;

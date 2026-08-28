@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import BannerFacturacion from "@/components/layout/BannerFacturacion";
 import PanelBloqueado from "@/components/layout/PanelBloqueado";
+import TutorialAyuda from "@/components/layout/TutorialAyuda";
 import Logo from "@/components/marca/Logo";
 import AvatarUsuario from "@/components/ui/avatar-usuario";
 import {
@@ -270,6 +271,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <MenuCuenta ctx={ctx} />
 
           <div className="flex-1" />
+
+          <TutorialAyuda />
 
           <button
             type="button"
