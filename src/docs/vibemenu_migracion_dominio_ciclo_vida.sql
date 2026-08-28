@@ -20,7 +20,7 @@
 
 begin;
 
-alter table tenants drop constraint dominio_estado_valido;
+alter table tenants drop constraint if exists dominio_estado_valido;
 alter table tenants add constraint dominio_estado_valido check (
   dominio_estado is null or dominio_estado in ('pendiente', 'verificado', 'listo')
 );
