@@ -5,6 +5,7 @@ import Layout from "@/components/layout/Layout";
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
+import { traducirErrorAuth } from "@/lib/erroresAuth";
 import { trackEvent } from "@/lib/analytics";
 
 type Estado = "verificando" | "listo" | "error";
@@ -63,7 +64,7 @@ export default function RestablecerContrasena() {
       }
       await navigate({ to: "/admin" });
     } catch (err) {
-      setError(traducirError(err as Error).mensaje);
+      setError(traducirErrorAuth(err) ?? traducirError(err as Error).mensaje);
     } finally {
       setEnviando(false);
     }

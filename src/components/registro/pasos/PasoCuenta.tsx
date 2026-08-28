@@ -5,6 +5,7 @@ import BotonGoogle from "@/components/ui/boton-google";
 import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components/ui/captcha";
 import { supabase } from "@/lib/supabase";
 import { traducirError } from "@/lib/errores";
+import { traducirErrorAuth } from "@/lib/erroresAuth";
 
 type PasoCuentaProps = {
   onListo: () => void;
@@ -38,6 +39,17 @@ export default function PasoCuenta({ onListo, onConfirmarCorreo }: PasoCuentaPro
       });
       if (errorAuth) throw errorAuth;
 
+      // Con confirmación de correo activa y protección contra enumeración de
+      // usuarios, signUp de un correo YA registrado no devuelve error: trae un
+      // `user` con `identities` vacío y no manda ningún correo. Sin esto, el
+      // usuario ve "Confirma tu correo" y espera un enlace que nunca llega.
+      if (data.user && data.user.identities?.length === 0) {
+        setError("Ese correo ya tiene una cuenta. Entra desde abajo con tu contraseña.");
+        captchaRef.current?.reset();
+        setCaptchaToken(null);
+        return;
+      }
+
       if (!data.session) {
         onConfirmarCorreo(email);
         return;
@@ -45,7 +57,7 @@ export default function PasoCuenta({ onListo, onConfirmarCorreo }: PasoCuentaPro
 
       onListo();
     } catch (err) {
-      setError(traducirError(err as Error).mensaje);
+      setError(traducirErrorAuth(err) ?? traducirError(err as Error).mensaje);
       captchaRef.current?.reset();
       setCaptchaToken(null);
     } finally {

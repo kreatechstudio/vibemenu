@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { MailCheck } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useSesion } from "@/hooks/useSesion";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import PasoCuenta from "@/components/registro/pasos/PasoCuenta";
@@ -33,6 +34,7 @@ export default function RegistroAsistido() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [nombreNegocio, setNombreNegocio] = useState("");
   const [correoConfirmacion, setCorreoConfirmacion] = useState<string | null>(null);
+  const [reenviado, setReenviado] = useState(false);
 
   // Con sesión ya puesta (OAuth, o una recarga después de crear la cuenta) el
   // wizard arranca en Bienvenida — el copy de ahí ("Tu cuenta ya está lista")
@@ -64,6 +66,22 @@ export default function RegistroAsistido() {
         >
           Ir a entrar
         </Link>
+        {reenviado ? (
+          <p className="mt-3 text-xs text-vm-body">Listo, te reenviamos el enlace.</p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setReenviado(true);
+              void supabase.auth
+                .resend({ type: "signup", email: correoConfirmacion })
+                .catch(() => setReenviado(false));
+            }}
+            className="mt-3 text-xs font-medium text-vm-primary hover:underline"
+          >
+            No me llegó — reenviar
+          </button>
+        )}
       </div>
     );
   }

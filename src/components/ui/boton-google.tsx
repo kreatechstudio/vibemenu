@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { traducirErrorAuth } from "@/lib/erroresAuth";
 
 /** Logo oficial de Google en cuatro colores, tal cual lo pide su guía de marca. */
 function LogoGoogle() {
@@ -31,22 +34,41 @@ function LogoGoogle() {
  * `rutaRegreso` cambia ese aterrizaje: /invitacion/:token lo usa para volver
  * a la misma invitación tras el login, en vez de a /auth/completar.
  */
-async function iniciarLoginGoogle(rutaRegreso: string) {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${window.location.origin}${rutaRegreso}` },
-  });
-}
-
 export default function BotonGoogle({ rutaRegreso = "/auth/completar" }: { rutaRegreso?: string }) {
+  const [error, setError] = useState<string | null>(null);
+
+  async function iniciar() {
+    setError(null);
+    // En éxito, signInWithOAuth redirige el navegador y esta promesa no
+    // resuelve con nada útil. Solo llega aquí con datos si algo falló
+    // (proveedor mal configurado en Supabase, sin red).
+    const { error: errorAuth } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}${rutaRegreso}` },
+    });
+    if (errorAuth) {
+      setError(
+        traducirErrorAuth(errorAuth) ?? "No pudimos conectarte con Google. Intenta de nuevo.",
+      );
+    }
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => void iniciarLoginGoogle(rutaRegreso)}
-      className="inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-lg border text-sm font-medium text-vm-ink transition-colors hover:bg-vm-bg-soft"
-    >
-      <LogoGoogle />
-      Continuar con Google
-    </button>
+    <div>
+      <button
+        type="button"
+        onClick={() => void iniciar()}
+        className="inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-lg border text-sm font-medium text-vm-ink transition-colors hover:bg-vm-bg-soft"
+      >
+        <LogoGoogle />
+        Continuar con Google
+      </button>
+      {error && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-vm-danger">
+          <AlertCircle className="size-3.5 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

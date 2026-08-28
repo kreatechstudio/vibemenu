@@ -5,6 +5,7 @@ import Layout from "@/components/layout/Layout";
 import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components/ui/captcha";
 import { supabase } from "@/lib/supabase";
 import { traducirError } from "@/lib/errores";
+import { traducirErrorAuth } from "@/lib/erroresAuth";
 
 export default function RecuperarContrasena() {
   const [email, setEmail] = useState("");
@@ -30,7 +31,7 @@ export default function RecuperarContrasena() {
       if (errorAuth) throw errorAuth;
       setEnviado(true);
     } catch (err) {
-      setError(traducirError(err as Error).mensaje);
+      setError(traducirErrorAuth(err) ?? traducirError(err as Error).mensaje);
       captchaRef.current?.reset();
       setCaptchaToken(null);
     } finally {

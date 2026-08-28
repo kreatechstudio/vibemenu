@@ -7,6 +7,7 @@ import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components
 import { supabase } from "@/lib/supabase";
 import { asegurarTenantDelUsuario } from "@/lib/registro";
 import { traducirError } from "@/lib/errores";
+import { esAuthErrorConCodigo, traducirErrorAuth } from "@/lib/erroresAuth";
 import { trackEvent } from "@/lib/analytics";
 
 export default function Login() {
@@ -15,6 +16,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [correoSinConfirmar, setCorreoSinConfirmar] = useState<string | null>(null);
+  const [reenviado, setReenviado] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<TurnstileInstance>(null);
 
@@ -23,6 +26,8 @@ export default function Login() {
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setCorreoSinConfirmar(null);
+    setReenviado(false);
     setEnviando(true);
 
     try {
@@ -42,18 +47,23 @@ export default function Login() {
 
       await navigate({ to: "/admin" });
     } catch (err) {
-      const traducido = traducirError(err as Error);
-      // signInWithPassword no devuelve un PostgrestError; su mensaje viene en ingles.
-      setError(
-        (err as Error).message === "Invalid login credentials"
-          ? "Correo o contraseña incorrectos."
-          : traducido.mensaje,
-      );
+      // El error de Auth gana; si no lo reconoce, cae al traductor de Postgres
+      // (asegurarTenantDelUsuario puede levantar un PostgrestError).
+      setError(traducirErrorAuth(err) ?? traducirError(err as Error).mensaje);
+      if (esAuthErrorConCodigo(err, "email_not_confirmed")) setCorreoSinConfirmar(email);
       captchaRef.current?.reset();
       setCaptchaToken(null);
     } finally {
       setEnviando(false);
     }
+  }
+
+  async function reenviarConfirmacion() {
+    if (!correoSinConfirmar) return;
+    setReenviado(true);
+    await supabase.auth
+      .resend({ type: "signup", email: correoSinConfirmar })
+      .catch(() => setReenviado(false));
   }
 
   return (
@@ -104,10 +114,26 @@ export default function Login() {
           </div>
 
           {error && (
-            <p className="flex items-center gap-1.5 rounded-lg bg-vm-danger-soft px-3.5 py-2.5 text-sm text-vm-danger">
-              <AlertCircle className="size-4 shrink-0" aria-hidden />
-              {error}
-            </p>
+            <div className="rounded-lg bg-vm-danger-soft px-3.5 py-2.5 text-sm text-vm-danger">
+              <p className="flex items-center gap-1.5">
+                <AlertCircle className="size-4 shrink-0" aria-hidden />
+                {error}
+              </p>
+              {correoSinConfirmar &&
+                (reenviado ? (
+                  <p className="mt-1.5 pl-5.5 text-xs text-vm-body">
+                    Te reenviamos el enlace a {correoSinConfirmar}.
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void reenviarConfirmacion()}
+                    className="mt-1.5 pl-5.5 text-xs font-medium underline hover:no-underline"
+                  >
+                    Reenviar correo de confirmación
+                  </button>
+                ))}
+            </div>
           )}
 
           <Captcha ref={captchaRef} onToken={setCaptchaToken} />
