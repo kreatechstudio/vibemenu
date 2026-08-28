@@ -15,7 +15,13 @@ import { esUrlValida } from "@/lib/url";
 import { avisarGuardado } from "@/lib/avisos";
 import { supabase } from "@/lib/supabase";
 import { MENSAJE_ERROR_SLUG, normalizarSlug } from "@/lib/slug";
-import { MENSAJE_ERROR_DOMINIO, normalizarDominio } from "@/lib/dominio";
+import {
+  MENSAJE_ERROR_DOMINIO,
+  normalizarDominio,
+  instruccionesDNS,
+  motivoProblemaDNS,
+  type DominioDiagnostico,
+} from "@/lib/dominio";
 import { BOTONES, ESTADOS } from "@/lib/copy";
 import { EMPRESA } from "@/lib/legal";
 import { cn } from "@/lib/utils";
@@ -120,6 +126,15 @@ function Contenido() {
   const dominioInvalido =
     cambioDominio && (estadoDominio.estado === "invalido" || estadoDominio.estado === "ocupado");
   const permiteDominio = ctx.plan.permite_dominio_propio;
+
+  // Instrucciones DNS y problema: desde el diagnostico real de Vercel guardado en
+  // el tenant. Mientras el usuario edita el dominio (cambioDominio) el diagnostico
+  // viejo ya no aplica, asi que se cae al fallback estatico.
+  const diagDominio = cambioDominio
+    ? null
+    : ((tenant.dominio_diagnostico as unknown as DominioDiagnostico | null) ?? null);
+  const registrosDNS = instruccionesDNS(dominio.trim(), diagDominio);
+  const problemaDNS = tenant.dominio_estado !== "listo" ? motivoProblemaDNS(diagDominio) : null;
 
   async function alElegirLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
@@ -389,10 +404,28 @@ function Contenido() {
                 <>
                   {!cambioDominio && tenant.dominio_estado && (
                     <p className="mt-2 flex items-center gap-1.5 text-xs">
-                      {tenant.dominio_estado === "verificado" ? (
+                      {problemaDNS ? (
+                        <>
+                          <AlertTriangle
+                            className="mt-px size-3.5 shrink-0 text-vm-danger"
+                            aria-hidden
+                          />
+                          <span className="text-vm-danger">Revisa tu DNS</span>
+                        </>
+                      ) : tenant.dominio_estado === "listo" ? (
                         <>
                           <Check className="size-3.5 shrink-0 text-vm-success" aria-hidden />
-                          <span className="text-vm-success">Verificado</span>
+                          <span className="text-vm-success">Verificado y sirviendo tráfico</span>
+                        </>
+                      ) : tenant.dominio_estado === "verificado" ? (
+                        <>
+                          <Loader2
+                            className="size-3.5 shrink-0 animate-spin text-vm-body"
+                            aria-hidden
+                          />
+                          <span className="text-vm-body">
+                            DNS correcto, activando el certificado
+                          </span>
                         </>
                       ) : (
                         <>
@@ -402,23 +435,26 @@ function Contenido() {
                       )}
                     </p>
                   )}
+
+                  {problemaDNS && (
+                    <div className="mt-3 rounded-lg border border-vm-danger bg-vm-danger-soft px-4 py-3 text-xs text-vm-danger">
+                      <p className="font-medium">Hay un problema con tu DNS</p>
+                      <p className="mt-1">{problemaDNS}</p>
+                    </div>
+                  )}
+
                   <div className="mt-4 rounded-lg bg-vm-bg-soft px-4 py-3 text-xs text-vm-body">
                     <p className="font-medium text-vm-ink">Configura tu DNS</p>
-                    {dominio.split(".").length > 2 ? (
-                      <p className="mt-1">
+                    {registrosDNS.map((r) => (
+                      <p key={r.tipo + r.nombre} className="mt-1">
                         En el proveedor donde compraste tu dominio, crea un registro{" "}
-                        <span className="vm-data font-medium">CNAME</span> que apunte{" "}
-                        <span className="vm-data font-medium">{dominio}</span> a{" "}
-                        <span className="vm-data font-medium">cname.vercel-dns.com</span>.
+                        <span className="vm-data font-medium">{r.tipo}</span> que apunte{" "}
+                        <span className="vm-data font-medium">
+                          {r.nombre === "@" ? dominio.trim() : r.nombre}
+                        </span>{" "}
+                        a <span className="vm-data font-medium">{r.valor}</span>.
                       </p>
-                    ) : (
-                      <p className="mt-1">
-                        Como es un dominio raíz (sin "www" ni otro prefijo), crea un registro{" "}
-                        <span className="vm-data font-medium">A</span> que apunte{" "}
-                        <span className="vm-data font-medium">{dominio}</span> a{" "}
-                        <span className="vm-data font-medium">76.76.21.21</span>.
-                      </p>
-                    )}
+                    ))}
                     <p className="mt-2">
                       En cuanto tu DNS esté configurado, lo detectamos solos — no hace falta que nos
                       avises.

@@ -1,11 +1,11 @@
 name: Verificar dominios pendientes
 
-# Diario. Revisa los tenants con dominio_estado = 'pendiente' contra la API
-# de Vercel y los pasa a 'verificado' en cuanto el DNS ya resuelve -- ver
-# supabase/functions/verificar-dominios-pendientes.
+# Cada 6 horas. Revisa los tenants con dominio_estado 'pendiente' o 'verificado'
+# contra la API de Vercel: los pasa a 'verificado' cuando el DNS resuelve y a
+# 'listo' cuando el HTTPS ya sirve -- ver supabase/functions/verificar-dominios-pendientes.
 on:
   schedule:
-    - cron: "30 10 * * *"
+    - cron: "0 */6 * * *"
   workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
 
 jobs:

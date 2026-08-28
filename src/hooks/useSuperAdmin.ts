@@ -5,6 +5,7 @@ import type { MiembroEquipo } from "@/hooks/useEquipo";
 import type {
   EstadoTenant,
   Invitacion,
+  Json,
   NombrePlan,
   NotaInterna,
   Pago,
@@ -55,6 +56,8 @@ type FilaTenantSuperAdmin = {
   dominio_personalizado: string | null;
   /* Migración 018 — estado del dominio (verificado, pendiente, etc). */
   dominio_estado: string | null;
+  /* Migración 019 — ultimo diagnostico de Vercel (misconfigured, reasons). */
+  dominio_diagnostico: Json | null;
   plan: Pick<Plan, "nombre"> | null;
   suscripciones: SuscripcionResumen[];
 };
@@ -78,7 +81,7 @@ export function useTenantsSuperAdmin(habilitado: boolean) {
       const { data, error } = await supabase
         .from("tenants")
         .select(
-          "id, nombre_negocio, slug, estado, created_at, dominio_personalizado, dominio_estado, plan:planes(nombre), suscripciones(estado, precio_congelado_usd, precio_congelado_mxn, moneda_cobro, fecha_renovacion)",
+          "id, nombre_negocio, slug, estado, created_at, dominio_personalizado, dominio_estado, dominio_diagnostico, plan:planes(nombre), suscripciones(estado, precio_congelado_usd, precio_congelado_mxn, moneda_cobro, fecha_renovacion)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;

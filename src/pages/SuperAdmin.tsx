@@ -15,6 +15,7 @@ import {
 import { formatearPrecio } from "@/lib/plan";
 import { COLOR_ESTADO, FECHA } from "@/lib/superadmin";
 import { avisarError } from "@/lib/avisos";
+import { motivoProblemaDNS, type DominioDiagnostico } from "@/lib/dominio";
 import {
   NOMBRE_PLAN,
   type EstadoTenant,
@@ -256,29 +257,47 @@ export default function SuperAdmin() {
                       </td>
                       <td className="px-4 py-3.5">
                         {t.dominio_personalizado ? (
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "rounded-full px-2.5 py-1 text-xs font-medium",
-                                t.dominio_estado === "verificado"
-                                  ? "bg-vm-success-soft text-vm-success"
-                                  : "bg-vm-warning-soft text-vm-warning",
-                              )}
-                            >
-                              {t.dominio_personalizado}
-                              {t.dominio_estado === "verificado" ? " · verificado" : " · pendiente"}
-                            </span>
-                            {t.dominio_estado !== "verificado" && (
-                              <button
-                                type="button"
-                                onClick={() => void verificarDominio(t.id)}
-                                disabled={verificandoId === t.id}
-                                className="text-xs font-medium text-vm-primary hover:underline disabled:opacity-50"
-                              >
-                                {verificandoId === t.id ? "Revisando…" : "Verificar ahora"}
-                              </button>
-                            )}
-                          </div>
+                          (() => {
+                            const problema = motivoProblemaDNS(
+                              (t.dominio_diagnostico as unknown as DominioDiagnostico | null) ??
+                                null,
+                            );
+                            const listo = t.dominio_estado === "listo";
+                            const verificado = t.dominio_estado === "verificado" && !problema;
+                            const etiqueta = listo
+                              ? "listo"
+                              : problema
+                                ? "problema DNS"
+                                : verificado
+                                  ? "verificado"
+                                  : "pendiente";
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={cn(
+                                    "rounded-full px-2.5 py-1 text-xs font-medium",
+                                    listo
+                                      ? "bg-vm-success-soft text-vm-success"
+                                      : problema
+                                        ? "bg-vm-danger-soft text-vm-danger"
+                                        : "bg-vm-warning-soft text-vm-warning",
+                                  )}
+                                >
+                                  {t.dominio_personalizado} · {etiqueta}
+                                </span>
+                                {!listo && (
+                                  <button
+                                    type="button"
+                                    onClick={() => void verificarDominio(t.id)}
+                                    disabled={verificandoId === t.id}
+                                    className="text-xs font-medium text-vm-primary hover:underline disabled:opacity-50"
+                                  >
+                                    {verificandoId === t.id ? "Revisando…" : "Verificar ahora"}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })()
                         ) : (
                           <span className="text-vm-body">—</span>
                         )}
