@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import { FolderPlus, ImageOff, Lock, Plus, Store, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -22,6 +23,42 @@ import { avisarExito } from "@/lib/avisos";
 import { alcanzoLimite, permiteMenuPorSucursal } from "@/lib/plan";
 import type { Producto, Sucursal } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { crearTour, type PasoTour } from "@/lib/tour";
+
+const routeApi = getRouteApi("/admin/menu");
+
+const PASOS_TOUR_CARTA: PasoTour[] = [
+  {
+    titulo: "Mi carta",
+    descripcion: "Aquí armas tu menú: categorías a la izquierda, productos a la derecha.",
+  },
+  {
+    elemento: '[data-tour="carta-nueva-categoria"]',
+    titulo: "Crea una categoría",
+    descripcion: 'Empieza creando una categoría, como "Bebidas" o "Entradas".',
+  },
+  {
+    elemento: '[data-tour="carta-lista-categorias"]',
+    titulo: "Elige una categoría",
+    descripcion: "Selecciona una categoría para ver y agregar sus productos.",
+  },
+  {
+    elemento: '[data-tour="carta-agregar-producto"]',
+    titulo: "Agrega un producto",
+    descripcion: "Agrega tus platillos: nombre, precio, foto y descripción.",
+  },
+  {
+    elemento: '[data-tour="carta-productos"]',
+    titulo: "Edita o personaliza",
+    descripcion:
+      "Haz clic en cualquier producto para editarlo o agregarle modificadores (tamaños, extras).",
+  },
+  {
+    elemento: '[data-tour="carta-activo-borrador"]',
+    titulo: "Activo o borrador",
+    descripcion: "Desactiva un producto sin borrarlo si se te acaba por un día.",
+  },
+];
 
 export default function Menu() {
   return (
@@ -125,6 +162,10 @@ function Contenido() {
   const borrarCategoria = useBorrarCategoria(tenantId);
   const alternarActivo = useAlternarActivo(tenantId);
 
+  const { tour } = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
+  const tourIniciado = useRef(false);
+
   const [ambito, setAmbito] = useState<string | null>(null);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [editando, setEditando] = useState<{ producto: Producto | null } | null>(null);
@@ -150,6 +191,13 @@ function Contenido() {
     const ids = idsVisibles.split(",");
     if (!seleccionada || !ids.includes(seleccionada)) setSeleccionada(ids[0]);
   }, [idsVisibles, seleccionada]);
+
+  useEffect(() => {
+    if (!tour || !ctx || tourIniciado.current) return;
+    tourIniciado.current = true;
+    requestAnimationFrame(() => crearTour(PASOS_TOUR_CARTA).drive());
+    void navigate({ search: {}, replace: true });
+  }, [tour, ctx, navigate]);
 
   if (!ctx) return null;
 
@@ -200,6 +248,7 @@ function Contenido() {
 
         <button
           type="button"
+          data-tour="carta-agregar-producto"
           disabled={!categoria || topado}
           onClick={() => setEditando({ producto: null })}
           title={topado ? ESTADOS.limiteProductos : undefined}
@@ -231,11 +280,12 @@ function Contenido() {
 
       <div className="mt-7 grid gap-6 lg:grid-cols-[280px_1fr]">
         {/* Categorías */}
-        <aside>
+        <aside data-tour="carta-lista-categorias">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium text-vm-ink">Categorías</h2>
             <button
               type="button"
+              data-tour="carta-nueva-categoria"
               onClick={() => setCreandoCategoria(true)}
               className="inline-flex items-center gap-1 text-xs font-medium text-vm-primary hover:underline"
             >
@@ -294,7 +344,7 @@ function Contenido() {
         </aside>
 
         {/* Productos */}
-        <section>
+        <section data-tour="carta-productos">
           {!categoria ? null : productosDeCategoria.length === 0 ? (
             <div className="rounded-xl border border-dashed p-10 text-center">
               <p className="text-sm text-vm-body">{ESTADOS.sinProductos}</p>
@@ -355,7 +405,10 @@ function Contenido() {
                         </p>
                       )}
 
-                      <label className="pointer-events-auto mt-2 flex w-fit items-center gap-2 text-xs text-vm-body">
+                      <label
+                        data-tour="carta-activo-borrador"
+                        className="pointer-events-auto mt-2 flex w-fit items-center gap-2 text-xs text-vm-body"
+                      >
                         <input
                           type="checkbox"
                           checked={p.activo}
