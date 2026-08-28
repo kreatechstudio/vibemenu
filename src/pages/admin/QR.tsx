@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { Check, Copy, Download, Loader2, Lock } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import TarjetaQR from "@/components/admin/TarjetaQR";
@@ -15,10 +15,43 @@ import {
   svgSerializado,
   type OpcionesTarjeta,
 } from "@/lib/qr";
+import { crearTour, type PasoTour } from "@/lib/tour";
 import { BOTONES } from "@/lib/copy";
 import { EMPRESA } from "@/lib/legal";
 import type { FormatoMenu } from "@/types/database";
 import { cn } from "@/lib/utils";
+
+const routeApi = getRouteApi("/admin/qr");
+
+const PASOS_TOUR_QR: PasoTour[] = [
+  {
+    elemento: '[data-tour="qr-preview"]',
+    titulo: "Tu código QR",
+    descripcion: "Este es el código QR de tu menú, listo para compartir.",
+  },
+  {
+    elemento: '[data-tour="qr-copiar"]',
+    titulo: "Copia el link",
+    descripcion: "Cópialo si prefieres compartirlo por WhatsApp o redes.",
+  },
+  {
+    elemento: '[data-tour="qr-descargar"]',
+    titulo: "Descarga tu QR",
+    descripcion:
+      "Descarga la tarjeta en PNG para imprimir, o el SVG si quieres editarlo con un diseñador.",
+  },
+  {
+    elemento: '[data-tour="qr-personalizacion"]',
+    titulo: "Personalízalo",
+    descripcion:
+      "Decide qué información se ve en la tarjeta: descripción, colores, tipografía, tu logo o tu imagen de fondo.",
+  },
+  {
+    elemento: '[data-tour="qr-sucursal"]',
+    titulo: "Una por sucursal",
+    descripcion: "Si tienes varias sucursales, cada una puede tener su propio QR.",
+  },
+];
 
 export default function QR() {
   return (
@@ -90,6 +123,17 @@ function Contenido() {
   const [usarLogo, setUsarLogo] = useState(true);
   const [usarFondo, setUsarFondo] = useState(false);
   const [usarDescripcion, setUsarDescripcion] = useState(false);
+
+  const { tour } = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
+  const tourIniciado = useRef(false);
+
+  useEffect(() => {
+    if (!tour || !ctx || tourIniciado.current) return;
+    tourIniciado.current = true;
+    requestAnimationFrame(() => crearTour(PASOS_TOUR_QR).drive());
+    void navigate({ search: {}, replace: true });
+  }, [tour, ctx, navigate]);
 
   if (!ctx) return null;
 
@@ -180,7 +224,7 @@ function Contenido() {
 
       {/* Un QR por sucursal: cada uno lleva a su carta y a su horario. */}
       {sucursales && sucursales.length > 0 && (
-        <div className="mt-6">
+        <div data-tour="qr-sucursal" className="mt-6">
           <p className="text-sm font-medium text-vm-ink">¿Para qué mesa?</p>
           <div className="tira-scroll mt-2.5 flex gap-2 overflow-x-auto pb-1">
             <button
@@ -221,13 +265,14 @@ function Contenido() {
             this grid column to TarjetaQR's unscaled 1000px min-content width,
             causing page-wide horizontal scroll. Without it, the grid item
             stretches beyond the available space on mobile viewports. */}
-        <div className="min-w-0">
+        <div data-tour="qr-preview" className="min-w-0">
           <TarjetaQR opciones={opciones} refQr={refQr} />
 
           <div className="mt-4 flex items-center gap-2 rounded-lg border bg-vm-bg-soft px-3.5 py-3">
             <span className="vm-data flex-1 truncate text-sm text-vm-ink">{visible}</span>
             <button
               type="button"
+              data-tour="qr-copiar"
               onClick={() => void copiar()}
               className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-vm-primary"
             >
@@ -236,7 +281,7 @@ function Contenido() {
             </button>
           </div>
 
-          <div className="mt-4 flex gap-3">
+          <div data-tour="qr-descargar" className="mt-4 flex gap-3">
             <button
               type="button"
               disabled={generando}
@@ -281,7 +326,7 @@ function Contenido() {
             . Si cambias el tema de tu menú, la tarjeta cambia contigo.
           </p>
 
-          <div className="mt-4 space-y-2.5">
+          <div data-tour="qr-personalizacion" className="mt-4 space-y-2.5">
             <Opcion
               titulo="La descripción de mi negocio"
               nota="Se imprime bajo el código, en dos renglones como mucho."
