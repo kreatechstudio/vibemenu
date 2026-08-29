@@ -23,31 +23,38 @@ export default function BarraPedido({
   const c = useCarritoWhatsApp();
   const [abierta, setAbierta] = useState(false);
 
-  if (!c.habilitado || c.cantidadTotal === 0) return null;
+  if (!c.habilitado) return null;
 
+  const hayItems = c.cantidadTotal > 0;
   const total = totalPedido(lineasDePedido(c.items));
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28 }}
-        className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md p-3"
-      >
-        <button
-          type="button"
-          onClick={() => setAbierta(true)}
-          className="flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold shadow-lg"
-          style={{ background: "var(--menu-primario)", color: "var(--menu-fondo)" }}
-        >
-          <span className="flex items-center gap-2">
-            <ShoppingBag className="size-4" aria-hidden />
-            Ver pedido · {c.cantidadTotal}
-          </span>
-          <span className="vm-data">{precioMenu(total)}</span>
-        </button>
-      </motion.div>
+      <AnimatePresence>
+        {hayItems && (
+          <motion.div
+            key="barra-pedido"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.28 }}
+            className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md p-3"
+          >
+            <button
+              type="button"
+              onClick={() => setAbierta(true)}
+              className="flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold shadow-lg"
+              style={{ background: "var(--menu-primario)", color: "var(--menu-fondo)" }}
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingBag className="size-4" aria-hidden />
+                Ver pedido · {c.cantidadTotal}
+              </span>
+              <span className="vm-data">{precioMenu(total)}</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {abierta && (

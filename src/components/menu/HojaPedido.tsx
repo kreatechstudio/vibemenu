@@ -44,7 +44,8 @@ export default function HojaPedido({
         nota,
       }),
     );
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    const ventana = url ? window.open(url, "_blank", "noopener,noreferrer") : null;
+    if (url && !ventana) return; // popup bloqueado — deja el pedido para reintentar
     c.vaciar();
     alCerrar();
   }

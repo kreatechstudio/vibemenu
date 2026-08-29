@@ -78,7 +78,7 @@ commit;
 --   -- free=false, basic/pro/enterprise=true
 ```
 
-Una columna. Nada más — el carrito no toca la base. Se aplica vía MCP `apply_migration` (`name: "pedidos_whatsapp"`); si el MCP no está disponible, paso manual. **Sin gate de deploy**: una columna faltante solo haría `permitePedidosWhatsApp` caer a `false` (la feature no aparece), no rompe ninguna escritura.
+Una columna. Nada más — el carrito no toca la base. Se aplica vía MCP `apply_migration` (`name: "pedidos_whatsapp"`); si el MCP no está disponible, paso manual. **Gate de deploy duro**: los 3 `.select("*, plan:planes(…, permite_pedidos_whatsapp)")` de `useMenuPublico` piden la columna a PostgREST, así que si falta, PostgREST responde 400 a TODA la consulta del menú (no un campo `null`) y cada menú público se cae. Aplicar la migración antes o junto con el deploy de la rama. Es seguro aplicarla temprano (`not null default false`, nada del código viejo la lee).
 
 ### 2. `src/lib/pedido.ts` (nuevo) + `src/lib/pedido.test.ts`
 
@@ -326,7 +326,7 @@ Añadir `pb-24` (o similar) al contenedor del `cuerpo` **cuando `pedidosOn`**, p
 
 ## Secuencia
 
-1. Migración (MCP o SQL Editor). Sin gate de deploy.
+1. Migración (MCP o SQL Editor). Gate de deploy duro — aplicar antes o junto con el deploy (los 3 `.select()` la piden; si falta, PostgREST 400 a todo el menú).
 2. Regenerar tipos.
 3. `pedido.ts` + tests.
 4. `useCarritoWhatsApp` + tests.
@@ -353,7 +353,7 @@ Añadir `pb-24` (o similar) al contenedor del `cuerpo` **cuando `pedidosOn`**, p
 
 | Riesgo | Mitigación |
 |---|---|
-| Migración no aplicada | Sin gate: la feature no aparece hasta que exista la columna. No rompe nada. |
+| Migración no aplicada | Gate de deploy duro: los 3 `.select()` de `useMenuPublico` piden `permite_pedidos_whatsapp`, así que una columna faltante hace que PostgREST responda 400 a toda la consulta del menú y cada menú público se cae. Aplicar antes o junto con el deploy. |
 | `<button>` anidado en Pinterest/Instagram (badge dentro de la tarjeta-botón) | Reestructurar la tarjeta: wrapper `relative`, badge como hermano absoluto de la tarjeta-botón. Cubierto en §11. |
 | `key` en el `<CarritoWhatsAppProvider>` dentro de una expresión reusada en 3 returns no re-monta bien | Si falla, envolver en `<Fragment key=...>`; el plan lo verifica con QA de cambio de sucursal. |
 | Real estate abajo: barra + embudo + contacto | Embudo espera al carrito (decisión 4) → nunca coinciden barra y embudo. `pb-24` evita tapar `ContactoMenu`. |

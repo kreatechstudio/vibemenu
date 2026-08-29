@@ -17,7 +17,7 @@
 - **Componentes de menú (`src/components/menu/`, `src/components/formatos/`):** SOLO variables `--menu-primario`, `--menu-fondo`, `--menu-texto`, `--menu-texto-suave`, `--menu-modificadores`. NUNCA clases `vm-*` ni el azul de Vibemenu. (`vm-data` sí se usa — es una clase de tipografía tabular, no color de marca; ya está en los formatos.)
 - **Sin modificadores en el carrito v1:** la línea del pedido es `N × nombre — precio`. `producto.precio` ya viene resuelto por sucursal desde `armarMenuPublico`.
 - **Carrito efímero:** nada de `localStorage` / `sessionStorage`. El provider se remonta (`key` por sucursal) y arranca vacío.
-- **Sin gate de deploy para la migración:** si la columna `permite_pedidos_whatsapp` falta, `permitePedidosWhatsApp` cae a `false` y la feature no aparece. No rompe ninguna escritura.
+- **La migración ES un gate de deploy duro:** los 3 `.select("*, plan:planes(…, permite_pedidos_whatsapp)")` de `useMenuPublico` piden la columna, así que PostgREST responde 400 a TODA la consulta del menú público si falta (cada menú público se cae). Aplicar la migración antes o junto con el deploy.
 - **Copy en español**, tono del producto (cercano, directo). Precios sin moneda escrita — `precioMenu()` ya pone `$`.
 - **`Producto.id` es `string`.** Las claves del carrito son `producto.id`.
 
@@ -77,7 +77,11 @@ commit;
 --   -- free=false, basic/pro/enterprise=true
 --
 -- Aplicar vía MCP `apply_migration` (name: "pedidos_whatsapp") o el SQL Editor.
--- SIN gate de deploy: si la columna falta, la feature no aparece y nada se rompe.
+--
+-- GATE DE DEPLOY: requisito para desplegar la rama. `useMenuPublico` selecciona
+-- `permite_pedidos_whatsapp` en tres consultas, así que si la columna falta
+-- PostgREST responde 400 a toda la consulta del menú y cada menú público se cae.
+-- Seguro aplicarla temprano (`not null default false`, nada viejo la lee).
 ```
 
 - [ ] **Step 2: Hand-edit `src/types/database.ts` — `planes.Row`**

@@ -57,4 +57,23 @@ describe("construirMensajePedido", () => {
     expect(construirMensajePedido({ negocio: "X", lineas, nota: "   " })).not.toContain("Nota:");
     expect(construirMensajePedido({ negocio: "X", lineas })).not.toContain("Nota:");
   });
+
+  test("estructura exacta sin nota: encabezado, línea en blanco, ítems, línea en blanco, total", () => {
+    const msg = construirMensajePedido({
+      negocio: "X",
+      lineas: [{ nombre: "A", cantidad: 1, precioUnitario: 10 }],
+    });
+    expect(msg).toBe("Hola, quiero hacer un pedido de X:\n\n• 1 × A — $10.00\n\nTotal: $10.00");
+  });
+
+  test("estructura exacta con nota: dos saltos de línea antes de Nota:", () => {
+    const msg = construirMensajePedido({
+      negocio: "X",
+      lineas: [{ nombre: "A", cantidad: 1, precioUnitario: 10 }],
+      nota: "ya",
+    });
+    expect(msg).toBe(
+      "Hola, quiero hacer un pedido de X:\n\n• 1 × A — $10.00\n\nTotal: $10.00\n\nNota: ya",
+    );
+  });
 });

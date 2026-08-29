@@ -12,4 +12,10 @@ commit;
 --   -- free=false, basic/pro/enterprise=true
 --
 -- Aplicar vía MCP `apply_migration` (name: "pedidos_whatsapp") o el SQL Editor.
--- SIN gate de deploy: si la columna falta, la feature no aparece y nada se rompe.
+--
+-- GATE DE DEPLOY: esta migración es requisito para desplegar la rama de la feature
+-- (aplicarla antes o junto con el deploy). `useMenuPublico` selecciona
+-- `permite_pedidos_whatsapp` en tres consultas (`plan:planes(...)`), así que si la
+-- columna falta PostgREST responde 400 a TODA la consulta del menú y cada menú
+-- público se cae. Es seguro aplicarla temprano (`not null default false`, nada
+-- del código viejo la lee).
