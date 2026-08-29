@@ -415,6 +415,7 @@ export type Database = {
           permite_desenfoque: boolean;
           permite_dominio_propio: boolean;
           permite_embudo_resenas: boolean;
+          permite_pedidos_whatsapp: boolean;
           permite_multiusuario: boolean;
           precio_mxn: number;
           precio_mxn_anual: number | null;
@@ -444,6 +445,7 @@ export type Database = {
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
           permite_embudo_resenas?: boolean;
+          permite_pedidos_whatsapp?: boolean;
           permite_multiusuario?: boolean;
           precio_mxn: number;
           precio_mxn_anual?: number | null;
@@ -473,6 +475,7 @@ export type Database = {
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
           permite_embudo_resenas?: boolean;
+          permite_pedidos_whatsapp?: boolean;
           permite_multiusuario?: boolean;
           precio_mxn?: number;
           precio_mxn_anual?: number | null;
