@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import BarraPedido from "@/components/menu/BarraPedido";
+import BotonPedidoTikTok from "@/components/menu/BotonPedidoTikTok";
 import ContactoMenu from "@/components/menu/ContactoMenu";
 import HeaderMenu from "@/components/menu/HeaderMenu";
+import { CarritoWhatsAppProvider } from "@/hooks/useCarritoWhatsApp";
 import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
 import Instagram from "@/components/formatos/Instagram";
@@ -80,34 +83,38 @@ export default function Demo() {
           transition={{ duration: 0.25 }}
           className="pt-12"
         >
-          {formato === "tiktok" ? (
-            <div
-              className="relative h-[calc(100dvh-3rem)] overflow-hidden"
-              style={variablesDeTema(tema)}
-            >
-              <Formato categorias={CATEGORIAS_DEMO} />
-            </div>
-          ) : (
-            <div
-              className="min-h-[calc(100dvh-3rem)]"
-              style={{ ...variablesDeTema(tema), background: "var(--menu-fondo)" }}
-            >
-              <HeaderMenu
-                tenant={TENANT_DEMO}
-                sucursales={[SUCURSAL_DEMO]}
-                sucursalActiva={SUCURSAL_DEMO}
-                menuIndependiente={false}
-                compacta={formato === "instagram"}
-                abiertaFija
-              />
-              <Formato
-                categorias={CATEGORIAS_DEMO}
-                logoUrl={TENANT_DEMO.logo_url}
-                inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
-              />
-              <ContactoMenu tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} />
-            </div>
-          )}
+          <CarritoWhatsAppProvider habilitado>
+            {formato === "tiktok" ? (
+              <div
+                className="relative h-[calc(100dvh-3rem)] overflow-hidden"
+                style={variablesDeTema(tema)}
+              >
+                <Formato categorias={CATEGORIAS_DEMO} />
+                <BotonPedidoTikTok tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} habilitado />
+              </div>
+            ) : (
+              <div
+                className="min-h-[calc(100dvh-3rem)]"
+                style={{ ...variablesDeTema(tema), background: "var(--menu-fondo)" }}
+              >
+                <HeaderMenu
+                  tenant={TENANT_DEMO}
+                  sucursales={[SUCURSAL_DEMO]}
+                  sucursalActiva={SUCURSAL_DEMO}
+                  menuIndependiente={false}
+                  compacta={formato === "instagram"}
+                  abiertaFija
+                />
+                <Formato
+                  categorias={CATEGORIAS_DEMO}
+                  logoUrl={TENANT_DEMO.logo_url}
+                  inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
+                />
+                <ContactoMenu tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} />
+                <BarraPedido tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} />
+              </div>
+            )}
+          </CarritoWhatsAppProvider>
         </motion.div>
       </AnimatePresence>
     </div>
