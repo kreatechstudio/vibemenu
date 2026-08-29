@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import BotonAgregar from "@/components/menu/BotonAgregar";
 import TiraCategorias from "@/components/menu/TiraCategorias";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
@@ -65,6 +66,10 @@ function Detalle({
             {precioMenu(producto.precio)}
           </p>
 
+          <div className="mt-3">
+            <BotonAgregar producto={producto} variante="stepper" />
+          </div>
+
           {producto.descripcion && (
             <p
               className="mt-3 text-sm leading-relaxed"
@@ -125,42 +130,47 @@ export default function Pinterest({ categorias }: { categorias: CategoriaConProd
       <div className="mx-auto max-w-3xl px-3 pb-6">
         <div className="columns-2 gap-3 md:columns-3">
           {productos.map((producto) => (
-            <motion.button
-              key={producto.id}
-              layoutId={`producto-${producto.id}`}
-              onClick={() => setAbierto(producto)}
-              whileHover={{ scale: 1.015 }}
-              className="mb-3 block w-full break-inside-avoid overflow-hidden rounded-xl text-left"
-              style={{ background: "color-mix(in srgb, var(--menu-texto) 5%, transparent)" }}
-            >
-              {producto.imagen_url ? (
-                <img
-                  src={producto.imagen_url}
-                  alt=""
-                  className="w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div
-                  className="aspect-[4/5] w-full"
-                  style={{
-                    background: "color-mix(in srgb, var(--menu-primario) 12%, transparent)",
-                  }}
-                  aria-hidden
-                />
-              )}
-              <div className="p-3">
-                <p
-                  className="text-sm font-medium leading-snug"
-                  style={{ color: "var(--menu-texto)" }}
-                >
-                  {producto.nombre}
-                </p>
-                <p className="vm-data mt-1 text-sm" style={{ color: "var(--menu-primario)" }}>
-                  {precioMenu(producto.precio)}
-                </p>
+            <div key={producto.id} className="relative mb-3 break-inside-avoid">
+              <motion.button
+                layoutId={`producto-${producto.id}`}
+                onClick={() => setAbierto(producto)}
+                whileHover={{ scale: 1.015 }}
+                className="block w-full overflow-hidden rounded-xl text-left"
+                style={{ background: "color-mix(in srgb, var(--menu-texto) 5%, transparent)" }}
+              >
+                {producto.imagen_url ? (
+                  <img
+                    src={producto.imagen_url}
+                    alt=""
+                    className="w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div
+                    className="aspect-[4/5] w-full"
+                    style={{
+                      background: "color-mix(in srgb, var(--menu-primario) 12%, transparent)",
+                    }}
+                    aria-hidden
+                  />
+                )}
+                <div className="p-3">
+                  <p
+                    className="text-sm font-medium leading-snug"
+                    style={{ color: "var(--menu-texto)" }}
+                  >
+                    {producto.nombre}
+                  </p>
+                  <p className="vm-data mt-1 text-sm" style={{ color: "var(--menu-primario)" }}>
+                    {precioMenu(producto.precio)}
+                  </p>
+                </div>
+              </motion.button>
+
+              <div className="absolute right-2 top-2 z-10">
+                <BotonAgregar producto={producto} variante="badge" />
               </div>
-            </motion.button>
+            </div>
           ))}
         </div>
       </div>

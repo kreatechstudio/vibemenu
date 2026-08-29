@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ImageOff, X } from "lucide-react";
+import BotonAgregar from "@/components/menu/BotonAgregar";
 import TiraCategorias from "@/components/menu/TiraCategorias";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
@@ -103,6 +104,10 @@ function Post({
             </span>
           </div>
 
+          <div className="mt-3">
+            <BotonAgregar producto={producto} variante="stepper" />
+          </div>
+
           {producto.descripcion && (
             <p
               className="mt-2.5 text-sm leading-relaxed"
@@ -203,40 +208,45 @@ export default function Instagram({
 
         <div className="grid grid-cols-3 gap-0.5">
           {productos.map((producto) => (
-            <button
-              key={producto.id}
-              type="button"
-              onClick={() => setAbierto(producto)}
-              className="group relative aspect-square overflow-hidden"
-              aria-label={producto.nombre}
-            >
-              {producto.imagen_url ? (
-                <img
-                  src={producto.imagen_url}
-                  alt=""
-                  loading="lazy"
-                  className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div
-                  className="grid size-full place-items-center p-2 text-center"
-                  style={{
-                    background: "color-mix(in srgb, var(--menu-primario) 10%, transparent)",
-                  }}
-                >
-                  <span
-                    className="text-[10px] font-medium leading-tight"
-                    style={{ color: "var(--menu-texto)" }}
+            <div key={producto.id} className="group relative aspect-square overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setAbierto(producto)}
+                className="block size-full"
+                aria-label={producto.nombre}
+              >
+                {producto.imagen_url ? (
+                  <img
+                    src={producto.imagen_url}
+                    alt=""
+                    loading="lazy"
+                    className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div
+                    className="grid size-full place-items-center p-2 text-center"
+                    style={{
+                      background: "color-mix(in srgb, var(--menu-primario) 10%, transparent)",
+                    }}
                   >
-                    {producto.nombre}
-                  </span>
-                </div>
-              )}
+                    <span
+                      className="text-[10px] font-medium leading-tight"
+                      style={{ color: "var(--menu-texto)" }}
+                    >
+                      {producto.nombre}
+                    </span>
+                  </div>
+                )}
 
-              <span className="vm-data absolute bottom-1 right-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
-                {precioMenu(producto.precio)}
-              </span>
-            </button>
+                <span className="vm-data absolute bottom-1 right-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
+                  {precioMenu(producto.precio)}
+                </span>
+              </button>
+
+              <div className="absolute left-1 top-1 z-10">
+                <BotonAgregar producto={producto} variante="badge" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
