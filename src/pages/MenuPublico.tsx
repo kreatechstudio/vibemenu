@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { Loader2 } from "lucide-react";
 import ContactoMenu from "@/components/menu/ContactoMenu";
+import EmbudoResenas from "@/components/menu/EmbudoResenas";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import MarcaAgua from "@/components/menu/MarcaAgua";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
@@ -220,6 +221,12 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
       )}
 
       <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
+
+      <EmbudoResenas
+        tenant={data.tenant}
+        sucursal={data.sucursalActiva}
+        habilitado={data.permiteEmbudoResenas}
+      />
 
       {data.marcaAgua && <MarcaAgua />}
     </>

@@ -20,6 +20,8 @@ export type MenuPublico = {
   formato: FormatoMenu;
   /** Del plan del tenant. Free lleva "Hecho con Vibemenu" al pie. */
   marcaAgua: boolean;
+  /** planes.permite_embudo_resenas — gatea el aviso "¿cómo estuvo tu visita?". */
+  permiteEmbudoResenas: boolean;
   menuIndependiente: boolean;
   sucursales: Sucursal[];
   sucursalActiva: Sucursal | null;
@@ -44,7 +46,7 @@ export async function obtenerMenuPublico(
 ): Promise<MenuPublico | null> {
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
-    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
+    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -60,7 +62,7 @@ export async function obtenerMenuPublico(
 export async function obtenerMenuPublicoPorDominio(host: string): Promise<MenuPublico | null> {
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
-    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
+    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas)")
     .eq("dominio_personalizado", host)
     .maybeSingle();
 
@@ -79,7 +81,7 @@ export async function obtenerSucursalPublicaPorDominio(
 ): Promise<MenuPublico | null> {
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
-    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal)")
+    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas)")
     .eq("dominio_personalizado", host)
     .maybeSingle();
 
@@ -89,7 +91,12 @@ export async function obtenerSucursalPublicaPorDominio(
 
 async function armarMenuPublico(
   tenantRow:
-    | (Tenant & { plan: Pick<Plan, "marca_agua" | "menu_independiente_por_sucursal"> | null })
+    | (Tenant & {
+        plan: Pick<
+          Plan,
+          "marca_agua" | "menu_independiente_por_sucursal" | "permite_embudo_resenas"
+        > | null;
+      })
     | null,
   sucursalSlug?: string,
 ): Promise<MenuPublico | null> {
@@ -187,6 +194,7 @@ async function armarMenuPublico(
     tenant: tenant as Tenant,
     formato: tenant.formato_activo as FormatoMenu,
     marcaAgua: plan?.marca_agua ?? true,
+    permiteEmbudoResenas: plan?.permite_embudo_resenas ?? false,
     menuIndependiente: plan?.menu_independiente_por_sucursal ?? false,
     sucursales: sucursales ?? [],
     sucursalActiva,

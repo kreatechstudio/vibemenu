@@ -91,6 +91,51 @@ export type Database = {
           },
         ];
       };
+      feedback_privado: {
+        Row: {
+          comentario: string | null;
+          creado_at: string;
+          id: number;
+          resuelto: boolean;
+          sentimiento: string;
+          sucursal_id: string | null;
+          tenant_id: string;
+        };
+        Insert: {
+          comentario?: string | null;
+          creado_at?: string;
+          id?: never;
+          resuelto?: boolean;
+          sentimiento: string;
+          sucursal_id?: string | null;
+          tenant_id: string;
+        };
+        Update: {
+          comentario?: string | null;
+          creado_at?: string;
+          id?: never;
+          resuelto?: boolean;
+          sentimiento?: string;
+          sucursal_id?: string | null;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feedback_privado_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feedback_privado_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       grupos_modificadores: {
         Row: {
           id: string;
@@ -369,6 +414,7 @@ export type Database = {
           permite_color_modificadores: boolean;
           permite_desenfoque: boolean;
           permite_dominio_propio: boolean;
+          permite_embudo_resenas: boolean;
           permite_multiusuario: boolean;
           precio_mxn: number;
           precio_mxn_anual: number | null;
@@ -397,6 +443,7 @@ export type Database = {
           permite_color_modificadores?: boolean;
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
+          permite_embudo_resenas?: boolean;
           permite_multiusuario?: boolean;
           precio_mxn: number;
           precio_mxn_anual?: number | null;
@@ -425,6 +472,7 @@ export type Database = {
           permite_color_modificadores?: boolean;
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
+          permite_embudo_resenas?: boolean;
           permite_multiusuario?: boolean;
           precio_mxn?: number;
           precio_mxn_anual?: number | null;
@@ -938,6 +986,15 @@ export type Database = {
       pertenece_a_tenant: {
         Args: { check_tenant_id: string };
         Returns: boolean;
+      };
+      registrar_feedback: {
+        Args: {
+          p_comentario?: string;
+          p_sentimiento: string;
+          p_sucursal_id?: string;
+          p_tenant_id: string;
+        };
+        Returns: undefined;
       };
       registrar_visita: {
         Args: { p_sucursal_id?: string; p_tenant_id: string };

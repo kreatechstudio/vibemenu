@@ -60,7 +60,9 @@ const SECCIONES: SeccionLegal[] = [
         <p>
           <strong>Si escaneas un menú público:</strong> no creamos una cuenta ni un perfil tuyo.
           Registramos únicamente un conteo agregado de visitas por sucursal y por día — nunca una
-          fila por persona, ni tu ubicación, ni tu identidad.
+          fila por persona, ni tu ubicación, ni tu identidad. Si dejas un comentario en el aviso de
+          «¿cómo estuvo tu visita?», se guarda ese texto tal cual, sin ligarlo a tu identidad ni a
+          tu dispositivo.
         </p>
       </>
     ),
