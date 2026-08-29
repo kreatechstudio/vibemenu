@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Frown, Meh, Smile, X } from "lucide-react";
+import { useCarritoWhatsApp } from "@/hooks/useCarritoWhatsApp";
 import { contactoSucursal } from "@/lib/contacto";
 import { marcarEmbudoRespondido, yaRespondioEmbudo } from "@/lib/embudo";
 import { supabase } from "@/lib/supabase";
@@ -38,7 +39,10 @@ export default function EmbudoResenas({
   // Lectura única: si ya respondió/cerró en este navegador, el embudo no existe.
   const [yaRespondio] = useState(() => yaRespondioEmbudo(tenant.id, storage()));
 
-  const puedeMostrar = habilitado && resenasUrl !== null && !yaRespondio;
+  const carrito = useCarritoWhatsApp();
+
+  const puedeMostrar =
+    habilitado && resenasUrl !== null && !yaRespondio && carrito.cantidadTotal === 0;
 
   const [fase, setFase] = useState<Fase>("oculto");
   const [sentimiento, setSentimiento] = useState<"regular" | "mal">("regular");
