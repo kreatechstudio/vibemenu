@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import BotonAgregar from "@/components/menu/BotonAgregar";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -92,6 +93,10 @@ export default function Clasico({ categorias }: { categorias: CategoriaConProduc
                   )}
 
                   <Modificadores producto={producto} />
+
+                  <div className="mt-2">
+                    <BotonAgregar producto={producto} variante="stepper" />
+                  </div>
                 </div>
               </li>
             ))}

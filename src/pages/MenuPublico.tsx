@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { Loader2 } from "lucide-react";
+import BarraPedido from "@/components/menu/BarraPedido";
+import BotonPedidoTikTok from "@/components/menu/BotonPedidoTikTok";
 import ContactoMenu from "@/components/menu/ContactoMenu";
 import EmbudoResenas from "@/components/menu/EmbudoResenas";
 import HeaderMenu from "@/components/menu/HeaderMenu";
@@ -9,15 +11,18 @@ import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
 import Instagram from "@/components/formatos/Instagram";
 import TikTok from "@/components/formatos/TikTok";
+import { CarritoWhatsAppProvider } from "@/hooks/useCarritoWhatsApp";
 import {
   useMenuPublico,
   type CategoriaConProductos,
   type MenuPublico as DatosMenu,
 } from "@/hooks/useMenuPublico";
 import { useRegistrarVisita } from "@/hooks/useVisitas";
+import { contactoSucursal } from "@/lib/contacto";
 import { resolverTema, variablesDeTema, type TemaResuelto } from "@/lib/tema";
 import { ESTADOS } from "@/lib/copy";
 import { cn } from "@/lib/utils";
+import { telefonoParaWaMe } from "@/lib/whatsapp";
 import type { FormatoMenu, Tenant } from "@/types/database";
 
 interface MenuPublicoProps {
@@ -173,6 +178,13 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
   const tema = resolverTema(data.tenant.tema, data.formato);
   const Formato = FORMATOS[data.formato];
 
+  // "Pedir por WhatsApp": lo permite el plan Y hay un WhatsApp resoluble
+  // (sucursal → empresa). Sin número usable, la feature entera se oculta.
+  const numeroPedido = telefonoParaWaMe(
+    contactoSucursal(data.sucursalActiva, data.tenant).whatsapp,
+  );
+  const pedidosOn = data.permitePedidosWhatsApp && numeroPedido !== null;
+
   const propsFormato: PropsFormato = {
     categorias: data.categorias,
     logoUrl: data.tenant.logo_url,
@@ -195,6 +207,11 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
         <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
           <Formato {...propsFormato} />
           {data.marcaAgua && <MarcaAgua flotante />}
+          <BotonPedidoTikTok
+            tenant={data.tenant}
+            sucursal={data.sucursalActiva}
+            habilitado={pedidosOn}
+          />
         </main>
         {cortina}
       </>
@@ -202,34 +219,42 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
   }
 
   const cuerpo = (
-    <>
-      <HeaderMenu
-        tenant={data.tenant}
-        sucursales={data.sucursales}
-        sucursalActiva={data.sucursalActiva}
-        menuIndependiente={data.menuIndependiente}
-        compacta={data.formato === "instagram"}
-        sobreOscuro={tema.modo_imagen === "completo"}
-      />
+    <CarritoWhatsAppProvider key={data.sucursalActiva?.id ?? "principal"} habilitado={pedidosOn}>
+      {/* pb-24: deja aire para que BarraPedido (fixed) no tape el final de ContactoMenu */}
+      <div className={cn(pedidosOn && "pb-24")}>
+        <HeaderMenu
+          tenant={data.tenant}
+          sucursales={data.sucursales}
+          sucursalActiva={data.sucursalActiva}
+          menuIndependiente={data.menuIndependiente}
+          compacta={data.formato === "instagram"}
+          sobreOscuro={tema.modo_imagen === "completo"}
+        />
 
-      {data.categorias.length === 0 ? (
-        <p className="px-4 py-20 text-center text-sm" style={{ color: "var(--menu-texto-suave)" }}>
-          Este menú todavía no tiene productos.
-        </p>
-      ) : (
-        <Formato {...propsFormato} />
-      )}
+        {data.categorias.length === 0 ? (
+          <p
+            className="px-4 py-20 text-center text-sm"
+            style={{ color: "var(--menu-texto-suave)" }}
+          >
+            Este menú todavía no tiene productos.
+          </p>
+        ) : (
+          <Formato {...propsFormato} />
+        )}
 
-      <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
+        <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
 
-      <EmbudoResenas
-        tenant={data.tenant}
-        sucursal={data.sucursalActiva}
-        habilitado={data.permiteEmbudoResenas}
-      />
+        <BarraPedido tenant={data.tenant} sucursal={data.sucursalActiva} />
 
-      {data.marcaAgua && <MarcaAgua />}
-    </>
+        <EmbudoResenas
+          tenant={data.tenant}
+          sucursal={data.sucursalActiva}
+          habilitado={data.permiteEmbudoResenas}
+        />
+
+        {data.marcaAgua && <MarcaAgua />}
+      </div>
+    </CarritoWhatsAppProvider>
   );
 
   const estiloRaiz = variablesDeTema(tema);

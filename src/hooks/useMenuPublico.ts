@@ -22,6 +22,8 @@ export type MenuPublico = {
   marcaAgua: boolean;
   /** planes.permite_embudo_resenas — gatea el aviso "¿cómo estuvo tu visita?". */
   permiteEmbudoResenas: boolean;
+  /** planes.permite_pedidos_whatsapp — gatea "Pedir por WhatsApp" (el carrito). */
+  permitePedidosWhatsApp: boolean;
   menuIndependiente: boolean;
   sucursales: Sucursal[];
   sucursalActiva: Sucursal | null;
@@ -46,7 +48,9 @@ export async function obtenerMenuPublico(
 ): Promise<MenuPublico | null> {
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
-    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas)")
+    .select(
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp)",
+    )
     .eq("slug", slug)
     .maybeSingle();
 
@@ -62,7 +66,9 @@ export async function obtenerMenuPublico(
 export async function obtenerMenuPublicoPorDominio(host: string): Promise<MenuPublico | null> {
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
-    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas)")
+    .select(
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp)",
+    )
     .eq("dominio_personalizado", host)
     .maybeSingle();
 
@@ -81,7 +87,9 @@ export async function obtenerSucursalPublicaPorDominio(
 ): Promise<MenuPublico | null> {
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
-    .select("*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas)")
+    .select(
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp)",
+    )
     .eq("dominio_personalizado", host)
     .maybeSingle();
 
@@ -94,7 +102,10 @@ async function armarMenuPublico(
     | (Tenant & {
         plan: Pick<
           Plan,
-          "marca_agua" | "menu_independiente_por_sucursal" | "permite_embudo_resenas"
+          | "marca_agua"
+          | "menu_independiente_por_sucursal"
+          | "permite_embudo_resenas"
+          | "permite_pedidos_whatsapp"
         > | null;
       })
     | null,
@@ -195,6 +206,7 @@ async function armarMenuPublico(
     formato: tenant.formato_activo as FormatoMenu,
     marcaAgua: plan?.marca_agua ?? true,
     permiteEmbudoResenas: plan?.permite_embudo_resenas ?? false,
+    permitePedidosWhatsApp: plan?.permite_pedidos_whatsapp ?? false,
     menuIndependiente: plan?.menu_independiente_por_sucursal ?? false,
     sucursales: sucursales ?? [],
     sucursalActiva,
