@@ -91,6 +91,53 @@ export type Database = {
           },
         ];
       };
+      dominios_huerfanos: {
+        Row: {
+          borrado_at: string | null;
+          creado_at: string;
+          dominio: string;
+          tenant_id: string | null;
+        };
+        Insert: {
+          borrado_at?: string | null;
+          creado_at?: string;
+          dominio: string;
+          tenant_id?: string | null;
+        };
+        Update: {
+          borrado_at?: string | null;
+          creado_at?: string;
+          dominio?: string;
+          tenant_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dominios_huerfanos_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      eventos_stripe: {
+        Row: {
+          id: string;
+          recibido_at: string;
+          tipo: string;
+        };
+        Insert: {
+          id: string;
+          recibido_at?: string;
+          tipo: string;
+        };
+        Update: {
+          id?: string;
+          recibido_at?: string;
+          tipo?: string;
+        };
+        Relationships: [];
+      };
       feedback_privado: {
         Row: {
           comentario: string | null;
@@ -417,6 +464,7 @@ export type Database = {
           permite_embudo_resenas: boolean;
           permite_multiusuario: boolean;
           permite_pedidos_whatsapp: boolean;
+          permite_reservaciones: boolean;
           precio_mxn: number;
           precio_mxn_anual: number | null;
           precio_usd: number;
@@ -447,6 +495,7 @@ export type Database = {
           permite_embudo_resenas?: boolean;
           permite_multiusuario?: boolean;
           permite_pedidos_whatsapp?: boolean;
+          permite_reservaciones?: boolean;
           precio_mxn: number;
           precio_mxn_anual?: number | null;
           precio_usd: number;
@@ -477,6 +526,7 @@ export type Database = {
           permite_embudo_resenas?: boolean;
           permite_multiusuario?: boolean;
           permite_pedidos_whatsapp?: boolean;
+          permite_reservaciones?: boolean;
           precio_mxn?: number;
           precio_mxn_anual?: number | null;
           precio_usd?: number;
@@ -626,6 +676,69 @@ export type Database = {
           },
         ];
       };
+      reservaciones: {
+        Row: {
+          consentimiento_at: string;
+          creada_en: string;
+          email: string | null;
+          estado: string;
+          fecha_hora: string;
+          id: string;
+          ip: unknown;
+          nombre: string;
+          nota: string | null;
+          personas: number;
+          sucursal_id: string;
+          telefono: string;
+          tenant_id: string;
+        };
+        Insert: {
+          consentimiento_at?: string;
+          creada_en?: string;
+          email?: string | null;
+          estado?: string;
+          fecha_hora: string;
+          id?: string;
+          ip?: unknown;
+          nombre: string;
+          nota?: string | null;
+          personas: number;
+          sucursal_id: string;
+          telefono: string;
+          tenant_id: string;
+        };
+        Update: {
+          consentimiento_at?: string;
+          creada_en?: string;
+          email?: string | null;
+          estado?: string;
+          fecha_hora?: string;
+          id?: string;
+          ip?: unknown;
+          nombre?: string;
+          nota?: string | null;
+          personas?: number;
+          sucursal_id?: string;
+          telefono?: string;
+          tenant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reservaciones_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reservaciones_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       slugs_reservados: {
         Row: {
           slug: string;
@@ -640,6 +753,7 @@ export type Database = {
       };
       sucursales: {
         Row: {
+          acepta_reservaciones: boolean;
           activa: boolean;
           created_at: string;
           direccion: string | null;
@@ -647,6 +761,7 @@ export type Database = {
           id: string;
           maps_url: string | null;
           nombre: string;
+          reservaciones_email: string | null;
           slug: string;
           telefono: string | null;
           tenant_id: string;
@@ -654,6 +769,7 @@ export type Database = {
           whatsapp: string | null;
         };
         Insert: {
+          acepta_reservaciones?: boolean;
           activa?: boolean;
           created_at?: string;
           direccion?: string | null;
@@ -661,6 +777,7 @@ export type Database = {
           id?: string;
           maps_url?: string | null;
           nombre: string;
+          reservaciones_email?: string | null;
           slug: string;
           telefono?: string | null;
           tenant_id: string;
@@ -668,6 +785,7 @@ export type Database = {
           whatsapp?: string | null;
         };
         Update: {
+          acepta_reservaciones?: boolean;
           activa?: boolean;
           created_at?: string;
           direccion?: string | null;
@@ -675,6 +793,7 @@ export type Database = {
           id?: string;
           maps_url?: string | null;
           nombre?: string;
+          reservaciones_email?: string | null;
           slug?: string;
           telefono?: string | null;
           tenant_id?: string;
@@ -956,6 +1075,10 @@ export type Database = {
         Args: { p_estado: string; p_tenant_id: string };
         Returns: undefined;
       };
+      combinar_fecha_hora_sucursal: {
+        Args: { p_fecha: string; p_hora: string; p_tz: string };
+        Returns: string;
+      };
       equipo_del_tenant: {
         Args: { p_tenant_id: string };
         Returns: {
@@ -990,6 +1113,7 @@ export type Database = {
         Args: { check_tenant_id: string };
         Returns: boolean;
       };
+      purgar_reservaciones_viejas: { Args: never; Returns: number };
       registrar_feedback: {
         Args: {
           p_comentario?: string;
@@ -1017,6 +1141,10 @@ export type Database = {
           rol: string;
           user_id: string;
         }[];
+      };
+      tenant_puede_escribir: {
+        Args: { check_tenant_id: string };
+        Returns: boolean;
       };
     };
     Enums: {

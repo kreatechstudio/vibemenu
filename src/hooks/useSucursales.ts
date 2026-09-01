@@ -23,6 +23,10 @@ export type BorradorSucursal = {
   telefono: string | null;
   whatsapp: string | null;
   timezone: string;
+  /** Opt-in de reservaciones para esta sucursal (plan Pro+). */
+  acepta_reservaciones: boolean;
+  /** Correo de aviso; null = al correo del owner. */
+  reservaciones_email: string | null;
 };
 
 /** Una fila por dia. `dia_semana` 0 = domingo, igual que `extract(dow ...)` en Postgres. */
@@ -82,6 +86,8 @@ function useInvalidar(tenantId: string | undefined) {
  *
  * `datos` siempre lleva `google_reviews_url`, así que la migración
  * `vibemenu_migracion_contacto_sucursal.sql` debe estar aplicada antes del deploy.
+ * Igual con `acepta_reservaciones`/`reservaciones_email`: la migración
+ * `vibemenu_migracion_reservaciones.sql` debe estar aplicada antes del deploy.
  */
 export function useGuardarSucursal(tenantId: string | undefined) {
   const invalidar = useInvalidar(tenantId);

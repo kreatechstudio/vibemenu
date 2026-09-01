@@ -1,4 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { useReservacionesNuevas } from "@/hooks/useReservaciones";
+import { useTenantActual } from "@/hooks/useTenantActual";
 import { cn } from "@/lib/utils";
 
 export type Pestana = {
@@ -11,6 +13,7 @@ export const PESTANAS_NEGOCIO: Pestana[] = [
   { a: "/admin/empresa", etiqueta: "Perfil" },
   { a: "/admin/sucursales", etiqueta: "Sucursales" },
   { a: "/admin/equipo", etiqueta: "Equipo" },
+  { a: "/admin/reservaciones", etiqueta: "Reservaciones" },
   { a: "/admin/opiniones", etiqueta: "Opiniones" },
   { a: "/admin/suscripcion", etiqueta: "Suscripción" },
 ];
@@ -23,11 +26,17 @@ export const PESTANAS_NEGOCIO: Pestana[] = [
  */
 export default function PillTabs({ pestanas }: { pestanas: Pestana[] }) {
   const { pathname } = useLocation();
+  const { data: ctx } = useTenantActual();
+  const { data: nuevas = 0 } = useReservacionesNuevas(ctx?.tenant.id);
 
   return (
     <div className="tira-scroll -mx-1 mb-6 flex gap-1.5 overflow-x-auto px-1 pb-1">
       {pestanas.map((p) => {
         const activa = pathname === p.a;
+        // Solo si el plan incluye reservaciones: si no, el badge apuntaría a
+        // trabajo que el negocio no puede accionar detrás del muro de pago.
+        const badge =
+          p.a === "/admin/reservaciones" && nuevas > 0 && Boolean(ctx?.plan.permite_reservaciones);
         return (
           <Link
             key={p.a}
@@ -40,6 +49,16 @@ export default function PillTabs({ pestanas }: { pestanas: Pestana[] }) {
             )}
           >
             {p.etiqueta}
+            {badge && (
+              <span
+                className={cn(
+                  "ml-1.5 rounded-full px-1.5 text-[11px] font-semibold",
+                  activa ? "bg-white text-vm-primary" : "bg-vm-primary text-white",
+                )}
+              >
+                {nuevas}
+              </span>
+            )}
           </Link>
         );
       })}

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Loader2, X } from "lucide-react";
 import Modal from "@/components/ui/modal";
+import { useTenantActual } from "@/hooks/useTenantActual";
 import PhoneInput from "@/components/ui/phone-input";
 import {
   cruzaMedianoche,
@@ -55,6 +57,13 @@ export default function EditorSucursal({
   const [timezone, setTimezone] = useState(sucursal?.timezone ?? "America/Mexico_City");
   const [error, setError] = useState<string | null>(null);
 
+  const { data: ctx } = useTenantActual();
+  const permiteReservaciones = Boolean(ctx?.plan.permite_reservaciones);
+  const [aceptaReservaciones, setAceptaReservaciones] = useState(
+    sucursal?.acepta_reservaciones ?? false,
+  );
+  const [reservacionesEmail, setReservacionesEmail] = useState(sucursal?.reservaciones_email ?? "");
+
   const [horarios, setHorarios] = useState<Record<number, BorradorHorario> | null>(null);
 
   const zonas = useMemo(() => zonasHorarias(), []);
@@ -107,6 +116,12 @@ export default function EditorSucursal({
       return;
     }
 
+    const resvEmail = reservacionesEmail.trim();
+    if (resvEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(resvEmail)) {
+      setError("El correo de avisos no se ve bien.");
+      return;
+    }
+
     try {
       await guardar.mutateAsync({
         id: sucursal?.id,
@@ -119,6 +134,16 @@ export default function EditorSucursal({
           telefono: asegurarLada(telefono.trim() || null),
           whatsapp: asegurarLada(whatsapp.trim() || null),
           timezone,
+          // Plan Basic: no tocar el estado de reservaciones ya guardado. Un edit
+          // no relacionado no debe borrar el correo de avisos ni apagar el opt-in
+          // (el trigger + la edge function son los guardas reales). El checkbox
+          // está `disabled` sin plan, así que esto solo preserva, nunca activa.
+          acepta_reservaciones: permiteReservaciones
+            ? aceptaReservaciones
+            : (sucursal?.acepta_reservaciones ?? false),
+          reservaciones_email: permiteReservaciones
+            ? resvEmail || null
+            : (sucursal?.reservaciones_email ?? null),
         },
         horarios: ORDEN_VISUAL.map((d) => filas[d]),
       });
@@ -249,6 +274,50 @@ export default function EditorSucursal({
               En tu ficha de Google entra a «Pedir reseñas» y copia el enlace corto. Si lo dejas
               vacío, el menú usa el de tu negocio.
             </p>
+          </div>
+
+          <div className="rounded-xl border p-4">
+            <p className="text-sm font-medium text-vm-ink">Reservaciones</p>
+            <label className="mt-3 flex items-center justify-between text-sm text-vm-ink">
+              Recibir reservaciones en esta sucursal
+              <input
+                type="checkbox"
+                disabled={!permiteReservaciones}
+                checked={aceptaReservaciones}
+                onChange={(e) => setAceptaReservaciones(e.target.checked)}
+                className="size-4 accent-vm-primary disabled:opacity-40"
+              />
+            </label>
+            {permiteReservaciones ? (
+              aceptaReservaciones && (
+                <div className="mt-3">
+                  <label htmlFor="s-resv-email" className="text-sm text-vm-ink">
+                    Correo para avisos <span className="font-normal text-vm-body">(opcional)</span>
+                  </label>
+                  <input
+                    id="s-resv-email"
+                    type="email"
+                    inputMode="email"
+                    value={reservacionesEmail}
+                    onChange={(e) => setReservacionesEmail(e.target.value)}
+                    placeholder="reservas@tunegocio.mx"
+                    className="mt-1.5 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:border-vm-primary"
+                  />
+                  <p className="mt-1.5 text-xs text-vm-body">
+                    Si lo dejas vacío, los avisos llegan al correo del dueño. Estos serán datos de
+                    tus clientes: confírmales tú directamente.
+                  </p>
+                </div>
+              )
+            ) : (
+              <p className="mt-2 text-xs text-vm-body">
+                Disponible en los planes Pro y Enterprise.{" "}
+                <Link to="/admin/suscripcion" className="text-vm-primary hover:underline">
+                  Ver planes
+                </Link>
+                .
+              </p>
+            )}
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">

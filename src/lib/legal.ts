@@ -32,7 +32,7 @@ export type Proveedor = {
  * La migración de imágenes a Cloudflare R2 se evaluó y se pausó (2026-08-20): con
  * la compresión de `src/lib/imagen.ts`, el uso real de Supabase Storage es de
  * kilobytes, no gigabytes — no hay urgencia de moverlas. Cloudflare se queda en
- * esta lista solo por Turnstile, que sigue en el roadmap.
+ * esta lista por Turnstile, que ya está en producción.
  */
 export const PROVEEDORES: Proveedor[] = [
   {
@@ -56,9 +56,16 @@ export const PROVEEDORES: Proveedor[] = [
   },
   {
     nombre: "Cloudflare",
-    rol: "Verificación de que no eres un bot (Turnstile) en el registro",
+    rol: "Verificación de que no eres un bot (Turnstile) en el registro, el inicio de sesión, la recuperación de contraseña y el formulario de reservas del menú público",
     datos: "Señales técnicas del navegador, sin cookies publicitarias ni identidad",
-    estado: "en migración",
+    estado: "activo",
+  },
+  {
+    nombre: "Resend",
+    rol: "Correo transaccional: bienvenida, invitaciones de equipo y avisos de reserva al restaurante con los datos del comensal",
+    datos:
+      "Nombre, teléfono, correo y nota del comensal que solicita mesa; correo y nombre de los usuarios de la cuenta. Servidores en EE. UU.",
+    estado: "activo",
   },
   {
     nombre: "Google Analytics",

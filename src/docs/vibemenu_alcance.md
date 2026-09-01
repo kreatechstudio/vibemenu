@@ -34,12 +34,12 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 
 ## Modelo de negocio — Planes
 
-| Plan          | USD/mes | MXN/mes | Sucursales | Productos  | Usuarios              | Grupos modif. | Formatos                                                     | Menú por sucursal | Extras                             |
-| ------------- | ------- | ------- | ---------- | ---------- | --------------------- | ------------- | ------------------------------------------------------------ | ----------------- | ---------------------------------- |
-| Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu" |
-| Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                  |
-| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | Dominio propio (CNAME)             |
-| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | Soporte prioritario                |
+| Plan          | USD/mes | MXN/mes | Sucursales | Productos  | Usuarios              | Grupos modif. | Formatos                                                     | Menú por sucursal | Extras                                      |
+| ------------- | ------- | ------- | ---------- | ---------- | --------------------- | ------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------- |
+| Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu"          |
+| Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                           |
+| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Dominio propio (CNAME)   |
+| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Soporte prioritario       |
 
 Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
 
@@ -87,6 +87,10 @@ Cuatro enlaces en `tenants`: Facebook, Instagram, TikTok y las reseñas de Googl
 **Visitas.** `visitas_menu` guarda un contador por `(tenant, sucursal, día)`, no una fila por visita: eso crece sin techo y no aporta nada que el contador no diga. El comensal no tiene sesión, así que no puede escribir en la tabla; el único camino es la función `registrar_visita`, SECURITY DEFINER, que valida que la sucursal sea del tenant. Se llama **desde el navegador**, nunca desde el loader del servidor: ahí contaríamos los prefetch del router y cada rastreador que pase. Una visita = una sesión del navegador por menú; recargar la página no cuenta otra vez.
 
 El día se calcula con la zona horaria de la sucursal. Con `current_date` a secas, un negocio en México vería las visitas de las 18:00 contadas al día siguiente, que es UTC.
+
+## Reservaciones simples (Pro/Enterprise, migración 012)
+
+Formulario breve en el menú público (nombre, personas, fecha/hora, teléfono con lada, nota, email opcional) para que el comensal solicite mesa. El restaurante recibe un aviso por correo vía Resend. **No es un sistema de reservas con mesas ni disponibilidad** — es captar la intención antes de que se vaya a otro lado. El restaurante gestiona las solicitudes en `/admin/reservaciones` con estados `nueva → atendida | cancelada`. Opt-in por sucursal (`sucursales.acepta_reservaciones` + `reservaciones_email`). Anti-spam: Turnstile verificado en la Edge Function `crear-reservacion` + rate-limit (20/sucursal/hora, 3/IP/hora). Ventana de fecha: hoy … +60 días. Purga a los 90 días por cron GitHub Actions.
 
 ## Precios distintos por sucursal
 
@@ -176,6 +180,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 | `/admin/empresa`                 | Mi negocio        | Nombre, slug, logo, descripción, contacto | Owner/Encargado |
 | `/admin/diseno`                  | Diseño            | Formato activo, colores, tipografía       | Owner/Encargado |
 | `/admin/qr`                      | QR                | Tarjeta imprimible, un QR por sucursal    | Owner/Encargado |
+| `/admin/reservaciones`           | Reservaciones     | Solicitudes de mesa, con estados          | Owner/Encargado |
 | `/admin/equipo`                  | Equipo            | Multi-usuario (Pro/Enterprise)            | Owner           |
 | `/admin/suscripcion`             | Suscripción       | Plan actual, Stripe Customer Portal       | Owner           |
 
