@@ -130,8 +130,9 @@ as $$
   select ((p_fecha + p_hora) at time zone coalesce(nullif(p_tz, ''), 'UTC'));
 $$;
 
-revoke execute on function combinar_fecha_hora_sucursal(date, time, text) from public;
-grant execute on function combinar_fecha_hora_sucursal(date, time, text) to service_role;
+-- Revoke default Supabase grants to anon/authenticated (implicit via ALTER DEFAULT PRIVILEGES).
+revoke execute on function combinar_fecha_hora_sucursal(date, time, text) from public, anon, authenticated;
+grant  execute on function combinar_fecha_hora_sucursal(date, time, text) to service_role;
 
 -- 6. Purga nocturna ----------------------------------------------------
 --    Por fecha_hora, no creada_en: una reserva pedida con 2 meses de
@@ -151,8 +152,9 @@ begin
 end;
 $$;
 
-revoke execute on function purgar_reservaciones_viejas() from public;
-grant execute on function purgar_reservaciones_viejas() to service_role;
+-- Revoke default Supabase grants to anon/authenticated (implicit via ALTER DEFAULT PRIVILEGES).
+revoke execute on function purgar_reservaciones_viejas() from public, anon, authenticated;
+grant  execute on function purgar_reservaciones_viejas() to service_role;
 
 commit;
 
