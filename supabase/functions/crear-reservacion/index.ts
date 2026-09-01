@@ -36,7 +36,12 @@ const SITIO = "https://vibemenu.com.mx";
 // El comensal no tiene sesion y controla nombre/nota/telefono/subject: escapar
 // antes de meterlos en el HTML del correo al restaurante (anti-phishing).
 const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const LIMITE_POR_SUCURSAL_HORA = 5;
 const LIMITE_POR_IP_HORA = 3;
@@ -177,7 +182,15 @@ Deno.serve(async (req) => {
     .eq("id", entrada.sucursal_id)
     .maybeSingle();
 
-  const tenant = (suc as { tenant?: { id: string; nombre_negocio: string; plan?: { permite_reservaciones: boolean } | null } } | null)?.tenant;
+  const tenant = (
+    suc as {
+      tenant?: {
+        id: string;
+        nombre_negocio: string;
+        plan?: { permite_reservaciones: boolean } | null;
+      };
+    } | null
+  )?.tenant;
   if (
     errSuc ||
     !suc ||
@@ -195,7 +208,8 @@ Deno.serve(async (req) => {
     .select("id", { count: "exact", head: true })
     .eq("sucursal_id", entrada.sucursal_id)
     .gte("creada_en", desde);
-  if ((nSuc ?? 0) >= LIMITE_POR_SUCURSAL_HORA) return json({ error: "demasiadas_solicitudes" }, 429);
+  if ((nSuc ?? 0) >= LIMITE_POR_SUCURSAL_HORA)
+    return json({ error: "demasiadas_solicitudes" }, 429);
 
   if (ip) {
     const { count: nIp } = await db
@@ -228,9 +242,10 @@ Deno.serve(async (req) => {
     ip,
   });
   if (errIns) {
-    const slug = /reservacion_en_pasado|reservacion_muy_lejana|sucursal_no_acepta_reservaciones|reservaciones_no_permitidas|sucursal_ajena/.exec(
-      errIns.message,
-    )?.[0];
+    const slug =
+      /reservacion_en_pasado|reservacion_muy_lejana|sucursal_no_acepta_reservaciones|reservaciones_no_permitidas|sucursal_ajena/.exec(
+        errIns.message,
+      )?.[0];
     return json({ error: slug ?? "datos_invalidos" }, 400);
   }
 
