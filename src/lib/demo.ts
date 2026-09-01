@@ -64,6 +64,8 @@ export const SUCURSAL_DEMO: Sucursal = {
   whatsapp: "+52 55 1234 5678",
   timezone: "America/Mexico_City",
   activa: true,
+  acepta_reservaciones: false,
+  reservaciones_email: null,
   created_at: new Date().toISOString(),
 };
 
