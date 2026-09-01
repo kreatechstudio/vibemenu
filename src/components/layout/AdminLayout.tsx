@@ -55,7 +55,7 @@ const NAV: ItemNav[] = [
     a: "/admin/empresa",
     etiqueta: "Mi negocio",
     icono: Building2,
-    cubre: ["/admin/sucursales", "/admin/equipo", "/admin/suscripcion"],
+    cubre: ["/admin/sucursales", "/admin/equipo", "/admin/reservaciones", "/admin/suscripcion"],
   },
   { a: "/admin/diseno", etiqueta: "Diseño", icono: Palette },
   { a: "/admin/qr", etiqueta: "QR", icono: QrCode },

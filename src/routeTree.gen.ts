@@ -28,6 +28,7 @@ import { Route as InvitacionTokenRouteImport } from './routes/invitacion.$token'
 import { Route as AuthCompletarRouteImport } from './routes/auth.completar'
 import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
 import { Route as AdminSucursalesRouteImport } from './routes/admin.sucursales'
+import { Route as AdminReservacionesRouteImport } from './routes/admin.reservaciones'
 import { Route as AdminQrRouteImport } from './routes/admin.qr'
 import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
 import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
@@ -132,6 +133,11 @@ const AdminSucursalesRoute = AdminSucursalesRouteImport.update({
   path: '/admin/sucursales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminReservacionesRoute = AdminReservacionesRouteImport.update({
+  id: '/admin/reservaciones',
+  path: '/admin/reservaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminQrRoute = AdminQrRouteImport.update({
   id: '/admin/qr',
   path: '/admin/qr',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/admin/modificadores': typeof AdminModificadoresRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/qr': typeof AdminQrRoute
+  '/admin/reservaciones': typeof AdminReservacionesRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
   '/auth/completar': typeof AuthCompletarRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/admin/modificadores': typeof AdminModificadoresRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/qr': typeof AdminQrRoute
+  '/admin/reservaciones': typeof AdminReservacionesRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
   '/auth/completar': typeof AuthCompletarRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/admin/modificadores': typeof AdminModificadoresRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/qr': typeof AdminQrRoute
+  '/admin/reservaciones': typeof AdminReservacionesRoute
   '/admin/sucursales': typeof AdminSucursalesRoute
   '/admin/suscripcion': typeof AdminSuscripcionRoute
   '/auth/completar': typeof AuthCompletarRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/admin/modificadores'
     | '/admin/opiniones'
     | '/admin/qr'
+    | '/admin/reservaciones'
     | '/admin/sucursales'
     | '/admin/suscripcion'
     | '/auth/completar'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/admin/modificadores'
     | '/admin/opiniones'
     | '/admin/qr'
+    | '/admin/reservaciones'
     | '/admin/sucursales'
     | '/admin/suscripcion'
     | '/auth/completar'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/admin/modificadores'
     | '/admin/opiniones'
     | '/admin/qr'
+    | '/admin/reservaciones'
     | '/admin/sucursales'
     | '/admin/suscripcion'
     | '/auth/completar'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   AdminModificadoresRoute: typeof AdminModificadoresRoute
   AdminOpinionesRoute: typeof AdminOpinionesRoute
   AdminQrRoute: typeof AdminQrRoute
+  AdminReservacionesRoute: typeof AdminReservacionesRoute
   AdminSucursalesRoute: typeof AdminSucursalesRoute
   AdminSuscripcionRoute: typeof AdminSuscripcionRoute
   AuthCompletarRoute: typeof AuthCompletarRoute
@@ -516,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSucursalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/reservaciones': {
+      id: '/admin/reservaciones'
+      path: '/admin/reservaciones'
+      fullPath: '/admin/reservaciones'
+      preLoaderRoute: typeof AdminReservacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/qr': {
       id: '/admin/qr'
       path: '/admin/qr'
@@ -606,6 +626,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminModificadoresRoute: AdminModificadoresRoute,
   AdminOpinionesRoute: AdminOpinionesRoute,
   AdminQrRoute: AdminQrRoute,
+  AdminReservacionesRoute: AdminReservacionesRoute,
   AdminSucursalesRoute: AdminSucursalesRoute,
   AdminSuscripcionRoute: AdminSuscripcionRoute,
   AuthCompletarRoute: AuthCompletarRoute,
