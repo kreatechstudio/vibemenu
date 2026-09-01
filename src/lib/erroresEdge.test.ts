@@ -52,3 +52,61 @@ describe("traducirErrorEdge", () => {
     expect(await traducirErrorEdge(null)).toBe("Algo salió mal. Vuelve a intentar en un momento.");
   });
 });
+
+describe("mensajes de reservaciones", () => {
+  test("datos_invalidos", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "datos_invalidos" }));
+    expect(mensaje).toBe("Revisa los datos del formulario e intenta de nuevo.");
+  });
+
+  test("captcha_invalido", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "captcha_invalido" }));
+    expect(mensaje).toBe(
+      "No pudimos verificar que no eres un robot. Recarga la página e intenta otra vez.",
+    );
+  });
+
+  test("reservaciones_no_disponibles", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "reservaciones_no_disponibles" }));
+    expect(mensaje).toBe("Este restaurante no está recibiendo reservaciones ahora mismo.");
+  });
+
+  test("demasiadas_solicitudes", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "demasiadas_solicitudes" }));
+    expect(mensaje).toBe(
+      "Llegaron muchas solicitudes seguidas. Espera unos minutos e intenta de nuevo.",
+    );
+  });
+
+  test("reservacion_en_pasado", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "reservacion_en_pasado" }));
+    expect(mensaje).toBe("Esa fecha y hora ya pasaron. Elige otra.");
+  });
+
+  test("reservacion_muy_lejana", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "reservacion_muy_lejana" }));
+    expect(mensaje).toBe("Solo puedes reservar hasta con 60 días de anticipación.");
+  });
+
+  test("sucursal_no_acepta_reservaciones", async () => {
+    const mensaje = await traducirErrorEdge(
+      errorEdge({ error: "sucursal_no_acepta_reservaciones" }),
+    );
+    expect(mensaje).toBe("Esta sucursal no está recibiendo reservaciones.");
+  });
+
+  test("reservaciones_no_permitidas", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "reservaciones_no_permitidas" }));
+    expect(mensaje).toBe("Este restaurante no está recibiendo reservaciones ahora mismo.");
+  });
+
+  test("sucursal_ajena", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "sucursal_ajena" }));
+    expect(mensaje).toBe("Algo salió mal con la sucursal. Recarga la página e intenta de nuevo.");
+  });
+
+  test("metodo_no_permitido", async () => {
+    const mensaje = await traducirErrorEdge(errorEdge({ error: "metodo_no_permitido" }));
+    expect(mensaje).toBe("Algo salió mal. Vuelve a intentar en un momento.");
+  });
+});

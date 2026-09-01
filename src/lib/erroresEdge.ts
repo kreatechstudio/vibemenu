@@ -22,6 +22,18 @@ const MENSAJES: Record<string, string> = {
   inicia_sesion_para_aceptar: "Ya existe una cuenta con este correo. Inicia sesión para aceptar.",
   falta_password: "Elige una contraseña de al menos 6 caracteres.",
   no_pudimos_crear_la_cuenta: "No pudimos crear tu cuenta. Intenta de nuevo.",
+  datos_invalidos: "Revisa los datos del formulario e intenta de nuevo.",
+  captcha_invalido:
+    "No pudimos verificar que no eres un robot. Recarga la página e intenta otra vez.",
+  reservaciones_no_disponibles: "Este restaurante no está recibiendo reservaciones ahora mismo.",
+  demasiadas_solicitudes:
+    "Llegaron muchas solicitudes seguidas. Espera unos minutos e intenta de nuevo.",
+  reservacion_en_pasado: "Esa fecha y hora ya pasaron. Elige otra.",
+  reservacion_muy_lejana: "Solo puedes reservar hasta con 60 días de anticipación.",
+  sucursal_no_acepta_reservaciones: "Esta sucursal no está recibiendo reservaciones.",
+  reservaciones_no_permitidas: "Este restaurante no está recibiendo reservaciones ahora mismo.",
+  sucursal_ajena: "Algo salió mal con la sucursal. Recarga la página e intenta de nuevo.",
+  metodo_no_permitido: "Algo salió mal. Vuelve a intentar en un momento.",
 };
 
 /**
