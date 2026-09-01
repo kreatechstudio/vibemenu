@@ -7,6 +7,7 @@ import EmbudoResenas from "@/components/menu/EmbudoResenas";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import MarcaAgua from "@/components/menu/MarcaAgua";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
+import ReservarMenu from "@/components/menu/ReservarMenu";
 import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
 import Instagram from "@/components/formatos/Instagram";
@@ -243,6 +244,12 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
         )}
 
         <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
+
+        <ReservarMenu
+          sucursalActiva={data.sucursalActiva}
+          sucursales={data.sucursales}
+          habilitado={data.permiteReservaciones}
+        />
 
         <BarraPedido tenant={data.tenant} sucursal={data.sucursalActiva} />
 
