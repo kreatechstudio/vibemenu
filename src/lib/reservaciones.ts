@@ -107,7 +107,13 @@ export function payloadReservacion(
 }
 
 const FMT_CACHE = new Map<string, Intl.DateTimeFormat>();
-function fmt(tz: string): Intl.DateTimeFormat {
+
+/**
+ * Formateador `dateStyle:"medium" timeStyle:"short"` en `tz`, cacheado por zona.
+ * Construir un `Intl.DateTimeFormat` no es gratis; el panel lo llama por fila y
+ * por render. Compartido con `Reservaciones.tsx`.
+ */
+export function formateadorFechaHora(tz: string): Intl.DateTimeFormat {
   let f = FMT_CACHE.get(tz);
   if (!f) {
     f = new Intl.DateTimeFormat("es-MX", {
@@ -124,5 +130,5 @@ function fmt(tz: string): Intl.DateTimeFormat {
 export function formatearFechaHora(fecha: string, hora: string, tz: string): string {
   const cuando = instantePedido(fecha, hora, tz);
   if (!cuando) return `${fecha} ${hora}`;
-  return fmt(tz).format(cuando);
+  return formateadorFechaHora(tz).format(cuando);
 }

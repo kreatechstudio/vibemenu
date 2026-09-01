@@ -90,7 +90,7 @@ El día se calcula con la zona horaria de la sucursal. Con `current_date` a seca
 
 ## Reservaciones simples (Pro/Enterprise, migración 012)
 
-Formulario breve en el menú público (nombre, personas, fecha/hora, teléfono con lada, nota, email opcional) para que el comensal solicite mesa. El restaurante recibe un aviso por correo vía Resend. **No es un sistema de reservas con mesas ni disponibilidad** — es captar la intención antes de que se vaya a otro lado. El restaurante gestiona las solicitudes en `/admin/reservaciones` con estados `nueva → atendida | cancelada`. Opt-in por sucursal (`sucursales.acepta_reservaciones` + `reservaciones_email`). Anti-spam: Turnstile verificado en la Edge Function `crear-reservacion` + rate-limit (5/sucursal/hora, 3/IP/hora). Ventana de fecha: hoy … +60 días. Purga a los 90 días por cron GitHub Actions.
+Formulario breve en el menú público (nombre, personas, fecha/hora, teléfono con lada, nota, email opcional) para que el comensal solicite mesa. El restaurante recibe un aviso por correo vía Resend. **No es un sistema de reservas con mesas ni disponibilidad** — es captar la intención antes de que se vaya a otro lado. El restaurante gestiona las solicitudes en `/admin/reservaciones` con estados `nueva → atendida | cancelada`. Opt-in por sucursal (`sucursales.acepta_reservaciones` + `reservaciones_email`). Anti-spam: Turnstile verificado en la Edge Function `crear-reservacion` + rate-limit (20/sucursal/hora, 3/IP/hora). Ventana de fecha: hoy … +60 días. Purga a los 90 días por cron GitHub Actions.
 
 ## Precios distintos por sucursal
 

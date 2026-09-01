@@ -33,7 +33,10 @@ export default function PillTabs({ pestanas }: { pestanas: Pestana[] }) {
     <div className="tira-scroll -mx-1 mb-6 flex gap-1.5 overflow-x-auto px-1 pb-1">
       {pestanas.map((p) => {
         const activa = pathname === p.a;
-        const badge = p.a === "/admin/reservaciones" && nuevas > 0;
+        // Solo si el plan incluye reservaciones: si no, el badge apuntaría a
+        // trabajo que el negocio no puede accionar detrás del muro de pago.
+        const badge =
+          p.a === "/admin/reservaciones" && nuevas > 0 && Boolean(ctx?.plan.permite_reservaciones);
         return (
           <Link
             key={p.a}

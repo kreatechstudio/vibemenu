@@ -22,8 +22,13 @@ const COLS =
   "id, sucursal_id, nombre, personas, fecha_hora, telefono, email, nota, estado, creada_en";
 
 /**
- * Reservaciones del tenant, próximas primero. `retry: false`: sin la migración
+ * Reservaciones del tenant. `retry: false`: sin la migración
  * `vibemenu_migracion_reservaciones.sql` la tabla no existe y reintentar no la crea.
+ *
+ * Orden DESCENDENTE + `limit`: el tope recorta las filas MÁS VIEJAS (pasadas),
+ * nunca las futuras. Con ~90 días de retención una sucursal ocupada rebasaría 500
+ * filas y, ordenando ascendente, las reservaciones próximas quedaban fuera del
+ * corte y "Próximas" salía vacía. El componente reordena para mostrar.
  */
 export function useReservaciones(tenantId: string | undefined) {
   return useQuery({
@@ -35,7 +40,7 @@ export function useReservaciones(tenantId: string | undefined) {
         .from("reservaciones")
         .select(COLS)
         .eq("tenant_id", tenantId!)
-        .order("fecha_hora", { ascending: true })
+        .order("fecha_hora", { ascending: false })
         .limit(500);
       if (error) throw error;
       return data as Reservacion[];
@@ -81,7 +86,7 @@ export function useCambiarEstadoReservacion(tenantId: string | undefined) {
  * El comensal no tiene sesión: supabase-js manda la anon key sola, que es lo
  * que la función espera.
  */
-export function useCrearReservacion(sucursalId: string, _tz: string) {
+export function useCrearReservacion(sucursalId: string) {
   return useMutation({
     mutationFn: async ({
       borrador,

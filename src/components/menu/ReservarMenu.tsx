@@ -100,7 +100,7 @@ function FormularioReserva({
   const [token, setToken] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
   const captchaRef = useRef<TurnstileInstance>(null);
-  const crear = useCrearReservacion(sucursalId, tz);
+  const crear = useCrearReservacion(sucursalId);
 
   // Límites del <input type="date">, en la timezone de la sucursal para que
   // cuadren con las reglas del servidor (`validarReservacion` / el trigger).

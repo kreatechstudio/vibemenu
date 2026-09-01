@@ -102,4 +102,13 @@ describe("formatearFechaHora", () => {
     expect(s.toLowerCase()).toContain("sep");
     expect(s).toContain("8:00"); // 20:00 → 8:00 p.m.
   });
+
+  // La hora de pared (20:00) se conserva en cualquier zona: Cancún es UTC-5 sin
+  // horario de verano; Tijuana observa el DST de EE. UU. (en septiembre, UTC-7).
+  test.each(["America/Cancun", "America/Tijuana"])("round-trip correcto en %s", (tz) => {
+    const s = formatearFechaHora("2026-09-03", "20:00", tz);
+    expect(s).toContain("2026");
+    expect(s.toLowerCase()).toContain("sep");
+    expect(s).toContain("8:00"); // 20:00 → 8:00 p.m.
+  });
 });

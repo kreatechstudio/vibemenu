@@ -39,12 +39,21 @@ const SECCIONES: SeccionLegal[] = [
     id: "responsable",
     titulo: "1. Quién es responsable de tus datos",
     contenido: (
-      <p>
-        <strong>{EMPRESA.razonSocial}</strong>, con domicilio en {EMPRESA.domicilio}, es responsable
-        del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos
-        Personales en Posesión de los Particulares (LFPDPPP). Puedes contactarnos en{" "}
-        <a href={`mailto:${EMPRESA.correoPrivacidad}`}>{EMPRESA.correoPrivacidad}</a>.
-      </p>
+      <>
+        <p>
+          <strong>{EMPRESA.razonSocial}</strong>, con domicilio en {EMPRESA.domicilio}, es
+          responsable del tratamiento de tus datos personales conforme a la Ley Federal de
+          Protección de Datos Personales en Posesión de los Particulares (LFPDPPP). Puedes
+          contactarnos en{" "}
+          <a href={`mailto:${EMPRESA.correoPrivacidad}`}>{EMPRESA.correoPrivacidad}</a>.
+        </p>
+        <p>
+          Hay una excepción: cuando solicitas una mesa desde el menú público de un restaurante, el{" "}
+          <strong>restaurante</strong> es el <strong>responsable</strong> de esos datos y Vibemenu
+          actúa como su <strong>encargado</strong> — los tratamos por cuenta e instrucción del
+          restaurante, únicamente para hacerle llegar tu solicitud.
+        </p>
+      </>
     ),
   },
   {
@@ -64,6 +73,12 @@ const SECCIONES: SeccionLegal[] = [
           «¿cómo estuvo tu visita?», se guarda ese texto tal cual, sin ligarlo a tu identidad ni a
           tu dispositivo.
         </p>
+        <p>
+          <strong>Si solicitas una reservación desde el menú:</strong> guardamos tu nombre, tu
+          teléfono, tu correo (si lo das), una nota opcional, la fecha y hora que pediste y la
+          dirección IP desde la que enviaste la solicitud. Esta información se conserva 90 días y
+          después se borra de forma automática.
+        </p>
       </>
     ),
   },
@@ -82,6 +97,12 @@ const SECCIONES: SeccionLegal[] = [
           correo. Puedes darte de baja de estos correos en cualquier momento sin que afecte tu
           servicio.
         </p>
+        <p>
+          <strong>Datos de una reservación:</strong> se usan únicamente para gestionar tu solicitud
+          de mesa y <strong>se comparten con el restaurante</strong> para que te confirme. El
+          restaurante es el <strong>responsable</strong> del uso que les dé; Vibemenu actúa como{" "}
+          <strong>encargado</strong>.
+        </p>
       </>
     ),
   },
@@ -96,10 +117,10 @@ const SECCIONES: SeccionLegal[] = [
         </p>
         <TablaProveedores />
         <p className="text-sm">
-          Cloudflare aparece como "en migración": estamos por activar Cloudflare Turnstile como
-          verificación anti-bots en el registro. Las imágenes de producto se quedan en Supabase
-          Storage — con la compresión que ya aplicamos antes de subir cada foto, no hay necesidad de
-          moverlas a otro proveedor. Este aviso se actualiza cuando Turnstile esté en producción.
+          Cloudflare Turnstile ya está activo como verificación anti-bots en el registro, el inicio
+          de sesión, la recuperación de contraseña y el formulario de reservas del menú público. Las
+          imágenes de producto se quedan en Supabase Storage — con la compresión que ya aplicamos
+          antes de subir cada foto, no hay necesidad de moverlas a otro proveedor.
         </p>
       </>
     ),
@@ -158,9 +179,8 @@ const SECCIONES: SeccionLegal[] = [
     titulo: "9. Cambios a este aviso",
     contenido: (
       <p>
-        Si cambiamos de manera importante qué datos recabamos o con quién los compartimos —como al
-        activar Cloudflare Turnstile— actualizaremos este aviso y avisaremos a los dueños de cuenta
-        por correo.
+        Si cambiamos de manera importante qué datos recabamos o con quién los compartimos,
+        actualizaremos este aviso y avisaremos a los dueños de cuenta por correo.
       </p>
     ),
   },

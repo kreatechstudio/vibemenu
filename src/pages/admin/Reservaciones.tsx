@@ -12,6 +12,7 @@ import {
   type Reservacion,
 } from "@/hooks/useReservaciones";
 import { telefonoParaWaMe } from "@/lib/whatsapp";
+import { formateadorFechaHora } from "@/lib/reservaciones";
 import { cn } from "@/lib/utils";
 
 export default function Reservaciones() {
@@ -50,15 +51,6 @@ const EJEMPLO: Reservacion[] = [
   },
 ];
 
-/** Formateador de fecha/hora en la zona de la sucursal. */
-function fmtFecha(tz: string) {
-  return new Intl.DateTimeFormat("es-MX", {
-    timeZone: tz,
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
 function Fila({
   r,
   sucursal,
@@ -81,7 +73,7 @@ function Fila({
             {r.nombre} · {r.personas} {r.personas === 1 ? "persona" : "personas"}
           </p>
           <p className="mt-0.5 text-xs text-vm-body">
-            {fmtFecha(tz).format(new Date(r.fecha_hora))} · {sucursal}
+            {formateadorFechaHora(tz).format(new Date(r.fecha_hora))} · {sucursal}
           </p>
         </div>
         <span
@@ -204,12 +196,45 @@ function Contenido() {
   if (!ctx) return null;
 
   if (!ctx.plan.permite_reservaciones) {
+    // Downgrade Pro→Basic: si quedaron solicitudes guardadas, se muestran en
+    // solo-lectura (sin botones de estado) para que el negocio pueda al menos
+    // leer nombre y teléfono del comensal. Sin filas: el muro de siempre.
+    const guardadas = [...(reservas ?? [])].sort(
+      (a, b) => new Date(a.fecha_hora).getTime() - new Date(b.fecha_hora).getTime(),
+    );
     return (
       <>
         <PillTabs pestanas={PESTANAS_NEGOCIO} />
         <h1 className="text-2xl">Reservaciones</h1>
         <p className="mt-1 text-sm text-vm-body">Lo que tus clientes piden desde el menú.</p>
-        <Bloqueado />
+        {guardadas.length > 0 ? (
+          <div className="mt-8">
+            <div className="rounded-xl border border-vm-primary/30 bg-vm-primary/5 p-4 text-sm text-vm-body">
+              <p>
+                Tu plan ya no incluye reservaciones. Estas son las solicitudes que quedaron
+                guardadas — vuelve a Pro para gestionarlas.
+              </p>
+              <Link
+                to="/admin/suscripcion"
+                className="mt-3 inline-flex h-10 items-center rounded-lg bg-vm-primary px-4 text-xs font-medium text-white hover:bg-vm-primary-hover"
+              >
+                Actualizar plan
+              </Link>
+            </div>
+            <ul className="mt-6 space-y-3">
+              {guardadas.map((r) => (
+                <Fila
+                  key={r.id}
+                  r={r}
+                  sucursal={nombreSuc.get(r.sucursal_id) ?? "Sucursal"}
+                  tz={tzSuc.get(r.sucursal_id) ?? "America/Mexico_City"}
+                />
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <Bloqueado />
+        )}
       </>
     );
   }
@@ -222,6 +247,13 @@ function Contenido() {
       if (cuando === "proximas") return t >= ahora;
       if (cuando === "pasadas") return t < ahora;
       return true;
+    })
+    // El hook trae las filas descendentes (para que el `limit` recorte las más
+    // viejas). "Próximas" se lee mejor ascendente: la más cercana primero.
+    .sort((a, b) => {
+      const ta = new Date(a.fecha_hora).getTime();
+      const tb = new Date(b.fecha_hora).getTime();
+      return cuando === "proximas" ? ta - tb : tb - ta;
     });
 
   return (
@@ -231,10 +263,13 @@ function Contenido() {
       <p className="mt-1 text-sm text-vm-body">Lo que tus clientes piden desde el menú.</p>
 
       {isError && (
-        <p className="mt-8 rounded-lg bg-vm-danger-soft px-4 py-3 text-sm text-vm-danger">
-          No pudimos leer tus reservaciones. Falta correr la migración{" "}
-          <code>vibemenu_migracion_reservaciones.sql</code>.
-        </p>
+        <div className="mt-8 rounded-lg bg-vm-danger-soft px-4 py-3 text-sm text-vm-danger">
+          <p>No pudimos leer tus reservaciones. Intenta recargar.</p>
+          <p className="mt-1 text-xs opacity-80">
+            Si acabas de instalar la función, quizá falte correr la migración{" "}
+            <code>vibemenu_migracion_reservaciones.sql</code>.
+          </p>
+        </div>
       )}
       {isLoading && <div className="mt-8 h-40 animate-pulse rounded-xl bg-vm-bg-soft" />}
 
@@ -280,18 +315,25 @@ function Contenido() {
               </p>
             </div>
           ) : (
-            <ul className="mt-6 space-y-3">
-              {visibles.map((r) => (
-                <Fila
-                  key={r.id}
-                  r={r}
-                  sucursal={nombreSuc.get(r.sucursal_id) ?? "Sucursal"}
-                  tz={tzSuc.get(r.sucursal_id) ?? "America/Mexico_City"}
-                  ocupado={cambiar.isPending}
-                  onEstado={(estado) => void cambiar.mutateAsync({ id: r.id, estado })}
-                />
-              ))}
-            </ul>
+            <>
+              {cambiar.isError && (
+                <p className="mt-6 rounded-lg bg-vm-danger-soft px-4 py-3 text-sm text-vm-danger">
+                  No pudimos actualizar la reservación. Intenta de nuevo.
+                </p>
+              )}
+              <ul className="mt-6 space-y-3">
+                {visibles.map((r) => (
+                  <Fila
+                    key={r.id}
+                    r={r}
+                    sucursal={nombreSuc.get(r.sucursal_id) ?? "Sucursal"}
+                    tz={tzSuc.get(r.sucursal_id) ?? "America/Mexico_City"}
+                    ocupado={cambiar.isPending}
+                    onEstado={(estado) => cambiar.mutate({ id: r.id, estado })}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </>
       )}

@@ -118,12 +118,18 @@ async function armarMenuPublico(
 
   const { plan, ...tenant } = tenantRow;
 
+  // Lista explícita de columnas (no select("*")): mantiene `reservaciones_email`
+  // —correo interno de avisos que teclea el dueño— fuera del payload público que
+  // se serializa en el HTML hidratado del menú.
   const { data: sucursales, error: errorSuc } = await supabase
     .from("sucursales")
-    .select("*")
+    .select(
+      "id, tenant_id, nombre, slug, direccion, telefono, whatsapp, maps_url, google_reviews_url, timezone, activa, created_at, acepta_reservaciones",
+    )
     .eq("tenant_id", tenant.id)
     .eq("activa", true)
-    .order("created_at");
+    .order("created_at")
+    .returns<Sucursal[]>();
   if (errorSuc) throw errorSuc;
 
   const sucursalActiva = sucursalSlug

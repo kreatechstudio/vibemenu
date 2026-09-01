@@ -134,8 +134,16 @@ export default function EditorSucursal({
           telefono: asegurarLada(telefono.trim() || null),
           whatsapp: asegurarLada(whatsapp.trim() || null),
           timezone,
-          acepta_reservaciones: permiteReservaciones ? aceptaReservaciones : false,
-          reservaciones_email: permiteReservaciones && resvEmail ? resvEmail : null,
+          // Plan Basic: no tocar el estado de reservaciones ya guardado. Un edit
+          // no relacionado no debe borrar el correo de avisos ni apagar el opt-in
+          // (el trigger + la edge function son los guardas reales). El checkbox
+          // está `disabled` sin plan, así que esto solo preserva, nunca activa.
+          acepta_reservaciones: permiteReservaciones
+            ? aceptaReservaciones
+            : (sucursal?.acepta_reservaciones ?? false),
+          reservaciones_email: permiteReservaciones
+            ? resvEmail || null
+            : (sucursal?.reservaciones_email ?? null),
         },
         horarios: ORDEN_VISUAL.map((d) => filas[d]),
       });

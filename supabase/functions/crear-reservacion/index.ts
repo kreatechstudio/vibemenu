@@ -14,6 +14,14 @@
 //
 // Secretos: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, TURNSTILE_SECRET_KEY
 //
+// OJO con Turnstile: TURNSTILE_SECRET_KEY (secreto de esta funcion) y
+// VITE_TURNSTILE_SITE_KEY (env de build del front) deben estar AMBAS puestas o
+// AMBAS sin poner. Config a medias = rechazo silencioso de TODA reservacion:
+//   - site key sin poner + secret puesto -> el front manda token:null y aqui
+//     verificarTurnstile devuelve false -> 403 captcha_invalido siempre.
+//   - site key puesta + secret sin poner -> se salta la verificacion (inseguro).
+// Al activar/desactivar Turnstile, cambia las dos a la vez.
+//
 // Requiere la migracion vibemenu_migracion_reservaciones.sql aplicada.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -43,7 +51,7 @@ const esc = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const LIMITE_POR_SUCURSAL_HORA = 5;
+const LIMITE_POR_SUCURSAL_HORA = 20;
 const LIMITE_POR_IP_HORA = 3;
 
 type Entrada = {
@@ -203,21 +211,23 @@ Deno.serve(async (req) => {
 
   // Rate-limit
   const desde = new Date(Date.now() - 3600_000).toISOString();
-  const { count: nSuc } = await db
+  const { count: nSuc, error: errSucCount } = await db
     .from("reservaciones")
     .select("id", { count: "exact", head: true })
     .eq("sucursal_id", entrada.sucursal_id)
     .gte("creada_en", desde);
-  if ((nSuc ?? 0) >= LIMITE_POR_SUCURSAL_HORA)
+  // Si el conteo fallo no podemos saber si hay abuso: fail-closed (429), no open.
+  if (errSucCount || (nSuc ?? 0) >= LIMITE_POR_SUCURSAL_HORA)
     return json({ error: "demasiadas_solicitudes" }, 429);
 
   if (ip) {
-    const { count: nIp } = await db
+    const { count: nIp, error: errIpCount } = await db
       .from("reservaciones")
       .select("id", { count: "exact", head: true })
       .eq("ip", ip)
       .gte("creada_en", desde);
-    if ((nIp ?? 0) >= LIMITE_POR_IP_HORA) return json({ error: "demasiadas_solicitudes" }, 429);
+    if (errIpCount || (nIp ?? 0) >= LIMITE_POR_IP_HORA)
+      return json({ error: "demasiadas_solicitudes" }, 429);
   }
 
   // fecha_hora en la zona de la sucursal
@@ -282,7 +292,9 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: REMITENTE,
             to: [destino],
-            subject: `Nueva reservación — ${esc(entrada.nombre)}, ${entrada.personas} ${entrada.personas === 1 ? "persona" : "personas"}`,
+            // El subject es texto plano, no HTML: nada de esc() (volveria "&" en
+            // "&amp;"). Solo se quitan CR/LF para evitar inyeccion de cabeceras.
+            subject: `Nueva reservación — ${entrada.nombre.replace(/[\r\n]/g, " ")}, ${entrada.personas} ${entrada.personas === 1 ? "persona" : "personas"}`,
             html: plantillaReservacion({
               negocio: tenant.nombre_negocio,
               sucursal: suc.nombre,
