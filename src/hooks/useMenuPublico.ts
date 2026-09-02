@@ -28,6 +28,8 @@ export type MenuPublico = {
   permiteReservaciones: boolean;
   /** planes.permite_analitica_platillo — cuenta interacciones por platillo (Enterprise). */
   permiteAnaliticaPlatillo: boolean;
+  /** Config viva del programa de sellos, o null si no aplica (plan/opt-in). */
+  lealtad: { meta: number; premio: string } | null;
   menuIndependiente: boolean;
   sucursales: Sucursal[];
   sucursalActiva: Sucursal | null;
@@ -53,7 +55,7 @@ export async function obtenerMenuPublico(
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
     .select(
-      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo)",
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo, permite_lealtad)",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -71,7 +73,7 @@ export async function obtenerMenuPublicoPorDominio(host: string): Promise<MenuPu
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
     .select(
-      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo)",
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo, permite_lealtad)",
     )
     .eq("dominio_personalizado", host)
     .maybeSingle();
@@ -92,7 +94,7 @@ export async function obtenerSucursalPublicaPorDominio(
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
     .select(
-      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo)",
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo, permite_lealtad)",
     )
     .eq("dominio_personalizado", host)
     .maybeSingle();
@@ -112,6 +114,7 @@ async function armarMenuPublico(
           | "permite_pedidos_whatsapp"
           | "permite_reservaciones"
           | "permite_analitica_platillo"
+          | "permite_lealtad"
         > | null;
       })
     | null,
@@ -221,6 +224,13 @@ async function armarMenuPublico(
     permitePedidosWhatsApp: plan?.permite_pedidos_whatsapp ?? false,
     permiteReservaciones: plan?.permite_reservaciones ?? false,
     permiteAnaliticaPlatillo: plan?.permite_analitica_platillo ?? false,
+    lealtad:
+      (plan?.permite_lealtad ?? false) &&
+      tenant.lealtad_activa &&
+      tenant.lealtad_sellos_meta != null &&
+      tenant.lealtad_premio != null
+        ? { meta: tenant.lealtad_sellos_meta, premio: tenant.lealtad_premio }
+        : null,
     menuIndependiente: plan?.menu_independiente_por_sucursal ?? false,
     sucursales: sucursales ?? [],
     sucursalActiva,
