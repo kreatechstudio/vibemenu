@@ -5,6 +5,7 @@ import BotonPedidoTikTok from "@/components/menu/BotonPedidoTikTok";
 import ContactoMenu from "@/components/menu/ContactoMenu";
 import EmbudoResenas from "@/components/menu/EmbudoResenas";
 import HeaderMenu from "@/components/menu/HeaderMenu";
+import LealtadMenu from "@/components/menu/LealtadMenu";
 import MarcaAgua from "@/components/menu/MarcaAgua";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
 import ReservarMenu from "@/components/menu/ReservarMenu";
@@ -260,6 +261,8 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
             sucursales={data.sucursales}
             habilitado={data.permiteReservaciones}
           />
+
+          <LealtadMenu tenantId={data.tenant.id} slug={data.tenant.slug} lealtad={data.lealtad} />
 
           <BarraPedido tenant={data.tenant} sucursal={data.sucursalActiva} />
 

@@ -1,0 +1,23 @@
+name: Purgar tarjetas de lealtad
+
+# Nocturno. Borra tarjetas sin uso (0 sellos > 14 días) e inactivas (> 12 meses).
+# Ver src/docs/vibemenu_migracion_lealtad.sql (purgar_tarjetas_lealtad).
+on:
+  schedule:
+    - cron: "15 4 * * *"
+  workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
+
+jobs:
+  purgar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar a purgar_tarjetas_lealtad
+        run: |
+          curl --fail-with-body -sS -X POST \
+            "https://iaiiwtqqiaqxnzxjqcnt.supabase.co/rest/v1/rpc/purgar_tarjetas_lealtad" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" -d '{}'
+
+# Si este job falla, GitHub le manda correo solo al dueño del repo — mismo
+# criterio que purgar-reservaciones.yml y purgar-interacciones-producto.yml.

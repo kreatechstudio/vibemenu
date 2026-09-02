@@ -38,8 +38,8 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 | ------------- | ------- | ------- | ---------- | ---------- | --------------------- | ------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------- |
 | Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu"          |
 | Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                           |
-| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Dominio propio (CNAME)   |
-| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Analítica por platillo**, Soporte prioritario |
+| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Tarjeta de lealtad**, Dominio propio (CNAME)   |
+| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Tarjeta de lealtad**, **Analítica por platillo**, Soporte prioritario |
 
 Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
 
@@ -95,6 +95,10 @@ Formulario breve en el menú público (nombre, personas, fecha/hora, teléfono c
 ## Analítica por platillo (Enterprise, migración analitica_platillo)
 
 Contador de `vistas` (abrir el detalle en Pinterest/Instagram, o ≥2 s en un slide de TikTok — Clásico no aporta vistas) y `agregados` (meter el platillo al carrito de WhatsApp) por `(sucursal, platillo, día, hora)`, en la zona horaria de la sucursal. Panel `/admin/analitica`: ranking con tasa de conversión (agregados/vistas), curva por hora de un platillo, platillos ignorados (< 3 vistas en el rango), y tendencia diaria. **No guarda nada del comensal** — es un contador agregado, sin IP ni identificador. Dedup 1 por platillo por sesión por hora (en el navegador). El chequeo de plan (Enterprise) vive dentro de la RPC `registrar_interaccion_producto`; sin insert público directo. Purga a 180 días por cron GitHub Actions.
+
+## Tarjeta de lealtad (Pro/Enterprise, migración lealtad)
+
+Programa de sellos, uno por negocio. El comensal crea su tarjeta desde un banner en el menú (UUID en `localStorage`, URL `/{slug}/lealtad/{uuid}`); el encargado la sella o canjea desde `/admin/lealtad` con un código de 6 caracteres o su QR, **tope 1 sello por tarjeta por día** (zona horaria de la sucursal). Premio de un solo nivel (`N sellos = premio`, `sellos -= N` al canjear). Campo de contacto opcional (teléfono/correo, con consentimiento) para recuperar la tarjeta y para promociones futuras. `movimientos_lealtad` guarda cada sello/canje (sucursal, encargado). Purga: tarjetas sin uso a 14 días, inactivas a 12 meses. Sin Edge Function; sin Wallet en v1.
 
 ## Precios distintos por sucursal
 
@@ -176,6 +180,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 | `/login`                         | Login             | Acceso al panel admin                     | Público         |
 | `/:slug`                         | Menú público      | Menú del tenant en su formato activo      | Público         |
 | `/:slug/sucursal/:sucursal_slug` | Menú por sucursal | Solo si plan permite menú independiente   | Público         |
+| `/:slug/lealtad/:uuid`           | Tarjeta de sellos | La tarjeta del comensal                    | Público         |
 | `/admin`                         | Dashboard         | Resumen del tenant                        | Owner/Encargado |
 | `/admin/menu`                    | Gestión de menú   | Categorías y productos                    | Owner/Encargado |
 | `/admin/modificadores`           | Modificadores     | Catálogo de grupos y opciones             | Owner/Encargado |
@@ -185,6 +190,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 | `/admin/qr`                      | QR                | Tarjeta imprimible, un QR por sucursal    | Owner/Encargado |
 | `/admin/reservaciones`           | Reservaciones     | Solicitudes de mesa, con estados          | Owner/Encargado |
 | `/admin/analitica`               | Analítica         | Vistas y agregados por platillo           | Owner/Encargado |
+| `/admin/lealtad`                 | Lealtad           | Configurar y validar sellos               | Owner/Encargado |
 | `/admin/equipo`                  | Equipo            | Multi-usuario (Pro/Enterprise)            | Owner           |
 | `/admin/suscripcion`             | Suscripción       | Plan actual, Stripe Customer Portal       | Owner           |
 

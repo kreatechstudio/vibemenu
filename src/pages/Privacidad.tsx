@@ -83,6 +83,16 @@ const SECCIONES: SeccionLegal[] = [
           dirección IP desde la que enviaste la solicitud. Esta información se conserva 90 días y
           después se borra de forma automática.
         </p>
+        <p>
+          <strong>Si usas la tarjeta de sellos de un negocio:</strong> creamos una tarjeta
+          identificada por un código aleatorio guardado en tu navegador — sin cuenta, sin perfil. Si{" "}
+          <strong>decides</strong> dejar un teléfono o correo, lo guardamos para que el negocio
+          pueda recuperar tu tarjeta si cambias de teléfono{" "}
+          <strong>y para que te contacte con promociones</strong>; marcas una casilla de
+          consentimiento antes de guardarlo y puedes quitar ese dato en cualquier momento desde tu
+          tarjeta. Si no dejas contacto y borras el navegador, la tarjeta se pierde. Las tarjetas
+          sin actividad por 12 meses se eliminan.
+        </p>
       </>
     ),
   },
@@ -106,6 +116,12 @@ const SECCIONES: SeccionLegal[] = [
           de mesa y <strong>se comparten con el restaurante</strong> para que te confirme. El
           restaurante es el <strong>responsable</strong> del uso que les dé; Vibemenu actúa como{" "}
           <strong>encargado</strong>.
+        </p>
+        <p>
+          <strong>Contacto que dejas en una tarjeta de sellos:</strong> lo usamos para que el
+          negocio recupere tu tarjeta y para enviarte promociones suyas. Diste tu consentimiento
+          expreso al guardarlo; el negocio es el <strong>responsable</strong> de esas comunicaciones
+          y Vibemenu actúa como <strong>encargado</strong>.
         </p>
       </>
     ),
