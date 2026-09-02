@@ -259,6 +259,61 @@ export type Database = {
           },
         ];
       };
+      interacciones_producto: {
+        Row: {
+          agregados: number;
+          dia: string;
+          hora: number;
+          id: number;
+          producto_id: string;
+          sucursal_id: string | null;
+          tenant_id: string;
+          vistas: number;
+        };
+        Insert: {
+          agregados?: number;
+          dia: string;
+          hora: number;
+          id?: never;
+          producto_id: string;
+          sucursal_id?: string | null;
+          tenant_id: string;
+          vistas?: number;
+        };
+        Update: {
+          agregados?: number;
+          dia?: string;
+          hora?: number;
+          id?: never;
+          producto_id?: string;
+          sucursal_id?: string | null;
+          tenant_id?: string;
+          vistas?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "interacciones_producto_producto_id_fkey";
+            columns: ["producto_id"];
+            isOneToOne: false;
+            referencedRelation: "productos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "interacciones_producto_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "interacciones_producto_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invitaciones: {
         Row: {
           aceptada_at: string | null;
@@ -458,6 +513,7 @@ export type Database = {
           menu_independiente_por_sucursal: boolean;
           modos_imagen_permitidos: string[];
           nombre: string;
+          permite_analitica_platillo: boolean;
           permite_color_modificadores: boolean;
           permite_desenfoque: boolean;
           permite_dominio_propio: boolean;
@@ -489,6 +545,7 @@ export type Database = {
           menu_independiente_por_sucursal?: boolean;
           modos_imagen_permitidos?: string[];
           nombre: string;
+          permite_analitica_platillo?: boolean;
           permite_color_modificadores?: boolean;
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
@@ -520,6 +577,7 @@ export type Database = {
           menu_independiente_por_sucursal?: boolean;
           modos_imagen_permitidos?: string[];
           nombre?: string;
+          permite_analitica_platillo?: boolean;
           permite_color_modificadores?: boolean;
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
@@ -1113,6 +1171,7 @@ export type Database = {
         Args: { check_tenant_id: string };
         Returns: boolean;
       };
+      purgar_interacciones_producto: { Args: never; Returns: number };
       purgar_reservaciones_viejas: { Args: never; Returns: number };
       registrar_feedback: {
         Args: {
@@ -1120,6 +1179,15 @@ export type Database = {
           p_sentimiento: string;
           p_sucursal_id?: string;
           p_tenant_id: string;
+        };
+        Returns: undefined;
+      };
+      registrar_interaccion_producto: {
+        Args: {
+          p_producto_id: string;
+          p_sucursal_id?: string;
+          p_tenant_id: string;
+          p_tipo: string;
         };
         Returns: undefined;
       };

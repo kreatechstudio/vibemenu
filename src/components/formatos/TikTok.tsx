@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronUp, ListPlus, X } from "lucide-react";
 import TiraCategorias from "@/components/menu/TiraCategorias";
+import { useAnalitica } from "@/hooks/useAnalitica";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -102,9 +103,39 @@ function Sheet({
 function Slide({ producto }: { producto: ProductoConModificadores }) {
   const [sheet, setSheet] = useState(false);
   const embed = producto.video_url ? urlEmbebida(producto.video_url) : null;
+  const seccionRef = useRef<HTMLElement>(null);
+  const analitica = useAnalitica();
+
+  useEffect(() => {
+    const el = seccionRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        // El callback se dispara en cada umbral (0.5 y 1.0): limpia SIEMPRE antes
+        // de re-armar, o un timer viejo huérfano dispara una `vista` de <1s.
+        if (timer) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          timer = setTimeout(() => analitica.registrarVista(producto.id), 2000);
+        }
+      },
+      { threshold: [0, 0.5, 1] },
+    );
+    obs.observe(el);
+    return () => {
+      if (timer) clearTimeout(timer);
+      obs.disconnect();
+    };
+  }, [producto.id, analitica]);
 
   return (
-    <section className="relative h-dvh w-full shrink-0 snap-start snap-always overflow-hidden bg-black">
+    <section
+      ref={seccionRef}
+      className="relative h-dvh w-full shrink-0 snap-start snap-always overflow-hidden bg-black"
+    >
       {embed ? (
         <iframe
           src={embed}

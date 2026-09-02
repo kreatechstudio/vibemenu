@@ -1,4 +1,5 @@
 import { Minus, Plus } from "lucide-react";
+import { useAnalitica } from "@/hooks/useAnalitica";
 import { useCarritoWhatsApp } from "@/hooks/useCarritoWhatsApp";
 import type { ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -22,6 +23,7 @@ export default function BotonAgregar({
   variante: "stepper" | "badge";
 }) {
   const c = useCarritoWhatsApp();
+  const analitica = useAnalitica();
   if (!c.habilitado) return null;
 
   const n = c.cantidadDe(producto.id);
@@ -34,6 +36,7 @@ export default function BotonAgregar({
           e.preventDefault();
           e.stopPropagation();
           c.agregar(producto);
+          analitica.registrarAgregado(producto.id);
         }}
         aria-label={
           n > 0
@@ -56,6 +59,7 @@ export default function BotonAgregar({
           e.preventDefault();
           e.stopPropagation();
           c.agregar(producto);
+          analitica.registrarAgregado(producto.id);
         }}
         aria-label={`Agregar ${producto.nombre} al pedido`}
         className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-sm font-medium"
@@ -92,6 +96,7 @@ export default function BotonAgregar({
           e.preventDefault();
           e.stopPropagation();
           c.agregar(producto);
+          analitica.registrarAgregado(producto.id);
         }}
         aria-label={`Agregar otro ${producto.nombre}`}
         className="grid size-6 place-items-center rounded-full"

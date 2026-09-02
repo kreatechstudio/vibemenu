@@ -1,0 +1,23 @@
+name: Purgar interacciones por platillo
+
+# Nocturno. Borra interacciones de producto con data de hace mas de 180 dias.
+# Ver src/docs/vibemenu_migracion_analitica_platillo.sql (purgar_interacciones_producto).
+on:
+  schedule:
+    - cron: "45 4 * * *"
+  workflow_dispatch: {} # boton "Run workflow" para probar sin esperar al cron
+
+jobs:
+  purgar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar a purgar_interacciones_producto
+        run: |
+          curl --fail-with-body -sS -X POST \
+            "https://iaiiwtqqiaqxnzxjqcnt.supabase.co/rest/v1/rpc/purgar_interacciones_producto" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" -d '{}'
+
+# Si este job falla, GitHub le manda correo solo al dueño del repo — mismo
+# criterio que purgar-reservaciones.yml y procesar-trials.yml.

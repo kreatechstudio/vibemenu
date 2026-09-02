@@ -39,7 +39,7 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 | Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu"          |
 | Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                           |
 | Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Dominio propio (CNAME)   |
-| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Soporte prioritario       |
+| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Analítica por platillo**, Soporte prioritario |
 
 Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
 
@@ -91,6 +91,10 @@ El día se calcula con la zona horaria de la sucursal. Con `current_date` a seca
 ## Reservaciones simples (Pro/Enterprise, migración 012)
 
 Formulario breve en el menú público (nombre, personas, fecha/hora, teléfono con lada, nota, email opcional) para que el comensal solicite mesa. El restaurante recibe un aviso por correo vía Resend. **No es un sistema de reservas con mesas ni disponibilidad** — es captar la intención antes de que se vaya a otro lado. El restaurante gestiona las solicitudes en `/admin/reservaciones` con estados `nueva → atendida | cancelada`. Opt-in por sucursal (`sucursales.acepta_reservaciones` + `reservaciones_email`). Anti-spam: Turnstile verificado en la Edge Function `crear-reservacion` + rate-limit (20/sucursal/hora, 3/IP/hora). Ventana de fecha: hoy … +60 días. Purga a los 90 días por cron GitHub Actions.
+
+## Analítica por platillo (Enterprise, migración analitica_platillo)
+
+Contador de `vistas` (abrir el detalle en Pinterest/Instagram, o ≥2 s en un slide de TikTok — Clásico no aporta vistas) y `agregados` (meter el platillo al carrito de WhatsApp) por `(sucursal, platillo, día, hora)`, en la zona horaria de la sucursal. Panel `/admin/analitica`: ranking con tasa de conversión (agregados/vistas), curva por hora de un platillo, platillos ignorados (< 3 vistas en el rango), y tendencia diaria. **No guarda nada del comensal** — es un contador agregado, sin IP ni identificador. Dedup 1 por platillo por sesión por hora (en el navegador). El chequeo de plan (Enterprise) vive dentro de la RPC `registrar_interaccion_producto`; sin insert público directo. Purga a 180 días por cron GitHub Actions.
 
 ## Precios distintos por sucursal
 
@@ -159,7 +163,6 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 - Panel de super-admin interno para Carlos (gestión de tenants, soporte)
 - App móvil nativa
 - Múltiples fotos por producto (queda para fase 2 si se valida demanda)
-- Analytics de escaneos/vistas por producto (fase 2)
 - Dominio personalizado real vía CNAME (arquitectura se deja lista, activación manual en fase 2)
 
 ## Rutas y páginas
@@ -181,6 +184,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 | `/admin/diseno`                  | Diseño            | Formato activo, colores, tipografía       | Owner/Encargado |
 | `/admin/qr`                      | QR                | Tarjeta imprimible, un QR por sucursal    | Owner/Encargado |
 | `/admin/reservaciones`           | Reservaciones     | Solicitudes de mesa, con estados          | Owner/Encargado |
+| `/admin/analitica`               | Analítica         | Vistas y agregados por platillo           | Owner/Encargado |
 | `/admin/equipo`                  | Equipo            | Multi-usuario (Pro/Enterprise)            | Owner           |
 | `/admin/suscripcion`             | Suscripción       | Plan actual, Stripe Customer Portal       | Owner           |
 
