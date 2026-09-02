@@ -358,6 +358,58 @@ export type Database = {
           },
         ];
       };
+      movimientos_lealtad: {
+        Row: {
+          creado_at: string;
+          encargado_id: string | null;
+          id: number;
+          sucursal_id: string | null;
+          tarjeta_id: string;
+          tenant_id: string;
+          tipo: string;
+        };
+        Insert: {
+          creado_at?: string;
+          encargado_id?: string | null;
+          id?: never;
+          sucursal_id?: string | null;
+          tarjeta_id: string;
+          tenant_id: string;
+          tipo: string;
+        };
+        Update: {
+          creado_at?: string;
+          encargado_id?: string | null;
+          id?: never;
+          sucursal_id?: string | null;
+          tarjeta_id?: string;
+          tenant_id?: string;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "movimientos_lealtad_sucursal_id_fkey";
+            columns: ["sucursal_id"];
+            isOneToOne: false;
+            referencedRelation: "sucursales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "movimientos_lealtad_tarjeta_id_fkey";
+            columns: ["tarjeta_id"];
+            isOneToOne: false;
+            referencedRelation: "tarjetas_lealtad";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "movimientos_lealtad_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       notas_internas: {
         Row: {
           autor_id: string;
@@ -518,6 +570,7 @@ export type Database = {
           permite_desenfoque: boolean;
           permite_dominio_propio: boolean;
           permite_embudo_resenas: boolean;
+          permite_lealtad: boolean;
           permite_multiusuario: boolean;
           permite_pedidos_whatsapp: boolean;
           permite_reservaciones: boolean;
@@ -550,6 +603,7 @@ export type Database = {
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
           permite_embudo_resenas?: boolean;
+          permite_lealtad?: boolean;
           permite_multiusuario?: boolean;
           permite_pedidos_whatsapp?: boolean;
           permite_reservaciones?: boolean;
@@ -582,6 +636,7 @@ export type Database = {
           permite_desenfoque?: boolean;
           permite_dominio_propio?: boolean;
           permite_embudo_resenas?: boolean;
+          permite_lealtad?: boolean;
           permite_multiusuario?: boolean;
           permite_pedidos_whatsapp?: boolean;
           permite_reservaciones?: boolean;
@@ -946,6 +1001,56 @@ export type Database = {
           },
         ];
       };
+      tarjetas_lealtad: {
+        Row: {
+          codigo: string;
+          consentimiento_marketing_at: string | null;
+          contacto: string | null;
+          contacto_tipo: string | null;
+          creada_at: string;
+          id: string;
+          premios_canjeados: number;
+          sellos: number;
+          tenant_id: string;
+          ultima_actividad_at: string | null;
+          ultimo_sello_dia: string | null;
+        };
+        Insert: {
+          codigo: string;
+          consentimiento_marketing_at?: string | null;
+          contacto?: string | null;
+          contacto_tipo?: string | null;
+          creada_at?: string;
+          id?: string;
+          premios_canjeados?: number;
+          sellos?: number;
+          tenant_id: string;
+          ultima_actividad_at?: string | null;
+          ultimo_sello_dia?: string | null;
+        };
+        Update: {
+          codigo?: string;
+          consentimiento_marketing_at?: string | null;
+          contacto?: string | null;
+          contacto_tipo?: string | null;
+          creada_at?: string;
+          id?: string;
+          premios_canjeados?: number;
+          sellos?: number;
+          tenant_id?: string;
+          ultima_actividad_at?: string | null;
+          ultimo_sello_dia?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tarjetas_lealtad_tenant_id_fkey";
+            columns: ["tenant_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       tenant_usuarios: {
         Row: {
           created_at: string;
@@ -998,6 +1103,9 @@ export type Database = {
           google_reviews_url: string | null;
           id: string;
           instagram_url: string | null;
+          lealtad_activa: boolean;
+          lealtad_premio: string | null;
+          lealtad_sellos_meta: number | null;
           logo_url: string | null;
           nombre_negocio: string;
           pago_fallido_desde: string | null;
@@ -1030,6 +1138,9 @@ export type Database = {
           google_reviews_url?: string | null;
           id?: string;
           instagram_url?: string | null;
+          lealtad_activa?: boolean;
+          lealtad_premio?: string | null;
+          lealtad_sellos_meta?: number | null;
           logo_url?: string | null;
           nombre_negocio: string;
           pago_fallido_desde?: string | null;
@@ -1062,6 +1173,9 @@ export type Database = {
           google_reviews_url?: string | null;
           id?: string;
           instagram_url?: string | null;
+          lealtad_activa?: boolean;
+          lealtad_premio?: string | null;
+          lealtad_sellos_meta?: number | null;
           logo_url?: string | null;
           nombre_negocio?: string;
           pago_fallido_desde?: string | null;
@@ -1129,13 +1243,112 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _enmascarar_contacto: {
+        Args: { p_contacto: string; p_tipo: string };
+        Returns: string;
+      };
+      _gen_codigo_lealtad: { Args: { p_tenant_id: string }; Returns: string };
+      _tarjeta_del_encargado: {
+        Args: { p_codigo: string };
+        Returns: {
+          codigo: string;
+          consentimiento_marketing_at: string | null;
+          contacto: string | null;
+          contacto_tipo: string | null;
+          creada_at: string;
+          id: string;
+          premios_canjeados: number;
+          sellos: number;
+          tenant_id: string;
+          ultima_actividad_at: string | null;
+          ultimo_sello_dia: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "tarjetas_lealtad";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      _vista_tarjeta: {
+        Args: {
+          p_sucursal_id: string;
+          p_tarjeta: Database["public"]["Tables"]["tarjetas_lealtad"]["Row"];
+        };
+        Returns: {
+          codigo: string;
+          listo_para_canje: boolean;
+          premio: string;
+          premios_canjeados: number;
+          sello_repetido_hoy: boolean;
+          sellos: number;
+          sellos_meta: number;
+        }[];
+      };
+      buscar_tarjeta: {
+        Args: { p_codigo: string };
+        Returns: {
+          codigo: string;
+          listo_para_canje: boolean;
+          premio: string;
+          premios_canjeados: number;
+          sello_repetido_hoy: boolean;
+          sellos: number;
+          sellos_meta: number;
+        }[];
+      };
+      buscar_tarjetas_por_contacto: {
+        Args: { p_contacto: string };
+        Returns: {
+          codigo: string;
+          contacto_enmascarado: string;
+          creada_at: string;
+          id: string;
+          sellos: number;
+          sellos_meta: number;
+        }[];
+      };
       cambiar_estado_tenant: {
         Args: { p_estado: string; p_tenant_id: string };
         Returns: undefined;
       };
+      canjear_premio: {
+        Args: { p_codigo: string; p_sucursal_id?: string };
+        Returns: {
+          codigo: string;
+          listo_para_canje: boolean;
+          premio: string;
+          premios_canjeados: number;
+          sello_repetido_hoy: boolean;
+          sellos: number;
+          sellos_meta: number;
+        }[];
+      };
       combinar_fecha_hora_sucursal: {
         Args: { p_fecha: string; p_hora: string; p_tz: string };
         Returns: string;
+      };
+      crear_tarjeta_lealtad: {
+        Args: { p_tenant_id: string };
+        Returns: {
+          codigo: string;
+          consentimiento_marketing_at: string | null;
+          contacto: string | null;
+          contacto_tipo: string | null;
+          creada_at: string;
+          id: string;
+          premios_canjeados: number;
+          sellos: number;
+          tenant_id: string;
+          ultima_actividad_at: string | null;
+          ultimo_sello_dia: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "tarjetas_lealtad";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       equipo_del_tenant: {
         Args: { p_tenant_id: string };
@@ -1153,6 +1366,15 @@ export type Database = {
         Returns: boolean;
       };
       es_super_admin: { Args: never; Returns: boolean };
+      guardar_contacto_tarjeta: {
+        Args: {
+          p_consent: boolean;
+          p_contacto: string;
+          p_tarjeta_id: string;
+          p_tipo: string;
+        };
+        Returns: undefined;
+      };
       invitacion_info: {
         Args: { p_token: string };
         Returns: {
@@ -1167,12 +1389,27 @@ export type Database = {
         Args: { p_formatos: string[]; p_limite: number; p_pool: string[] };
         Returns: string[];
       };
+      obtener_tarjeta_lealtad: {
+        Args: { p_tarjeta_id: string };
+        Returns: {
+          codigo: string;
+          contacto_enmascarado: string;
+          premio: string;
+          premios_canjeados: number;
+          sellos: number;
+          sellos_meta: number;
+          tenant_nombre: string;
+          tenant_slug: string;
+          tiene_contacto: boolean;
+        }[];
+      };
       pertenece_a_tenant: {
         Args: { check_tenant_id: string };
         Returns: boolean;
       };
       purgar_interacciones_producto: { Args: never; Returns: number };
       purgar_reservaciones_viejas: { Args: never; Returns: number };
+      purgar_tarjetas_lealtad: { Args: never; Returns: number };
       registrar_feedback: {
         Args: {
           p_comentario?: string;
@@ -1194,6 +1431,18 @@ export type Database = {
       registrar_visita: {
         Args: { p_sucursal_id?: string; p_tenant_id: string };
         Returns: undefined;
+      };
+      sellar_tarjeta: {
+        Args: { p_codigo: string; p_sucursal_id?: string };
+        Returns: {
+          codigo: string;
+          listo_para_canje: boolean;
+          premio: string;
+          premios_canjeados: number;
+          sello_repetido_hoy: boolean;
+          sellos: number;
+          sellos_meta: number;
+        }[];
       };
       sucursal_esta_abierta: {
         Args: { p_sucursal_id: string };
