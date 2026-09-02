@@ -36,6 +36,7 @@ import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
 import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
+import { Route as AdminAnaliticaRouteImport } from './routes/admin.analitica'
 import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
 
 const SuperadminRoute = SuperadminRouteImport.update({
@@ -173,6 +174,11 @@ const AdminDisenoRoute = AdminDisenoRouteImport.update({
   path: '/admin/diseno',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAnaliticaRoute = AdminAnaliticaRouteImport.update({
+  id: '/admin/analitica',
+  path: '/admin/analitica',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SlugSucursalSucursalSlugRoute =
   SlugSucursalSucursalSlugRouteImport.update({
     id: '/$slug/sucursal/$sucursalSlug',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/restablecer': typeof RestablecerRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/admin/analitica': typeof AdminAnaliticaRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/registro': typeof RegistroRoute
   '/restablecer': typeof RestablecerRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/admin/analitica': typeof AdminAnaliticaRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/restablecer': typeof RestablecerRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/admin/analitica': typeof AdminAnaliticaRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/restablecer'
     | '/superadmin'
+    | '/admin/analitica'
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/restablecer'
     | '/superadmin'
+    | '/admin/analitica'
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/restablecer'
     | '/superadmin'
+    | '/admin/analitica'
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   RegistroRoute: typeof RegistroRoute
   RestablecerRoute: typeof RestablecerRoute
   SuperadminRoute: typeof SuperadminRouteWithChildren
+  AdminAnaliticaRoute: typeof AdminAnaliticaRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
   AdminEmpresaRoute: typeof AdminEmpresaRoute
   AdminEquipoRoute: typeof AdminEquipoRoute
@@ -585,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDisenoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/analitica': {
+      id: '/admin/analitica'
+      path: '/admin/analitica'
+      fullPath: '/admin/analitica'
+      preLoaderRoute: typeof AdminAnaliticaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$slug/sucursal/$sucursalSlug': {
       id: '/$slug/sucursal/$sucursalSlug'
       path: '/$slug/sucursal/$sucursalSlug'
@@ -619,6 +639,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegistroRoute: RegistroRoute,
   RestablecerRoute: RestablecerRoute,
   SuperadminRoute: SuperadminRouteWithChildren,
+  AdminAnaliticaRoute: AdminAnaliticaRoute,
   AdminDisenoRoute: AdminDisenoRoute,
   AdminEmpresaRoute: AdminEmpresaRoute,
   AdminEquipoRoute: AdminEquipoRoute,
