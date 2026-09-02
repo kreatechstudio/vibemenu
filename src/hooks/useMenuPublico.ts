@@ -26,6 +26,8 @@ export type MenuPublico = {
   permitePedidosWhatsApp: boolean;
   /** planes.permite_reservaciones — gatea "Reservar" en el menú. */
   permiteReservaciones: boolean;
+  /** planes.permite_analitica_platillo — cuenta interacciones por platillo (Enterprise). */
+  permiteAnaliticaPlatillo: boolean;
   menuIndependiente: boolean;
   sucursales: Sucursal[];
   sucursalActiva: Sucursal | null;
@@ -51,7 +53,7 @@ export async function obtenerMenuPublico(
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
     .select(
-      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones)",
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo)",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -69,7 +71,7 @@ export async function obtenerMenuPublicoPorDominio(host: string): Promise<MenuPu
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
     .select(
-      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones)",
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo)",
     )
     .eq("dominio_personalizado", host)
     .maybeSingle();
@@ -90,7 +92,7 @@ export async function obtenerSucursalPublicaPorDominio(
   const { data: tenantRow, error: errorTenant } = await supabase
     .from("tenants")
     .select(
-      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones)",
+      "*, plan:planes(marca_agua, menu_independiente_por_sucursal, permite_embudo_resenas, permite_pedidos_whatsapp, permite_reservaciones, permite_analitica_platillo)",
     )
     .eq("dominio_personalizado", host)
     .maybeSingle();
@@ -109,6 +111,7 @@ async function armarMenuPublico(
           | "permite_embudo_resenas"
           | "permite_pedidos_whatsapp"
           | "permite_reservaciones"
+          | "permite_analitica_platillo"
         > | null;
       })
     | null,
@@ -217,6 +220,7 @@ async function armarMenuPublico(
     permiteEmbudoResenas: plan?.permite_embudo_resenas ?? false,
     permitePedidosWhatsApp: plan?.permite_pedidos_whatsapp ?? false,
     permiteReservaciones: plan?.permite_reservaciones ?? false,
+    permiteAnaliticaPlatillo: plan?.permite_analitica_platillo ?? false,
     menuIndependiente: plan?.menu_independiente_por_sucursal ?? false,
     sucursales: sucursales ?? [],
     sucursalActiva,
