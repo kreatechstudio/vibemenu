@@ -367,7 +367,9 @@ begin
   end if;
 
   update tarjetas_lealtad
-     set sellos = sellos + 1, ultimo_sello_dia = v_hoy, ultima_actividad_at = now()
+     set sellos = tarjetas_lealtad.sellos + 1,
+         ultimo_sello_dia = v_hoy,
+         ultima_actividad_at = now()
    where id = v_tarjeta.id
    returning * into v_tarjeta;
 
@@ -407,8 +409,8 @@ begin
   end if;
 
   update tarjetas_lealtad
-     set sellos = sellos - v_meta,
-         premios_canjeados = premios_canjeados + 1,
+     set sellos = tarjetas_lealtad.sellos - v_meta,
+         premios_canjeados = tarjetas_lealtad.premios_canjeados + 1,
          ultima_actividad_at = now()
    where id = v_tarjeta.id
    returning * into v_tarjeta;
@@ -448,7 +450,7 @@ begin
   return query
   select
     t.id, t.codigo, t.sellos,
-    (select lealtad_sellos_meta from tenants where id = v_tenant),
+    (select lealtad_sellos_meta from tenants where tenants.id = v_tenant),
     _enmascarar_contacto(t.contacto, t.contacto_tipo),
     t.creada_at
   from tarjetas_lealtad t
