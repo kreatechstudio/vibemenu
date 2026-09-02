@@ -33,6 +33,7 @@ import { Route as AdminQrRouteImport } from './routes/admin.qr'
 import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
 import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
+import { Route as AdminLealtadRouteImport } from './routes/admin.lealtad'
 import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
 import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
@@ -160,6 +161,11 @@ const AdminMenuRoute = AdminMenuRouteImport.update({
   path: '/admin/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLealtadRoute = AdminLealtadRouteImport.update({
+  id: '/admin/lealtad',
+  path: '/admin/lealtad',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminEquipoRoute = AdminEquipoRouteImport.update({
   id: '/admin/equipo',
   path: '/admin/equipo',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
+  '/admin/lealtad': typeof AdminLealtadRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
+  '/admin/lealtad': typeof AdminLealtadRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
   '/admin/equipo': typeof AdminEquipoRoute
+  '/admin/lealtad': typeof AdminLealtadRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/modificadores': typeof AdminModificadoresRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
+    | '/admin/lealtad'
     | '/admin/menu'
     | '/admin/modificadores'
     | '/admin/opiniones'
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
+    | '/admin/lealtad'
     | '/admin/menu'
     | '/admin/modificadores'
     | '/admin/opiniones'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/admin/diseno'
     | '/admin/empresa'
     | '/admin/equipo'
+    | '/admin/lealtad'
     | '/admin/menu'
     | '/admin/modificadores'
     | '/admin/opiniones'
@@ -404,6 +416,7 @@ export interface RootRouteChildren {
   AdminDisenoRoute: typeof AdminDisenoRoute
   AdminEmpresaRoute: typeof AdminEmpresaRoute
   AdminEquipoRoute: typeof AdminEquipoRoute
+  AdminLealtadRoute: typeof AdminLealtadRoute
   AdminMenuRoute: typeof AdminMenuRoute
   AdminModificadoresRoute: typeof AdminModificadoresRoute
   AdminOpinionesRoute: typeof AdminOpinionesRoute
@@ -590,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/lealtad': {
+      id: '/admin/lealtad'
+      path: '/admin/lealtad'
+      fullPath: '/admin/lealtad'
+      preLoaderRoute: typeof AdminLealtadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/equipo': {
       id: '/admin/equipo'
       path: '/admin/equipo'
@@ -663,6 +683,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDisenoRoute: AdminDisenoRoute,
   AdminEmpresaRoute: AdminEmpresaRoute,
   AdminEquipoRoute: AdminEquipoRoute,
+  AdminLealtadRoute: AdminLealtadRoute,
   AdminMenuRoute: AdminMenuRoute,
   AdminModificadoresRoute: AdminModificadoresRoute,
   AdminOpinionesRoute: AdminOpinionesRoute,

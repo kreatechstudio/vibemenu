@@ -60,6 +60,7 @@ const NAV: ItemNav[] = [
       "/admin/equipo",
       "/admin/reservaciones",
       "/admin/analitica",
+      "/admin/lealtad",
       "/admin/suscripcion",
     ],
   },
