@@ -1286,7 +1286,7 @@ export type Database = {
         }[];
       };
       buscar_tarjeta: {
-        Args: { p_codigo: string };
+        Args: { p_codigo: string; p_sucursal_id?: string };
         Returns: {
           codigo: string;
           listo_para_canje: boolean;
