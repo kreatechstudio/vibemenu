@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
   claveDedup,
   ignoradosDesde,
@@ -9,18 +9,41 @@ import {
   type FilaInteraccion,
 } from "@/lib/analitica";
 
-// Mock sessionStorage for tests
-if (typeof globalThis.sessionStorage === "undefined") {
+// Mock sessionStorage sólo si el runtime no lo trae, y restáuralo al terminar la
+// suite para no filtrarlo a otros archivos del mismo proceso `bun test`.
+const hadSessionStorage = "sessionStorage" in globalThis;
+const prevSessionStorage = hadSessionStorage
+  ? (globalThis as { sessionStorage?: Storage }).sessionStorage
+  : undefined;
+
+beforeAll(() => {
+  if (hadSessionStorage) return;
   const store = new Map<string, string>();
-  globalThis.sessionStorage = {
+  (globalThis as { sessionStorage?: Storage }).sessionStorage = {
     getItem: (key: string) => store.get(key) ?? null,
-    setItem: (key: string, value: string) => store.set(key, value),
-    removeItem: (key: string) => store.delete(key),
-    clear: () => store.clear(),
-    length: 0,
-    key: (_index: number) => null,
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    get length() {
+      return store.size;
+    },
+    key: (index: number) => [...store.keys()][index] ?? null,
   } as Storage;
-}
+});
+
+afterAll(() => {
+  if (hadSessionStorage) {
+    (globalThis as { sessionStorage?: Storage }).sessionStorage = prevSessionStorage;
+  } else {
+    delete (globalThis as { sessionStorage?: Storage }).sessionStorage;
+  }
+});
 
 const fila = (over: Partial<FilaInteraccion>): FilaInteraccion => ({
   sucursal_id: null,
@@ -115,13 +138,30 @@ describe("porHoraDe", () => {
 });
 
 describe("serieDesde", () => {
-  test("rellena días sin datos y respeta el rango", () => {
-    const hoy = new Date("2026-09-03T12:00:00Z");
-    const s = serieDesde([fila({ dia: "2026-09-02", vistas: 5 })], 3, hoy);
+  test("rellena días sin datos y respeta el rango (TZ-robusto)", () => {
+    const pad2 = (n: number) => String(n).padStart(2, "0");
+    const ymdLocal = (d: Date) =>
+      `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+    const hoy = new Date();
+    const diaConDatos = new Date(hoy);
+    diaConDatos.setDate(diaConDatos.getDate() - 1);
+    const claveConDatos = ymdLocal(diaConDatos);
+
+    const s = serieDesde([fila({ dia: claveConDatos, vistas: 5 })], 3, hoy);
+
+    // 3 días, terminando HOY (fecha local), consecutivos y ascendentes.
     expect(s).toHaveLength(3);
-    expect(s.map((x) => x.dia)).toEqual(["2026-09-01", "2026-09-02", "2026-09-03"]);
-    expect(s[1].vistas).toBe(5);
-    expect(s[0].vistas).toBe(0);
+    expect(s[s.length - 1].dia).toBe(ymdLocal(hoy));
+    for (let i = 1; i < s.length; i++) {
+      const prev = new Date(`${s[i - 1].dia}T00:00:00`);
+      const cur = new Date(`${s[i].dia}T00:00:00`);
+      expect(cur.getTime() - prev.getTime()).toBe(86_400_000);
+    }
+    // El día con datos lleva sus 5 vistas; el resto, 0.
+    const conDatos = s.find((x) => x.dia === claveConDatos)!;
+    expect(conDatos.vistas).toBe(5);
+    expect(s.filter((x) => x.dia !== claveConDatos).every((x) => x.vistas === 0)).toBe(true);
   });
 });
 

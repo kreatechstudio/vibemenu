@@ -71,9 +71,11 @@ const SECCIONES: SeccionLegal[] = [
           Registramos únicamente un conteo agregado de visitas por sucursal y por día — y un conteo
           agregado de <strong>interacciones por platillo</strong> (cuántas veces se vio o se agregó
           al pedido cada platillo, por hora) —{" "}
-          <strong>sin identificarte, sin una fila por persona</strong>, ni tu ubicación, ni tu
-          identidad. Si dejas un comentario en el aviso de «¿cómo estuvo tu visita?», se guarda ese
-          texto tal cual, sin ligarlo a tu identidad ni a tu dispositivo.
+          <strong>
+            sin identificarte, sin una fila por persona, sin tu ubicación y sin tu identidad
+          </strong>
+          . Si dejas un comentario en el aviso de «¿cómo estuvo tu visita?», se guarda ese texto tal
+          cual, sin ligarlo a tu identidad ni a tu dispositivo.
         </p>
         <p>
           <strong>Si solicitas una reservación desde el menú:</strong> guardamos tu nombre, tu

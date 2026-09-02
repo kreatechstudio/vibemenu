@@ -205,24 +205,22 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
 
   if (data.formato === "tiktok") {
     return (
-      <>
-        <AnaliticaProvider
-          tenantId={data.tenant.id}
-          sucursalId={data.sucursalActiva?.id ?? null}
-          habilitado={data.permiteAnaliticaPlatillo}
-        >
-          <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
-            <Formato {...propsFormato} />
-            {data.marcaAgua && <MarcaAgua flotante />}
-            <BotonPedidoTikTok
-              tenant={data.tenant}
-              sucursal={data.sucursalActiva}
-              habilitado={pedidosOn}
-            />
-          </main>
-          {cortina}
-        </AnaliticaProvider>
-      </>
+      <AnaliticaProvider
+        tenantId={data.tenant.id}
+        sucursalId={data.sucursalActiva?.id ?? null}
+        habilitado={data.permiteAnaliticaPlatillo}
+      >
+        <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
+          <Formato {...propsFormato} />
+          {data.marcaAgua && <MarcaAgua flotante />}
+          <BotonPedidoTikTok
+            tenant={data.tenant}
+            sucursal={data.sucursalActiva}
+            habilitado={pedidosOn}
+          />
+        </main>
+        {cortina}
+      </AnaliticaProvider>
     );
   }
 

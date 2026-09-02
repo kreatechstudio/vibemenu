@@ -112,11 +112,14 @@ function Slide({ producto }: { producto: ProductoConModificadores }) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-          timer = setTimeout(() => analitica.registrarVista(producto.id), 2000);
-        } else if (timer) {
+        // El callback se dispara en cada umbral (0.5 y 1.0): limpia SIEMPRE antes
+        // de re-armar, o un timer viejo huérfano dispara una `vista` de <1s.
+        if (timer) {
           clearTimeout(timer);
           timer = undefined;
+        }
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          timer = setTimeout(() => analitica.registrarVista(producto.id), 2000);
         }
       },
       { threshold: [0, 0.5, 1] },

@@ -33,9 +33,10 @@ export type FilaRanking = {
 
 export const UMBRAL_IGNORADO = 3;
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
 function ymdHLocal(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}-${pad2(d.getHours())}`;
 }
 
 export function claveDedup(
@@ -94,8 +95,7 @@ export function porHoraDe(
 }
 
 function ymdLocal(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 export function serieDesde(

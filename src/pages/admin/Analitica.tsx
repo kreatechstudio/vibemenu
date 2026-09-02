@@ -116,21 +116,30 @@ function Contenido() {
   const { data: sucursales } = useSucursales(tenantId);
 
   const [dias, setDias] = useState<7 | 30 | 90>(30);
-  const [filtroSuc, setFiltroSuc] = useState<string | "todas">("todas");
+  const [filtroSuc, setFiltroSuc] = useState<string | "todas" | "general">("todas");
   const [platilloSel, setPlatilloSel] = useState<string | null>(null);
   const [orden, setOrden] = useState<Columna | null>(null);
   const [dir, setDir] = useState<"asc" | "desc">("desc");
 
-  const { data, isLoading, isError } = useAnaliticaProducto(tenantId, {
-    dias,
-    sucursalId: filtroSuc,
-  });
+  const { data, isLoading, isError } = useAnaliticaProducto(
+    tenantId,
+    { dias, sucursalId: filtroSuc },
+    ctx?.plan.permite_analitica_platillo ?? false,
+  );
 
   const rankingOrdenado = useMemo(() => {
     if (!data) return [];
     if (!orden) return data.ranking;
-    const val = (f: FilaRanking) => (orden === "tasa" ? (f.tasa ?? -1) : f[orden]);
-    return [...data.ranking].sort((a, b) => (dir === "asc" ? val(a) - val(b) : val(b) - val(a)));
+    const col = orden;
+    return [...data.ranking].sort((a, b) => {
+      const va = col === "tasa" ? a.tasa : a[col];
+      const vb = col === "tasa" ? b.tasa : b[col];
+      // La tasa puede ser null ("—"): siempre al final, en cualquier dirección.
+      if (va === null && vb === null) return 0;
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return dir === "asc" ? va - vb : vb - va;
+    });
   }, [data, orden, dir]);
 
   if (!ctx) return null;
@@ -156,15 +165,25 @@ function Contenido() {
       setDir("desc");
     }
   };
-  const flecha = (col: Columna) => (orden === col ? (dir === "asc" ? " ↑" : " ↓") : "");
+  // Para la flecha visible, un `orden` sin fijar equivale a "vistas desc"
+  // (lo que ya devuelve `rankingDesde`); no re-ordena, solo pinta el indicador.
+  const ordenVisible: Columna = orden ?? "vistas";
+  const flechaDe = (col: Columna) =>
+    ordenVisible === col ? <span aria-hidden>{dir === "asc" ? " ↑" : " ↓"}</span> : null;
 
-  const platilloActivo = platilloSel ?? data?.ranking[0]?.productoId ?? null;
+  // `platilloSel` puede quedar apuntando a un platillo que ya no está en el
+  // ranking (cambió el rango o la sucursal): en ese caso, al primero.
+  const platilloActivo =
+    platilloSel && data?.ranking.some((f) => f.productoId === platilloSel)
+      ? platilloSel
+      : (data?.ranking[0]?.productoId ?? null);
   const horas = data && platilloActivo ? data.porHora(platilloActivo) : [];
   const topeHora = Math.max(1, ...horas.map((h) => h.vistas));
 
   const serie = data?.serie ?? [];
-  const topeSerieV = Math.max(1, ...serie.map((s) => s.vistas));
-  const topeSerieA = Math.max(1, ...serie.map((s) => s.agregados));
+  // Misma escala para las dos filas: así el alto de una barra de agregados es
+  // comparable con el de una de vistas (la lectura honesta).
+  const topeSerie = Math.max(1, ...serie.flatMap((s) => [s.vistas, s.agregados]));
   const sumaVistas = serie.reduce((n, s) => n + s.vistas, 0);
   const sumaAgregados = serie.reduce((n, s) => n + s.agregados, 0);
 
@@ -178,7 +197,9 @@ function Contenido() {
 
       {isError && (
         <div className="mt-8 rounded-lg bg-vm-danger-soft px-4 py-3 text-sm text-vm-danger">
-          <p>No pudimos leer tu analítica. Intenta recargar.</p>
+          <p>
+            No pudimos cargar los datos de esta página (tu menú o tu analítica). Intenta recargar.
+          </p>
           <p className="mt-1 text-xs opacity-80">
             Si acabas de instalar la función, quizá falte correr la migración{" "}
             <code>vibemenu_migracion_analitica_platillo.sql</code>.
@@ -204,9 +225,11 @@ function Contenido() {
           <select
             value={filtroSuc}
             onChange={(e) => setFiltroSuc(e.target.value)}
+            aria-label="Filtrar por sucursal"
             className="ml-auto h-8 rounded-full border px-3 text-xs"
           >
             <option value="todas">Todas las sucursales</option>
+            <option value="general">Menú general</option>
             {(sucursales ?? []).map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nombre}
@@ -215,6 +238,18 @@ function Contenido() {
           </select>
         )}
       </div>
+
+      {(sucursales?.length ?? 0) > 1 && (
+        <p className="mt-2 text-xs text-vm-body">
+          Las cifras por sucursal no incluyen el menú general (<code>/tu-slug</code> sin sucursal).
+        </p>
+      )}
+
+      {data?.truncado && (
+        <div className="mt-4 rounded-lg bg-vm-warning-soft px-4 py-3 text-sm text-vm-warning">
+          Mostramos una parte de los datos de este rango. Usa un rango más corto para ver todo.
+        </div>
+      )}
 
       {isLoading && <div className="mt-8 h-40 animate-pulse rounded-xl bg-vm-bg-soft" />}
 
@@ -239,32 +274,59 @@ function Contenido() {
               <table className="w-full min-w-[28rem] text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs text-vm-body">
-                    <th className="py-2 pr-3 font-medium">Platillo</th>
-                    <th className="py-2 pr-3 text-right font-medium">
+                    <th scope="col" className="py-2 pr-3 font-medium">
+                      Platillo
+                    </th>
+                    <th
+                      scope="col"
+                      aria-sort={
+                        orden === "vistas" ? (dir === "asc" ? "ascending" : "descending") : "none"
+                      }
+                      className="py-2 pr-3 text-right font-medium"
+                    >
                       <button
                         type="button"
                         onClick={() => ordenar("vistas")}
                         className="hover:text-vm-ink"
                       >
-                        Vistas{flecha("vistas")}
+                        Vistas
+                        {flechaDe("vistas")}
                       </button>
                     </th>
-                    <th className="py-2 pr-3 text-right font-medium">
+                    <th
+                      scope="col"
+                      aria-sort={
+                        orden === "agregados"
+                          ? dir === "asc"
+                            ? "ascending"
+                            : "descending"
+                          : "none"
+                      }
+                      className="py-2 pr-3 text-right font-medium"
+                    >
                       <button
                         type="button"
                         onClick={() => ordenar("agregados")}
                         className="hover:text-vm-ink"
                       >
-                        Agregados{flecha("agregados")}
+                        Agregados
+                        {flechaDe("agregados")}
                       </button>
                     </th>
-                    <th className="py-2 text-right font-medium">
+                    <th
+                      scope="col"
+                      aria-sort={
+                        orden === "tasa" ? (dir === "asc" ? "ascending" : "descending") : "none"
+                      }
+                      className="py-2 text-right font-medium"
+                    >
                       <button
                         type="button"
                         onClick={() => ordenar("tasa")}
                         className="hover:text-vm-ink"
                       >
-                        Tasa{flecha("tasa")}
+                        Tasa
+                        {flechaDe("tasa")}
                       </button>
                     </th>
                   </tr>
@@ -290,6 +352,7 @@ function Contenido() {
               <select
                 value={platilloActivo ?? ""}
                 onChange={(e) => setPlatilloSel(e.target.value)}
+                aria-label="Elegir platillo"
                 className="h-8 rounded-full border px-3 text-xs"
               >
                 {data.ranking.map((f) => (
@@ -367,7 +430,7 @@ function Contenido() {
                   className="flex-1 rounded-sm bg-vm-primary"
                   title={`${fmtDia(s.dia)}: ${s.vistas} vistas`}
                   initial={{ height: 0 }}
-                  animate={{ height: `${(s.vistas / topeSerieV) * 100}%` }}
+                  animate={{ height: `${(s.vistas / topeSerie) * 100}%` }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               ))}
@@ -381,7 +444,7 @@ function Contenido() {
                   className="flex-1 rounded-sm bg-vm-ink"
                   title={`${fmtDia(s.dia)}: ${s.agregados} agregados`}
                   initial={{ height: 0 }}
-                  animate={{ height: `${(s.agregados / topeSerieA) * 100}%` }}
+                  animate={{ height: `${(s.agregados / topeSerie) * 100}%` }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               ))}

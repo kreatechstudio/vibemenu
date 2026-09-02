@@ -39,7 +39,7 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 | Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu"          |
 | Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                           |
 | Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Dominio propio (CNAME)   |
-| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, Soporte prioritario       |
+| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Analítica por platillo**, Soporte prioritario |
 
 Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
 
@@ -184,7 +184,7 @@ Solo los planes con `menu_independiente_por_sucursal` pueden escribir ahí, y el
 | `/admin/diseno`                  | Diseño            | Formato activo, colores, tipografía       | Owner/Encargado |
 | `/admin/qr`                      | QR                | Tarjeta imprimible, un QR por sucursal    | Owner/Encargado |
 | `/admin/reservaciones`           | Reservaciones     | Solicitudes de mesa, con estados          | Owner/Encargado |
-| `/admin/analitica`               | Analítica         | Vistas y agregados por platillo            | Owner/Encargado |
+| `/admin/analitica`               | Analítica         | Vistas y agregados por platillo           | Owner/Encargado |
 | `/admin/equipo`                  | Equipo            | Multi-usuario (Pro/Enterprise)            | Owner           |
 | `/admin/suscripcion`             | Suscripción       | Plan actual, Stripe Customer Portal       | Owner           |
 
