@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import BotonAgregar from "@/components/menu/BotonAgregar";
 import TiraCategorias from "@/components/menu/TiraCategorias";
+import { useAnalitica } from "@/hooks/useAnalitica";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -110,6 +111,7 @@ function Detalle({
 export default function Pinterest({ categorias }: { categorias: CategoriaConProductos[] }) {
   const [abierto, setAbierto] = useState<ProductoConModificadores | null>(null);
   const [categoria, setCategoria] = useState<string | null>(null);
+  const analitica = useAnalitica();
 
   const visibles = categoria ? categorias.filter((c) => c.id === categoria) : categorias;
   const productos = visibles.flatMap((c) => c.productos);
@@ -133,7 +135,10 @@ export default function Pinterest({ categorias }: { categorias: CategoriaConProd
             <div key={producto.id} className="relative mb-3 break-inside-avoid">
               <motion.button
                 layoutId={`producto-${producto.id}`}
-                onClick={() => setAbierto(producto)}
+                onClick={() => {
+                  analitica.registrarVista(producto.id);
+                  setAbierto(producto);
+                }}
                 whileHover={{ scale: 1.015 }}
                 className="block w-full overflow-hidden rounded-xl text-left"
                 style={{ background: "color-mix(in srgb, var(--menu-texto) 5%, transparent)" }}

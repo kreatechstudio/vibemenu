@@ -12,6 +12,7 @@ import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
 import Instagram from "@/components/formatos/Instagram";
 import TikTok from "@/components/formatos/TikTok";
+import { AnaliticaProvider } from "@/hooks/useAnalitica";
 import { CarritoWhatsAppProvider } from "@/hooks/useCarritoWhatsApp";
 import {
   useMenuPublico,
@@ -205,63 +206,75 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
   if (data.formato === "tiktok") {
     return (
       <>
-        <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
-          <Formato {...propsFormato} />
-          {data.marcaAgua && <MarcaAgua flotante />}
-          <BotonPedidoTikTok
-            tenant={data.tenant}
-            sucursal={data.sucursalActiva}
-            habilitado={pedidosOn}
-          />
-        </main>
-        {cortina}
+        <AnaliticaProvider
+          tenantId={data.tenant.id}
+          sucursalId={data.sucursalActiva?.id ?? null}
+          habilitado={data.permiteAnaliticaPlatillo}
+        >
+          <main className="relative h-dvh overflow-hidden" style={variablesDeTema(tema)}>
+            <Formato {...propsFormato} />
+            {data.marcaAgua && <MarcaAgua flotante />}
+            <BotonPedidoTikTok
+              tenant={data.tenant}
+              sucursal={data.sucursalActiva}
+              habilitado={pedidosOn}
+            />
+          </main>
+          {cortina}
+        </AnaliticaProvider>
       </>
     );
   }
 
   const cuerpo = (
-    <CarritoWhatsAppProvider key={data.sucursalActiva?.id ?? "principal"} habilitado={pedidosOn}>
-      {/* pb-24: deja aire para que BarraPedido (fixed) no tape el final de ContactoMenu */}
-      <div className={cn(pedidosOn && "pb-24")}>
-        <HeaderMenu
-          tenant={data.tenant}
-          sucursales={data.sucursales}
-          sucursalActiva={data.sucursalActiva}
-          menuIndependiente={data.menuIndependiente}
-          compacta={data.formato === "instagram"}
-          sobreOscuro={tema.modo_imagen === "completo"}
-        />
+    <AnaliticaProvider
+      tenantId={data.tenant.id}
+      sucursalId={data.sucursalActiva?.id ?? null}
+      habilitado={data.permiteAnaliticaPlatillo}
+    >
+      <CarritoWhatsAppProvider key={data.sucursalActiva?.id ?? "principal"} habilitado={pedidosOn}>
+        {/* pb-24: deja aire para que BarraPedido (fixed) no tape el final de ContactoMenu */}
+        <div className={cn(pedidosOn && "pb-24")}>
+          <HeaderMenu
+            tenant={data.tenant}
+            sucursales={data.sucursales}
+            sucursalActiva={data.sucursalActiva}
+            menuIndependiente={data.menuIndependiente}
+            compacta={data.formato === "instagram"}
+            sobreOscuro={tema.modo_imagen === "completo"}
+          />
 
-        {data.categorias.length === 0 ? (
-          <p
-            className="px-4 py-20 text-center text-sm"
-            style={{ color: "var(--menu-texto-suave)" }}
-          >
-            Este menú todavía no tiene productos.
-          </p>
-        ) : (
-          <Formato {...propsFormato} />
-        )}
+          {data.categorias.length === 0 ? (
+            <p
+              className="px-4 py-20 text-center text-sm"
+              style={{ color: "var(--menu-texto-suave)" }}
+            >
+              Este menú todavía no tiene productos.
+            </p>
+          ) : (
+            <Formato {...propsFormato} />
+          )}
 
-        <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
+          <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
 
-        <ReservarMenu
-          sucursalActiva={data.sucursalActiva}
-          sucursales={data.sucursales}
-          habilitado={data.permiteReservaciones}
-        />
+          <ReservarMenu
+            sucursalActiva={data.sucursalActiva}
+            sucursales={data.sucursales}
+            habilitado={data.permiteReservaciones}
+          />
 
-        <BarraPedido tenant={data.tenant} sucursal={data.sucursalActiva} />
+          <BarraPedido tenant={data.tenant} sucursal={data.sucursalActiva} />
 
-        <EmbudoResenas
-          tenant={data.tenant}
-          sucursal={data.sucursalActiva}
-          habilitado={data.permiteEmbudoResenas}
-        />
+          <EmbudoResenas
+            tenant={data.tenant}
+            sucursal={data.sucursalActiva}
+            habilitado={data.permiteEmbudoResenas}
+          />
 
-        {data.marcaAgua && <MarcaAgua />}
-      </div>
-    </CarritoWhatsAppProvider>
+          {data.marcaAgua && <MarcaAgua />}
+        </div>
+      </CarritoWhatsAppProvider>
+    </AnaliticaProvider>
   );
 
   const estiloRaiz = variablesDeTema(tema);

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ImageOff, X } from "lucide-react";
 import BotonAgregar from "@/components/menu/BotonAgregar";
 import TiraCategorias from "@/components/menu/TiraCategorias";
+import { useAnalitica } from "@/hooks/useAnalitica";
 import { precioMenu } from "@/lib/tema";
 import type { CategoriaConProductos, ProductoConModificadores } from "@/hooks/useMenuPublico";
 
@@ -188,6 +189,7 @@ export default function Instagram({
 }) {
   const [abierto, setAbierto] = useState<ProductoConModificadores | null>(null);
   const [categoria, setCategoria] = useState<string | null>(null);
+  const analitica = useAnalitica();
 
   const visibles = categoria ? categorias.filter((c) => c.id === categoria) : categorias;
   const productos = visibles.flatMap((c) => c.productos);
@@ -211,7 +213,10 @@ export default function Instagram({
             <div key={producto.id} className="group relative aspect-square overflow-hidden">
               <button
                 type="button"
-                onClick={() => setAbierto(producto)}
+                onClick={() => {
+                  analitica.registrarVista(producto.id);
+                  setAbierto(producto);
+                }}
                 className="block size-full"
                 aria-label={producto.nombre}
               >
