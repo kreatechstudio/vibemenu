@@ -38,6 +38,7 @@ import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as AdminAnaliticaRouteImport } from './routes/admin.analitica'
 import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
+import { Route as SlugLealtadTarjetaIdRouteImport } from './routes/$slug.lealtad.$tarjetaId'
 
 const SuperadminRoute = SuperadminRouteImport.update({
   id: '/superadmin',
@@ -185,6 +186,11 @@ const SlugSucursalSucursalSlugRoute =
     path: '/$slug/sucursal/$sucursalSlug',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SlugLealtadTarjetaIdRoute = SlugLealtadTarjetaIdRouteImport.update({
+  id: '/$slug/lealtad/$tarjetaId',
+  path: '/$slug/lealtad/$tarjetaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/$tenantId': typeof SuperadminTenantIdRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$slug/lealtad/$tarjetaId': typeof SlugLealtadTarjetaIdRoute
   '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRoutesByTo {
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/superadmin/$tenantId': typeof SuperadminTenantIdRoute
   '/$slug': typeof SlugIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/$slug/lealtad/$tarjetaId': typeof SlugLealtadTarjetaIdRoute
   '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRoutesById {
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/superadmin/$tenantId': typeof SuperadminTenantIdRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$slug/lealtad/$tarjetaId': typeof SlugLealtadTarjetaIdRoute
   '/$slug/sucursal/$sucursalSlug': typeof SlugSucursalSucursalSlugRoute
 }
 export interface FileRouteTypes {
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/superadmin/$tenantId'
     | '/$slug/'
     | '/admin/'
+    | '/$slug/lealtad/$tarjetaId'
     | '/$slug/sucursal/$sucursalSlug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/superadmin/$tenantId'
     | '/$slug'
     | '/admin'
+    | '/$slug/lealtad/$tarjetaId'
     | '/$slug/sucursal/$sucursalSlug'
   id:
     | '__root__'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/superadmin/$tenantId'
     | '/$slug/'
     | '/admin/'
+    | '/$slug/lealtad/$tarjetaId'
     | '/$slug/sucursal/$sucursalSlug'
   fileRoutesById: FileRoutesById
 }
@@ -404,6 +416,7 @@ export interface RootRouteChildren {
   SucursalSucursalSlugRoute: typeof SucursalSucursalSlugRoute
   SlugIndexRoute: typeof SlugIndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  SlugLealtadTarjetaIdRoute: typeof SlugLealtadTarjetaIdRoute
   SlugSucursalSucursalSlugRoute: typeof SlugSucursalSucursalSlugRoute
 }
 
@@ -612,6 +625,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SlugSucursalSucursalSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$slug/lealtad/$tarjetaId': {
+      id: '/$slug/lealtad/$tarjetaId'
+      path: '/$slug/lealtad/$tarjetaId'
+      fullPath: '/$slug/lealtad/$tarjetaId'
+      preLoaderRoute: typeof SlugLealtadTarjetaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -655,6 +675,7 @@ const rootRouteChildren: RootRouteChildren = {
   SucursalSucursalSlugRoute: SucursalSucursalSlugRoute,
   SlugIndexRoute: SlugIndexRoute,
   AdminIndexRoute: AdminIndexRoute,
+  SlugLealtadTarjetaIdRoute: SlugLealtadTarjetaIdRoute,
   SlugSucursalSucursalSlugRoute: SlugSucursalSucursalSlugRoute,
 }
 export const routeTree = rootRouteImport
