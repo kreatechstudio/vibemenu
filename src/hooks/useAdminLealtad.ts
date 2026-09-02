@@ -96,6 +96,7 @@ export function useMovimientosLealtad(tenantId: string | undefined) {
     queryKey: ["movimientos-lealtad", tenantId],
     enabled: Boolean(tenantId),
     retry: false,
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("movimientos_lealtad")

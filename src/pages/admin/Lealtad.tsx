@@ -233,6 +233,7 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
           </button>
           {multi && (
             <select
+              aria-label="Sucursal"
               value={sucursalEfectiva ?? ""}
               onChange={(e) => setSucursalSel(e.target.value)}
               className={INPUT}
@@ -247,7 +248,12 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
           <button
             type="button"
             disabled={!codigoValido(codigo) || buscar.isPending}
-            onClick={() => buscar.mutate(codigo, { onSuccess: setTarjetaActiva })}
+            onClick={() => {
+              setTarjetaActiva(null);
+              sellar.reset();
+              canjear.reset();
+              buscar.mutate(codigo, { onSuccess: setTarjetaActiva });
+            }}
             className={BOTON_PRIMARIO}
           >
             Buscar
@@ -329,7 +335,10 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
           <button
             type="button"
             disabled={!contactoBuscar.trim() || recuperar.isPending}
-            onClick={() => recuperar.mutate(contactoBuscar.trim())}
+            onClick={() => {
+              recuperar.reset();
+              recuperar.mutate(contactoBuscar.trim());
+            }}
             className={BOTON_PRIMARIO}
           >
             Buscar

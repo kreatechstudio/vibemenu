@@ -9,8 +9,16 @@ export default function EscanerCodigo({
   onCerrar: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const onCodigoRef = useRef(onCodigo);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    onCodigoRef.current = onCodigo;
+  }, [onCodigo]);
+
+  // Deps vacías a propósito: el escáner se monta una sola vez. La cámara pide
+  // permiso y eso desenfoca la ventana; si el efecto dependiera de la identidad
+  // del callback, un re-render a mitad de `start()` dejaría el stream sin cerrar.
   useEffect(() => {
     let scanner: { stop: () => Promise<void>; clear: () => void } | null = null;
     let vivo = true;
@@ -24,7 +32,7 @@ export default function EscanerCodigo({
           { facingMode: "environment" },
           { fps: 10, qrbox: 220 },
           (texto: string) => {
-            onCodigo(texto);
+            onCodigoRef.current(texto);
             void inst.stop().then(() => inst.clear());
           },
           () => {},
@@ -40,7 +48,7 @@ export default function EscanerCodigo({
         .then(() => scanner?.clear())
         .catch(() => {});
     };
-  }, [onCodigo]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
