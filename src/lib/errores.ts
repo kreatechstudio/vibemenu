@@ -36,7 +36,16 @@ export type SlugErrorDb =
   | "ya_perteneces_a_un_tenant"
   // Migración 013: validar_dominio_tenant
   | "dominio_reservado"
-  | "dominio_propio_no_permitido";
+  | "dominio_propio_no_permitido"
+  // Migración lealtad (#6): RPCs de tarjetas de sellos
+  | "lealtad_no_disponible"
+  | "sello_repetido_hoy"
+  | "tarjeta_no_encontrada"
+  | "sellos_insuficientes"
+  | "consentimiento_requerido"
+  | "sin_tenant"
+  | "lealtad_error_interno"
+  | "datos_invalidos";
 
 /** Errores que el usuario resuelve actualizando su plan. */
 export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
@@ -82,6 +91,14 @@ const MENSAJES: Record<SlugErrorDb, string> = {
   ya_perteneces_a_un_tenant: "Tu cuenta ya administra un negocio en Vibemenu.",
   dominio_reservado: "Ese dominio está reservado para Vibemenu.",
   dominio_propio_no_permitido: "El dominio personalizado es parte de Pro.",
+  lealtad_no_disponible: "Este negocio no tiene un programa de sellos activo ahora mismo.",
+  sello_repetido_hoy: "Esta tarjeta ya recibió su sello de hoy. Vuelve mañana.",
+  tarjeta_no_encontrada: "No encontramos una tarjeta con ese código.",
+  sellos_insuficientes: "Esta tarjeta todavía no junta los sellos para el premio.",
+  consentimiento_requerido: "Marca la casilla de consentimiento para guardar tu dato.",
+  sin_tenant: "Tu sesión no está ligada a un negocio. Vuelve a entrar.",
+  lealtad_error_interno: "No pudimos crear tu tarjeta. Intenta de nuevo.",
+  datos_invalidos: "Revisa los datos e intenta de nuevo.",
 };
 
 const esSlugConocido = (m: string): m is SlugErrorDb => m in MENSAJES;
