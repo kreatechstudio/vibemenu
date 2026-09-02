@@ -18,11 +18,17 @@ export default function LealtadMenu({
   lealtad: { meta: number; premio: string } | null;
 }) {
   const navigate = useNavigate();
-  const { uuid } = useTarjetaLocal(slug);
+  const { uuid, olvidar } = useTarjetaLocal(slug);
   const tarjeta = useTarjeta(slug, uuid);
   const crear = useCrearTarjeta(tenantId, slug);
 
   if (!lealtad) return null;
+
+  // La tarjeta local existe pero el servidor ya no la tiene (purga de tarjetas
+  // sin uso a los 14 días): no es un callejón sin salida, se ofrece crear una
+  // nueva y se limpia la clave vieja al hacerlo.
+  const tarjetaViva = Boolean(uuid) && Boolean(tarjeta.data);
+  const cargandoTarjeta = Boolean(uuid) && tarjeta.isLoading;
 
   const borde = "color-mix(in srgb, var(--menu-texto) 12%, transparent)";
 
@@ -61,19 +67,20 @@ export default function LealtadMenu({
 
         <button
           type="button"
-          disabled={crear.isPending}
+          disabled={crear.isPending || cargandoTarjeta}
           onClick={() => {
-            if (uuid) {
+            if (tarjetaViva && uuid) {
               irATarjeta(uuid);
               return;
             }
+            if (uuid) olvidar();
             crear.mutate(undefined, { onSuccess: (u) => irATarjeta(u) });
           }}
           className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium disabled:opacity-50"
           style={{ background: "var(--menu-primario)", color: "var(--menu-fondo)" }}
         >
           {crear.isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          {prog ? "Ver mi tarjeta" : "Crear mi tarjeta"}
+          {tarjetaViva ? "Ver mi tarjeta" : "Crear mi tarjeta"}
         </button>
 
         {crear.isError && (

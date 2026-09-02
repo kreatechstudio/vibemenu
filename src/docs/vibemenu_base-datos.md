@@ -1380,6 +1380,8 @@ grant  execute on function purgar_interacciones_producto() to service_role;
 
 `interacciones_producto` es **un contador** por `(tenant, sucursal, producto, día, hora)` — no una fila por evento (patrón `visitas_menu`). El comensal (sin sesión) **no escribe directo**: la única puerta es la RPC `registrar_interaccion_producto` (`SECURITY DEFINER`, `to anon, authenticated`), que nunca lanza y hace `return` silencioso ante tipo inválido, plan no-Enterprise, producto ajeno o sucursal ajena. El chequeo de plan (`permite_analitica_platillo`, solo `enterprise`) vive dentro de la RPC. Los índices únicos son **parciales** por el `sucursal_id` nullable (`null` = menú general). Dedup 1/platillo/sesión/hora en el navegador (`sessionStorage`). Purga a 180 días (`purgar_interacciones_producto`, `service_role` only, cron nocturno `.github/workflows/purgar-interacciones-producto.yml`).
 
+Cualquiera puede llamar la RPC repetidamente para inflar los contadores de su propio tenant Enterprise; el conteo de **filas** está acotado por el grano `(tenant, sucursal, producto, día, hora)`, así que es ruido en las métricas, no un vector de crecimiento — misma exposición aceptada que `registrar_visita`.
+
 ---
 
 ## 17. Tarjeta de lealtad (migración lealtad)
@@ -1400,6 +1402,7 @@ alter table tenants
   add column if not exists lealtad_sellos_meta smallint,
   add column if not exists lealtad_premio      text;
 
+-- OJO: los ADD CONSTRAINT no llevan IF NOT EXISTS — un segundo apply de esta migración aborta la transacción. Es un one-shot ya aplicado.
 alter table tenants
   add constraint tenants_lealtad_meta_valida
     check (lealtad_sellos_meta is null or lealtad_sellos_meta between 2 and 50),
@@ -1476,7 +1479,7 @@ set search_path = public
 as $$
   select case
     when p_contacto is null then null
-    when p_tipo = 'correo' then
+    when p_tipo = 'correo' and p_contacto like '%@%' then
       left(p_contacto, 1) || '●●●' || substr(p_contacto, position('@' in p_contacto))
     else
       '●●●' || right(regexp_replace(p_contacto, '\D', '', 'g'), 4)
@@ -1549,9 +1552,50 @@ $$;
 revoke execute on function _tarjeta_del_encargado(text) from public, anon, authenticated;
 ```
 
-**_vista_tarjeta:** Proyección de tarjeta para panel de encargado (sin contacto en claro). Helper, revoke public/anon/authenticated.
+**_vista_tarjeta:** Proyección de tarjeta para panel de encargado (sin contacto en claro). Helper, revoke public/anon/authenticated. Aquí vive la regla de zona horaria: usa el `timezone` de la sucursal indicada (o el de la primera sucursal si `p_sucursal_id` es null) para calcular `v_hoy` y el flag `sello_repetido_hoy`.
 
-**crear_tarjeta_lealtad:** El comensal (sin sesión) crea su tarjeta desde el menú público. Genera código único y valida lealtad_activa. Grant: `to anon, authenticated`.
+```sql
+create or replace function _vista_tarjeta(p_tarjeta tarjetas_lealtad, p_sucursal_id uuid)
+returns table (
+  codigo             text,
+  sellos             smallint,
+  sellos_meta        smallint,
+  premio             text,
+  premios_canjeados  smallint,
+  listo_para_canje   boolean,
+  sello_repetido_hoy boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_meta smallint;
+  v_tz   text;
+  v_hoy  date;
+begin
+  select lealtad_sellos_meta into v_meta from tenants where id = p_tarjeta.tenant_id;
+
+  select s.timezone into v_tz from sucursales s
+   where s.tenant_id = p_tarjeta.tenant_id
+     and (p_sucursal_id is null or s.id = p_sucursal_id)
+   order by s.created_at limit 1;
+  v_hoy := (now() at time zone coalesce(v_tz, 'UTC'))::date;
+
+  return query select
+    p_tarjeta.codigo,
+    p_tarjeta.sellos,
+    v_meta,
+    (select lealtad_premio from tenants where id = p_tarjeta.tenant_id),
+    p_tarjeta.premios_canjeados,
+    (p_tarjeta.sellos >= coalesce(v_meta, 2147483647)),
+    coalesce(p_tarjeta.ultimo_sello_dia = v_hoy, false);
+end;
+$$;
+revoke execute on function _vista_tarjeta(tarjetas_lealtad, uuid) from public, anon, authenticated;
+```
+
+**crear_tarjeta_lealtad:** El comensal (sin sesión) crea su tarjeta desde el menú público. Genera código único y valida `lealtad_activa` **y** `permite_lealtad` del plan (enforcement de plan server-side). Grant: `to anon, authenticated`.
 
 ```sql
 create or replace function crear_tarjeta_lealtad(p_tenant_id uuid)
@@ -1564,7 +1608,10 @@ declare
   v_activa boolean;
   v_fila   tarjetas_lealtad;
 begin
-  select lealtad_activa into v_activa from tenants where id = p_tenant_id;
+  select t.lealtad_activa and coalesce(p.permite_lealtad, false)
+    into v_activa
+    from tenants t left join planes p on p.id = t.plan_id
+   where t.id = p_tenant_id;
   if not coalesce(v_activa, false) then
     raise exception 'lealtad_no_disponible';
   end if;
@@ -1637,7 +1684,26 @@ revoke execute on function guardar_contacto_tarjeta(uuid, text, text, boolean) f
 grant  execute on function guardar_contacto_tarjeta(uuid, text, text, boolean) to anon, authenticated;
 ```
 
-**buscar_tarjeta:** El encargado busca una tarjeta por código (sin mutar). Grant: `to authenticated` (revoke anon).
+**buscar_tarjeta:** El encargado busca una tarjeta por código (sin mutar). Recibe `p_sucursal_id` para previsualizar con la misma zona horaria que usará `sellar_tarjeta`. Grant: `to authenticated` (revoke anon).
+
+```sql
+drop function if exists buscar_tarjeta(text);
+create or replace function buscar_tarjeta(p_codigo text, p_sucursal_id uuid default null)
+returns table (
+  codigo text, sellos smallint, sellos_meta smallint, premio text,
+  premios_canjeados smallint, listo_para_canje boolean, sello_repetido_hoy boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query select * from _vista_tarjeta(_tarjeta_del_encargado(p_codigo), p_sucursal_id);
+end;
+$$;
+revoke execute on function buscar_tarjeta(text, uuid) from public, anon;
+grant  execute on function buscar_tarjeta(text, uuid) to authenticated;
+```
 
 **sellar_tarjeta:** El encargado sella la tarjeta (1/día por zona horaria de sucursal). Grant: `to authenticated` (revoke anon).
 
@@ -1658,7 +1724,10 @@ declare
   v_tz      text;
   v_hoy     date;
 begin
-  select lealtad_activa into v_activa from tenants where id = v_tarjeta.tenant_id;
+  select t.lealtad_activa and coalesce(p.permite_lealtad, false)
+    into v_activa
+    from tenants t left join planes p on p.id = t.plan_id
+   where t.id = v_tarjeta.tenant_id;
   if not coalesce(v_activa, false) then
     raise exception 'lealtad_no_disponible';
   end if;
@@ -1675,16 +1744,23 @@ begin
    order by s.created_at limit 1;
   v_hoy := (now() at time zone coalesce(v_tz, 'UTC'))::date;
 
+  -- vía rápida / error claro
   if v_tarjeta.ultimo_sello_dia = v_hoy then
     raise exception 'sello_repetido_hoy';
   end if;
 
+  -- UPDATE condicional: el tope 1/día se resuelve aquí (no en el check de
+  -- arriba) para que dos llamadas concurrentes no ganen ambas (TOCTOU).
   update tarjetas_lealtad
      set sellos = tarjetas_lealtad.sellos + 1,
          ultimo_sello_dia = v_hoy,
          ultima_actividad_at = now()
    where id = v_tarjeta.id
+     and tarjetas_lealtad.ultimo_sello_dia is distinct from v_hoy
    returning * into v_tarjeta;
+  if not found then
+    raise exception 'sello_repetido_hoy';
+  end if;
 
   insert into movimientos_lealtad (tarjeta_id, tenant_id, sucursal_id, tipo, encargado_id)
   values (v_tarjeta.id, v_tarjeta.tenant_id, v_suc, 'sello', auth.uid());
@@ -1713,6 +1789,8 @@ declare
   v_meta    smallint;
   v_suc     uuid := p_sucursal_id;
 begin
+  -- SIN gate de plan a propósito: un negocio que bajó de plan debe poder honrar
+  -- premios que sus clientes ya ganaron.
   select lealtad_sellos_meta into v_meta from tenants where id = v_tarjeta.tenant_id;
   if v_meta is null or v_tarjeta.sellos < v_meta then
     raise exception 'sellos_insuficientes';
@@ -1729,7 +1807,11 @@ begin
          premios_canjeados = tarjetas_lealtad.premios_canjeados + 1,
          ultima_actividad_at = now()
    where id = v_tarjeta.id
+     and tarjetas_lealtad.sellos >= v_meta
    returning * into v_tarjeta;
+  if not found then
+    raise exception 'sellos_insuficientes';
+  end if;
 
   insert into movimientos_lealtad (tarjeta_id, tenant_id, sucursal_id, tipo, encargado_id)
   values (v_tarjeta.id, v_tarjeta.tenant_id, v_suc, 'canje', auth.uid());
@@ -1742,6 +1824,50 @@ grant  execute on function canjear_premio(text, uuid) to authenticated;
 ```
 
 **buscar_tarjetas_por_contacto:** El encargado busca tarjetas por teléfono/correo (sin leer contacto en claro). Grant: `to authenticated` (revoke anon).
+
+```sql
+create or replace function buscar_tarjetas_por_contacto(p_contacto text)
+returns table (
+  id uuid, codigo text, sellos smallint, sellos_meta smallint,
+  contacto_enmascarado text, creada_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid;
+  v_q      text := nullif(trim(coalesce(p_contacto, '')), '');
+  v_digitos text := regexp_replace(coalesce(p_contacto, ''), '\D', '', 'g');
+begin
+  select tenant_id into v_tenant from tenant_usuarios where user_id = auth.uid();
+  if v_tenant is null then
+    raise exception 'sin_tenant';
+  end if;
+  if v_q is null then
+    return;
+  end if;
+
+  return query
+  select
+    t.id, t.codigo, t.sellos,
+    (select lealtad_sellos_meta from tenants where tenants.id = v_tenant),
+    _enmascarar_contacto(t.contacto, t.contacto_tipo),
+    t.creada_at
+  from tarjetas_lealtad t
+  where t.tenant_id = v_tenant
+    and t.contacto is not null
+    and (
+      lower(t.contacto) = lower(v_q)
+      or (length(v_digitos) >= 7 and regexp_replace(t.contacto, '\D', '', 'g') like '%' || v_digitos || '%')
+    )
+  order by t.ultima_actividad_at desc nulls last
+  limit 25;
+end;
+$$;
+revoke execute on function buscar_tarjetas_por_contacto(text) from public, anon;
+grant  execute on function buscar_tarjetas_por_contacto(text) to authenticated;
+```
 
 **purgar_tarjetas_lealtad:** Borra tarjetas sin sellos/premios >14 días o inactivas >365 días. Grant: `to service_role` (revoke all anon/authenticated).
 
@@ -1769,4 +1895,4 @@ grant  execute on function purgar_tarjetas_lealtad() to service_role;
 
 La tarjeta = un UUID en `localStorage` del comensal (el `id` de `tarjetas_lealtad`). Sin escritura pública directa a las tablas: solo las RPC. `crear` / `obtener` / `guardar_contacto` son del comensal (sin sesión, `SECURITY DEFINER`, lanzan slugs del contrato). `buscar` / `sellar` / `canjear` / `recuperar` exigen sesión y resuelven el tenant con `tenant_usuarios.user_id = auth.uid()` — nunca cruzan tenants. Tope 1 sello/tarjeta/día en la zona horaria de la sucursal que sella. `contacto` (teléfono/correo, opcional, con `consentimiento_marketing_at`) nunca sale en claro por RPC pública — solo `_enmascarar_contacto`. Purga: 0 sellos > 14 días, o `coalesce(ultima_actividad_at, creada_at)` > 12 meses.
 
-Cualquiera puede llamar la RPC repetidamente para inflar los contadores de su propio tenant Enterprise; el conteo de **filas** está acotado por el grano `(tenant, sucursal, producto, día, hora)`, así que es ruido en las métricas, no un vector de crecimiento — misma exposición aceptada que `registrar_visita`.
+El chequeo de plan (`permite_lealtad`) vive dentro de `crear_tarjeta_lealtad` y `sellar_tarjeta`; `canjear_premio` queda sin gate para honrar premios ya ganados tras una baja de plan. El tope 1/día es un UPDATE condicional (`ultimo_sello_dia is distinct from`), no un check-then-update. `buscar_tarjeta` recibe `p_sucursal_id` para previsualizar con la misma zona horaria que usará `sellar_tarjeta`.

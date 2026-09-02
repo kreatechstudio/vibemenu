@@ -58,6 +58,9 @@ describe("validarTelefono", () => {
     expect(validarTelefono("123").ok).toBe(false);
     expect(validarTelefono("abcdef").ok).toBe(false);
   });
+  test("prefijo + con menos de 10 dígitos → inválido (coincide con el RPC)", () => {
+    expect(validarTelefono("+52 55 12")).toEqual({ ok: false, e164: null });
+  });
 });
 
 describe("validarCorreo", () => {

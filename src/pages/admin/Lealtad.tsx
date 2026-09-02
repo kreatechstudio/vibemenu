@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, Copy, Gift, Lock, QrCode, Stamp } from "lucide-react";
 import QRCode from "react-qr-code";
@@ -7,6 +7,7 @@ import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
 import EscanerCodigo from "@/components/admin/EscanerCodigo";
 import { useTenantActual, type ContextoTenant } from "@/hooks/useTenantActual";
 import { useSucursales } from "@/hooks/useSucursales";
+import { useEquipo } from "@/hooks/useEquipo";
 import {
   useBuscarTarjeta,
   useCanjear,
@@ -110,6 +111,13 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
   const canjear = useCanjear(tenantId);
   const recuperar = useRecuperarTarjetas();
   const movimientos = useMovimientosLealtad(tenantId);
+  const equipo = useEquipo(tenantId);
+
+  const nombreEncargado = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of equipo.data ?? []) m.set(p.user_id, p.nombre ?? p.email);
+    return (id: string | null | undefined) => (id ? (m.get(id) ?? "—") : "—");
+  }, [equipo.data]);
 
   const [activa, setActiva] = useState(ctx.tenant.lealtad_activa);
   const [meta, setMeta] = useState<number>(ctx.tenant.lealtad_sellos_meta ?? 6);
@@ -121,6 +129,19 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
   const [tarjetaActiva, setTarjetaActiva] = useState<VistaTarjeta | null>(null);
   const [contactoBuscar, setContactoBuscar] = useState("");
   const [copiado, setCopiado] = useState<string | null>(null);
+  const [guardadoOk, setGuardadoOk] = useState(false);
+
+  useEffect(() => {
+    if (!copiado) return;
+    const t = setTimeout(() => setCopiado(null), 2500);
+    return () => clearTimeout(t);
+  }, [copiado]);
+
+  useEffect(() => {
+    if (!guardadoOk) return;
+    const t = setTimeout(() => setGuardadoOk(false), 2500);
+    return () => clearTimeout(t);
+  }, [guardadoOk]);
 
   const multi = (sucursales?.length ?? 0) > 1;
   const sucursalEfectiva = multi ? (sucursalSel ?? sucursales?.[0]?.id ?? null) : null;
@@ -142,11 +163,14 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
           className="mt-4 space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            guardarConfig.mutate({
-              lealtad_activa: activa,
-              lealtad_sellos_meta: meta,
-              lealtad_premio: premio.trim(),
-            });
+            guardarConfig.mutate(
+              {
+                lealtad_activa: activa,
+                lealtad_sellos_meta: meta,
+                lealtad_premio: premio.trim(),
+              },
+              { onSuccess: () => setGuardadoOk(true) },
+            );
           }}
         >
           <label className="block text-sm">
@@ -192,9 +216,7 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
             >
               {guardarConfig.isPending ? "Guardando…" : "Guardar"}
             </button>
-            {guardarConfig.isSuccess && (
-              <span className="text-xs text-vm-success">Cambios guardados.</span>
-            )}
+            {guardadoOk && <span className="text-xs text-vm-success">Cambios guardados.</span>}
           </div>
 
           {guardarConfig.isError && (
@@ -252,7 +274,10 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
               setTarjetaActiva(null);
               sellar.reset();
               canjear.reset();
-              buscar.mutate(codigo, { onSuccess: setTarjetaActiva });
+              buscar.mutate(
+                { codigo, sucursalId: sucursalEfectiva },
+                { onSuccess: setTarjetaActiva },
+              );
             }}
             className={BOTON_PRIMARIO}
           >
@@ -403,6 +428,10 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
       <section className={SECCION}>
         <h2 className="text-lg">Actividad</h2>
 
+        {movimientos.isLoading && (
+          <div className="mt-4 h-40 animate-pulse rounded-xl bg-vm-bg-soft" />
+        )}
+
         {movimientos.isError && (
           <p className="mt-3 rounded-lg bg-vm-danger-soft px-3 py-2 text-sm text-vm-danger">
             No pudimos leer la actividad reciente.
@@ -421,7 +450,8 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
                   <th className="pb-2 pr-4 font-medium">Fecha</th>
                   <th className="pb-2 pr-4 font-medium">Tipo</th>
                   <th className="pb-2 pr-4 font-medium">Código</th>
-                  <th className="pb-2 font-medium">Sucursal</th>
+                  <th className="pb-2 pr-4 font-medium">Sucursal</th>
+                  <th className="pb-2 font-medium">Encargado</th>
                 </tr>
               </thead>
               <tbody>
@@ -432,7 +462,8 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
                     </td>
                     <td className="py-2 pr-4">{m.tipo === "canje" ? "Canje" : "Sello"}</td>
                     <td className="py-2 pr-4 font-mono">{m.tarjeta?.codigo ?? "—"}</td>
-                    <td className="py-2">{m.sucursal?.nombre ?? "General"}</td>
+                    <td className="py-2 pr-4">{m.sucursal?.nombre ?? "General"}</td>
+                    <td className="py-2 text-vm-body">{nombreEncargado(m.encargado_id)}</td>
                   </tr>
                 ))}
               </tbody>

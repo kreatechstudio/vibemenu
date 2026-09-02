@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "react-qr-code";
 import { Loader2 } from "lucide-react";
@@ -30,8 +30,9 @@ const BORDE = "color-mix(in srgb, var(--menu-texto, #0b0b0f) 12%, transparent)";
 const HUECO = "color-mix(in srgb, var(--menu-texto, #0b0b0f) 25%, transparent)";
 
 export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarjetaId: string }) {
+  const navigate = useNavigate();
   const { uuid, guardar, olvidar } = useTarjetaLocal(slug);
-  const { data, isLoading, isError } = useTarjeta(slug, tarjetaId);
+  const { data, isLoading, isError, isFetched } = useTarjeta(slug, tarjetaId);
   const guardarContacto = useGuardarContacto(tarjetaId);
 
   const tema = useQuery({
@@ -56,6 +57,24 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
   const [tel, setTel] = useState("");
   const [correo, setCorreo] = useState("");
   const [consent, setConsent] = useState(false);
+
+  // La tarjeta ya no existe en el servidor (purga) y la clave local apunta a
+  // ella: límpiala para que el banner del menú ofrezca crear una nueva.
+  useEffect(() => {
+    if (isFetched && !data && uuid === tarjetaId) olvidar();
+  }, [isFetched, data, uuid, tarjetaId, olvidar]);
+
+  // El slug de la URL no es el del negocio dueño de la tarjeta: redirige al
+  // correcto para no pintar la tarjeta bajo el tema/localStorage equivocados.
+  useEffect(() => {
+    if (data && data.tenantSlug !== slug) {
+      void navigate({
+        to: "/$slug/lealtad/$tarjetaId",
+        params: { slug: data.tenantSlug, tarjetaId },
+        replace: true,
+      });
+    }
+  }, [data, slug, tarjetaId, navigate]);
 
   if (isLoading) {
     return (
@@ -91,6 +110,8 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
       </main>
     );
   }
+
+  if (data.tenantSlug !== slug) return null;
 
   const prog = progresoLealtad(data.sellos, data.sellosMeta);
   const rejilla = rejillaSellos(data.sellos, data.sellosMeta);
@@ -207,30 +228,37 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
         {/* Respaldo opcional de contacto */}
         <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: BORDE }}>
           {data.tieneContacto && !respaldoAbierto ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm" style={{ color: TEXTO }}>
-                Respaldo: {data.contactoEnmascarado}
-              </span>
-              <span className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRespaldoAbierto(true)}
-                  className="text-xs underline"
-                  style={{ color: SUAVE }}
-                >
-                  Cambiar
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    guardarContacto.mutate({ contacto: "", tipo: "telefono", consent: false })
-                  }
-                  className="text-xs underline"
-                  style={{ color: SUAVE }}
-                >
-                  Quitar
-                </button>
-              </span>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm" style={{ color: TEXTO }}>
+                  Respaldo: {data.contactoEnmascarado}
+                </span>
+                <span className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRespaldoAbierto(true)}
+                    className="text-xs underline"
+                    style={{ color: SUAVE }}
+                  >
+                    Cambiar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      guardarContacto.mutate({ contacto: "", tipo: "telefono", consent: false })
+                    }
+                    className="text-xs underline"
+                    style={{ color: SUAVE }}
+                  >
+                    Quitar
+                  </button>
+                </span>
+              </div>
+              {guardarContacto.isError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {(guardarContacto.error as Error).message}
+                </p>
+              )}
             </div>
           ) : !respaldoAbierto ? (
             <button
@@ -257,6 +285,7 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
                   <button
                     key={t}
                     type="button"
+                    aria-pressed={tipo === t}
                     onClick={() => setTipo(t)}
                     className="flex-1 px-3 py-2 font-medium"
                     style={

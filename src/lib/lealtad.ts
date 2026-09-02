@@ -25,7 +25,7 @@ export function validarTelefono(s: string): { ok: boolean; e164: string | null }
   const bruto = (s ?? "").trim();
   const digitos = bruto.replace(/\D/g, "");
   if (bruto.startsWith("+")) {
-    return digitos.length >= 8 && digitos.length <= 15
+    return digitos.length >= 10 && digitos.length <= 15
       ? { ok: true, e164: "+" + digitos }
       : { ok: false, e164: null };
   }

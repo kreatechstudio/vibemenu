@@ -32,8 +32,14 @@ export function useGuardarConfigLealtad(tenantId: string | undefined) {
 
 export function useBuscarTarjeta() {
   return useMutation({
-    mutationFn: async (codigo: string): Promise<VistaTarjeta> => {
-      const { data, error } = await supabase.rpc("buscar_tarjeta", { p_codigo: codigo });
+    mutationFn: async (v: {
+      codigo: string;
+      sucursalId?: string | null;
+    }): Promise<VistaTarjeta> => {
+      const { data, error } = await supabase.rpc("buscar_tarjeta", {
+        p_codigo: v.codigo,
+        p_sucursal_id: v.sucursalId ?? undefined,
+      });
       if (error) throw new Error(traducirError(error).mensaje);
       const f = primera(data);
       if (!f) throw new Error("No encontramos una tarjeta con ese código.");
@@ -101,7 +107,7 @@ export function useMovimientosLealtad(tenantId: string | undefined) {
       const { data, error } = await supabase
         .from("movimientos_lealtad")
         .select(
-          "id, tipo, creado_at, sucursal_id, tarjeta:tarjetas_lealtad(codigo), sucursal:sucursales(nombre)",
+          "id, tipo, creado_at, sucursal_id, encargado_id, tarjeta:tarjetas_lealtad(codigo), sucursal:sucursales(nombre)",
         )
         .eq("tenant_id", tenantId!)
         .order("creado_at", { ascending: false })

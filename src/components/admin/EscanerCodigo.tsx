@@ -37,6 +37,11 @@ export default function EscanerCodigo({
           },
           () => {},
         );
+        if (!vivo) {
+          await inst.stop().catch(() => {});
+          inst.clear();
+          return;
+        }
       } catch {
         if (vivo) setError("No pudimos abrir la cámara. Teclea el código.");
       }

@@ -28,6 +28,7 @@ alter table tenants
   add column if not exists lealtad_sellos_meta smallint,
   add column if not exists lealtad_premio      text;
 
+-- OJO: los ADD CONSTRAINT no llevan IF NOT EXISTS — un segundo apply de esta migración aborta la transacción. Es un one-shot ya aplicado.
 alter table tenants
   add constraint tenants_lealtad_meta_valida
     check (lealtad_sellos_meta is null or lealtad_sellos_meta between 2 and 50),
@@ -93,7 +94,7 @@ set search_path = public
 as $$
   select case
     when p_contacto is null then null
-    when p_tipo = 'correo' then
+    when p_tipo = 'correo' and p_contacto like '%@%' then
       left(p_contacto, 1) || '●●●' || substr(p_contacto, position('@' in p_contacto))
     else
       '●●●' || right(regexp_replace(p_contacto, '\D', '', 'g'), 4)
@@ -143,7 +144,10 @@ declare
   v_activa boolean;
   v_fila   tarjetas_lealtad;
 begin
-  select lealtad_activa into v_activa from tenants where id = p_tenant_id;
+  select t.lealtad_activa and coalesce(p.permite_lealtad, false)
+    into v_activa
+    from tenants t left join planes p on p.id = t.plan_id
+   where t.id = p_tenant_id;
   if not coalesce(v_activa, false) then
     raise exception 'lealtad_no_disponible';
   end if;
@@ -312,7 +316,10 @@ $$;
 revoke execute on function _vista_tarjeta(tarjetas_lealtad, uuid) from public, anon, authenticated;
 
 -- ── buscar_tarjeta (no muta) ───────────────────────────────────────────────
-create or replace function buscar_tarjeta(p_codigo text)
+-- La firma cambió (+ p_sucursal_id): la preview debe usar la misma tz que
+-- sellar_tarjeta (la de la sucursal seleccionada), no la de la primera sucursal.
+drop function if exists buscar_tarjeta(text);
+create or replace function buscar_tarjeta(p_codigo text, p_sucursal_id uuid default null)
 returns table (
   codigo text, sellos smallint, sellos_meta smallint, premio text,
   premios_canjeados smallint, listo_para_canje boolean, sello_repetido_hoy boolean
@@ -322,11 +329,11 @@ security definer
 set search_path = public
 as $$
 begin
-  return query select * from _vista_tarjeta(_tarjeta_del_encargado(p_codigo), null::uuid);
+  return query select * from _vista_tarjeta(_tarjeta_del_encargado(p_codigo), p_sucursal_id);
 end;
 $$;
-revoke execute on function buscar_tarjeta(text) from public, anon;
-grant  execute on function buscar_tarjeta(text) to authenticated;
+revoke execute on function buscar_tarjeta(text, uuid) from public, anon;
+grant  execute on function buscar_tarjeta(text, uuid) to authenticated;
 
 -- ── sellar_tarjeta ─────────────────────────────────────────────────────────
 create or replace function sellar_tarjeta(p_codigo text, p_sucursal_id uuid default null)
@@ -345,7 +352,10 @@ declare
   v_tz      text;
   v_hoy     date;
 begin
-  select lealtad_activa into v_activa from tenants where id = v_tarjeta.tenant_id;
+  select t.lealtad_activa and coalesce(p.permite_lealtad, false)
+    into v_activa
+    from tenants t left join planes p on p.id = t.plan_id
+   where t.id = v_tarjeta.tenant_id;
   if not coalesce(v_activa, false) then
     raise exception 'lealtad_no_disponible';
   end if;
@@ -362,16 +372,23 @@ begin
    order by s.created_at limit 1;
   v_hoy := (now() at time zone coalesce(v_tz, 'UTC'))::date;
 
+  -- vía rápida / error claro
   if v_tarjeta.ultimo_sello_dia = v_hoy then
     raise exception 'sello_repetido_hoy';
   end if;
 
+  -- UPDATE condicional: el tope 1/día se resuelve aquí, no en el check de arriba,
+  -- para que dos llamadas concurrentes no puedan ganar ambas (TOCTOU).
   update tarjetas_lealtad
      set sellos = tarjetas_lealtad.sellos + 1,
          ultimo_sello_dia = v_hoy,
          ultima_actividad_at = now()
    where id = v_tarjeta.id
+     and tarjetas_lealtad.ultimo_sello_dia is distinct from v_hoy
    returning * into v_tarjeta;
+  if not found then
+    raise exception 'sello_repetido_hoy';
+  end if;
 
   insert into movimientos_lealtad (tarjeta_id, tenant_id, sucursal_id, tipo, encargado_id)
   values (v_tarjeta.id, v_tarjeta.tenant_id, v_suc, 'sello', auth.uid());
@@ -397,6 +414,8 @@ declare
   v_meta    smallint;
   v_suc     uuid := p_sucursal_id;
 begin
+  -- SIN gate de plan a propósito: un negocio que bajó de plan debe poder honrar
+  -- premios que sus clientes ya ganaron.
   select lealtad_sellos_meta into v_meta from tenants where id = v_tarjeta.tenant_id;
   if v_meta is null or v_tarjeta.sellos < v_meta then
     raise exception 'sellos_insuficientes';
@@ -413,7 +432,11 @@ begin
          premios_canjeados = tarjetas_lealtad.premios_canjeados + 1,
          ultima_actividad_at = now()
    where id = v_tarjeta.id
+     and tarjetas_lealtad.sellos >= v_meta
    returning * into v_tarjeta;
+  if not found then
+    raise exception 'sellos_insuficientes';
+  end if;
 
   insert into movimientos_lealtad (tarjeta_id, tenant_id, sucursal_id, tipo, encargado_id)
   values (v_tarjeta.id, v_tarjeta.tenant_id, v_suc, 'canje', auth.uid());
