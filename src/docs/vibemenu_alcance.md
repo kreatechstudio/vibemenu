@@ -37,9 +37,9 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 | Plan          | USD/mes | MXN/mes | Sucursales | Productos  | Usuarios              | Grupos modif. | Formatos                                                     | Menú por sucursal | Extras                                      |
 | ------------- | ------- | ------- | ---------- | ---------- | --------------------- | ------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------- |
 | Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu"          |
-| Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua                           |
-| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Tarjeta de lealtad**, Dominio propio (CNAME)   |
-| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | **Reservaciones**, **Tarjeta de lealtad**, **Analítica por platillo**, Soporte prioritario |
+| Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua · Pedir por WhatsApp · Embudo a reseñas |
+| Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | Todo lo de Basic · Reservaciones · Tarjeta de lealtad · Dominio propio (CNAME) |
+| Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | Todo lo de Pro · Analítica por platillo · Soporte prioritario |
 
 Todos los planes: 1 foto por producto, video solo por URL embebida (nunca subido).
 
@@ -62,6 +62,19 @@ La segunda palanca de venta, además de los formatos. Todo vive en `tenants.tema
 **Al bajar de plan, el trigger limpia el tema en silencio**: quita la fuente si ya no está en el pool, apaga el modo de imagen si no lo permite, y borra el color de modificadores y el desenfoque. Igual que hace `trg_tenants_20_formatos` con los formatos. Nadie queda con un menú que su plan no soporta.
 
 El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción `fuentes_permitidas_validas` de la tabla. Agregar una exige tocar los dos lados y el `<link>` de Google Fonts en `__root.tsx`.
+
+## Funciones de conversión y fidelización por plan
+
+| Función | Free | Basic | Pro | Enterprise | Columna en `planes` |
+| --- | :-: | :-: | :-: | :-: | --- |
+| Pedir por WhatsApp | ❌ | ✅ | ✅ | ✅ | `permite_pedidos_whatsapp` |
+| Embudo a reseñas de Google | ❌ | ✅ | ✅ | ✅ | `permite_embudo_resenas` |
+| Reservaciones | ❌ | ❌ | ✅ | ✅ | `permite_reservaciones` |
+| Tarjeta de lealtad con QR | ❌ | ❌ | ✅ | ✅ | `permite_lealtad` |
+| Analítica por platillo | ❌ | ❌ | ❌ | ✅ | `permite_analitica_platillo` |
+
+El gating real vive en los triggers/RPC de Postgres; la página de precios y el
+panel solo leen estas columnas para mostrar u ocultar.
 
 ## QR imprimible por plan
 
@@ -88,7 +101,7 @@ Cuatro enlaces en `tenants`: Facebook, Instagram, TikTok y las reseñas de Googl
 
 El día se calcula con la zona horaria de la sucursal. Con `current_date` a secas, un negocio en México vería las visitas de las 18:00 contadas al día siguiente, que es UTC.
 
-## Reservaciones simples (Pro/Enterprise, migración 012)
+## Reservaciones simples (Pro/Enterprise)
 
 Formulario breve en el menú público (nombre, personas, fecha/hora, teléfono con lada, nota, email opcional) para que el comensal solicite mesa. El restaurante recibe un aviso por correo vía Resend. **No es un sistema de reservas con mesas ni disponibilidad** — es captar la intención antes de que se vaya a otro lado. El restaurante gestiona las solicitudes en `/admin/reservaciones` con estados `nueva → atendida | cancelada`. Opt-in por sucursal (`sucursales.acepta_reservaciones` + `reservaciones_email`). Anti-spam: Turnstile verificado en la Edge Function `crear-reservacion` + rate-limit (20/sucursal/hora, 3/IP/hora). Ventana de fecha: hoy … +60 días. Purga a los 90 días por cron GitHub Actions.
 
