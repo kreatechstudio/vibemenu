@@ -67,6 +67,51 @@ const ENTERPRISE = plan({
   permite_lealtad: true,
 });
 
+/** Basic: WhatsApp + embudo, nada de reservaciones/lealtad/analítica. */
+const BASIC = plan({
+  nombre: "basic",
+  precio_mxn_anual: 1690,
+  limite_productos: null,
+  limite_grupos_modificadores: 5,
+  limite_formatos: 2,
+  formatos_permitidos: ["clasico", "pinterest", "instagram", "tiktok"],
+  modos_imagen_permitidos: ["marco"],
+  marca_agua: false,
+  permite_color_modificadores: true,
+  qr_color: true,
+  permite_pedidos_whatsapp: true,
+  permite_embudo_resenas: true,
+});
+
+/** Pro: agrega reservaciones + lealtad + dominio, pero NO analítica por platillo. */
+const PRO = plan({
+  nombre: "pro",
+  precio_mxn_anual: 3490,
+  limite_sucursales: 3,
+  limite_productos: null,
+  limite_grupos_modificadores: null,
+  limite_usuarios: 2,
+  limite_formatos: null,
+  formatos_permitidos: ["clasico", "pinterest", "instagram", "tiktok"],
+  modos_imagen_permitidos: ["marco", "completo"],
+  marca_agua: false,
+  menu_independiente_por_sucursal: true,
+  permite_multiusuario: true,
+  permite_dominio_propio: true,
+  permite_color_modificadores: true,
+  permite_desenfoque: true,
+  qr_color: true,
+  qr_avanzado: true,
+  permite_pedidos_whatsapp: true,
+  permite_embudo_resenas: true,
+  permite_reservaciones: true,
+  permite_lealtad: true,
+});
+
+/** Etiqueta → columna que espera cada fila de conversión/fidelización. */
+const valorDe = (etiqueta: string, p: Plan): string | boolean =>
+  FILAS_COMPARATIVA.find((f) => f.etiqueta === etiqueta)!.valor(p);
+
 const ETIQUETAS_FIJAS = new Set([
   "1 foto por producto",
   "Video por URL embebida",
@@ -126,6 +171,21 @@ describe("valores por plan", () => {
     expect(fila.valor(FREE)).toBe(false);
     expect(fila.valor(plan({ precio_mxn_anual: 1690 }))).toBe(true);
   });
+
+  test("Basic: pedidos y embudo sí; reservaciones, lealtad y analítica no", () => {
+    expect(valorDe("Pedir por WhatsApp", BASIC)).toBe(true);
+    expect(valorDe("Embudo a reseñas de Google", BASIC)).toBe(true);
+    expect(valorDe("Reservaciones", BASIC)).toBe(false);
+    expect(valorDe("Tarjeta de lealtad con QR", BASIC)).toBe(false);
+    expect(valorDe("Analítica por platillo", BASIC)).toBe(false);
+  });
+
+  test("Pro: reservaciones y lealtad sí; analítica por platillo no", () => {
+    expect(valorDe("Reservaciones", PRO)).toBe(true);
+    expect(valorDe("Tarjeta de lealtad con QR", PRO)).toBe(true);
+    expect(valorDe("Dominio propio", PRO)).toBe(true);
+    expect(valorDe("Analítica por platillo", PRO)).toBe(false);
+  });
 });
 
 describe("agrupado", () => {
@@ -146,9 +206,9 @@ describe("agrupado", () => {
     }
   });
 
-  test("hay entre 7 y 10 filas destacadas", () => {
+  test("hay entre 8 y 13 filas destacadas", () => {
     const n = FILAS_COMPARATIVA.filter((f) => f.destacada).length;
-    expect(n).toBeGreaterThanOrEqual(7);
-    expect(n).toBeLessThanOrEqual(10);
+    expect(n).toBeGreaterThanOrEqual(8);
+    expect(n).toBeLessThanOrEqual(13);
   });
 });

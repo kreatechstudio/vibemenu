@@ -10,6 +10,16 @@ import {
 } from "@/lib/plan";
 import type { NombrePlan, Plan } from "@/types/database";
 
+/**
+ * Modelo de datos de la tabla comparativa de `/precios`. Patrón de `src/lib/plan.ts`:
+ * cada fila lee su valor de la fila de `planes` — nunca se hardcodea un límite,
+ * un `UPDATE` en la base cambia la tabla sola.
+ *
+ * Las filas marcadas `// fijo` son la única excepción: valen lo mismo en los 4
+ * planes (o dependen de algo que no vive en `planes`, como el soporte prioritario)
+ * y por eso se codifican a mano. Si agregas una capacidad que sí varía por plan,
+ * añade la columna en `planes` y léela aquí, no un `() => true/false`.
+ */
 export const GRUPOS_COMPARATIVA = [
   "Tu menú",
   "Contenido",
@@ -71,8 +81,8 @@ export const FILAS_COMPARATIVA: FilaComparativa[] = [
   { grupo: "Tu menú", etiqueta: "Sin marca de agua", valor: (p) => !p.marca_agua, destacada: true },
 
   // Contenido
-  { grupo: "Contenido", etiqueta: "1 foto por producto", valor: () => true },
-  { grupo: "Contenido", etiqueta: "Video por URL embebida", valor: () => true },
+  { grupo: "Contenido", etiqueta: "1 foto por producto", valor: () => true }, // fijo
+  { grupo: "Contenido", etiqueta: "Video por URL embebida", valor: () => true }, // fijo
 
   // Diseño
   {
@@ -80,7 +90,7 @@ export const FILAS_COMPARATIVA: FilaComparativa[] = [
     etiqueta: "Tipografías",
     valor: (p) => `${fuentesDelPlan(p).length} de ${CLAVES_FUENTE.length}`,
   },
-  { grupo: "Diseño", etiqueta: "Color de acento, fondo y texto", valor: () => true },
+  { grupo: "Diseño", etiqueta: "Color de acento, fondo y texto", valor: () => true }, // fijo
   {
     grupo: "Diseño",
     etiqueta: "Color de los modificadores",
@@ -98,7 +108,7 @@ export const FILAS_COMPARATIVA: FilaComparativa[] = [
   { grupo: "Diseño", etiqueta: "Desenfoque detrás del texto", valor: (p) => permiteDesenfoque(p) },
 
   // Tu QR
-  { grupo: "Tu QR", etiqueta: "QR imprimible con tu nombre", valor: () => true },
+  { grupo: "Tu QR", etiqueta: "QR imprimible con tu nombre", valor: () => true }, // fijo
   { grupo: "Tu QR", etiqueta: "Los colores de tu menú en el QR", valor: (p) => permiteQrColor(p) },
   {
     grupo: "Tu QR",
@@ -137,7 +147,12 @@ export const FILAS_COMPARATIVA: FilaComparativa[] = [
     valor: (p) => p.permite_embudo_resenas,
     destacada: true,
   },
-  { grupo: "Pedidos y reseñas", etiqueta: "Reservaciones", valor: (p) => p.permite_reservaciones },
+  {
+    grupo: "Pedidos y reseñas",
+    etiqueta: "Reservaciones",
+    valor: (p) => p.permite_reservaciones,
+    destacada: true,
+  },
 
   // Fidelización y analítica
   {
@@ -154,13 +169,14 @@ export const FILAS_COMPARATIVA: FilaComparativa[] = [
   },
 
   // Soporte
-  { grupo: "Soporte", etiqueta: "Soporte por correo", valor: () => true },
+  { grupo: "Soporte", etiqueta: "Soporte por correo", valor: () => true }, // fijo
   {
     grupo: "Soporte",
     etiqueta: "Soporte prioritario",
+    // fijo: no hay columna en `planes`; solo enterprise
     valor: (p) => (p.nombre as NombrePlan) === "enterprise",
   },
-  { grupo: "Soporte", etiqueta: "Precio congelado al suscribirte", valor: () => true },
+  { grupo: "Soporte", etiqueta: "Precio congelado al suscribirte", valor: () => true }, // fijo
   {
     grupo: "Soporte",
     etiqueta: "Descuento en plan anual",
