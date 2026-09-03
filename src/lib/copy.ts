@@ -96,18 +96,18 @@ export const PLANES_COPY = {
   basic: {
     headline: "Para un solo local, sin límites de menú",
     descripcion:
-      "Productos ilimitados, sin marca de agua, con el formato Clásico y uno más a tu elección.",
+      "Productos ilimitados, sin marca de agua, con pedidos por WhatsApp y embudo a reseñas de Google.",
     cta: "Elegir plan",
   },
   pro: {
     headline: "Para negocios que quieren destacar",
-    descripcion: "Los 4 formatos, hasta 3 sucursales con menús independientes, tu propio dominio.",
+    descripcion:
+      "Los 4 formatos, hasta 3 sucursales, dominio propio, reservaciones y tarjeta de lealtad con QR.",
     cta: "Elegir plan",
   },
   enterprise: {
     headline: "Para cadenas y grupos restauranteros",
-    descripcion:
-      "Sucursales ilimitadas, equipo completo con múltiples usuarios, soporte prioritario.",
+    descripcion: "Todo lo de Pro sin límites, más analítica por platillo y soporte prioritario.",
     cta: "Contactar ventas",
   },
 } as const;
@@ -116,6 +116,9 @@ export const PRECIOS = {
   notaPrecioCongelado:
     "Tu precio no sube mientras sigas activo, aunque lancemos nuevos precios más adelante.",
   notaAhorroAnual: (porcentaje: number) => `Ahorra ${porcentaje}% pagando anual`,
+  comparativaCompletaTitulo: "Todo lo que incluye cada plan",
+  comparativaCompletaNota:
+    "Cada función, en cada plan. Lo que tu plan no incluye aparece con una raya (–).",
 } as const;
 
 export const FACTURACION = {
