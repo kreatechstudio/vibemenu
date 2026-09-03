@@ -116,6 +116,9 @@ export const PRECIOS = {
   notaPrecioCongelado:
     "Tu precio no sube mientras sigas activo, aunque lancemos nuevos precios más adelante.",
   notaAhorroAnual: (porcentaje: number) => `Ahorra ${porcentaje}% pagando anual`,
+  comparativaCompletaTitulo: "Todo lo que incluye cada plan",
+  comparativaCompletaNota:
+    "Cada función, en cada plan. Lo que tu plan no incluye aparece con una raya (–).",
 } as const;
 
 export const FACTURACION = {

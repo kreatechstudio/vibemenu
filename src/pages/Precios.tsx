@@ -5,19 +5,8 @@ import { Check, Minus } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { usePlanes } from "@/hooks/usePlanes";
-import {
-  formatearPrecio,
-  fuentesDelPlan,
-  modosImagenDelPlan,
-  permiteColorModificadores,
-  permiteDesenfoque,
-  permiteQrAvanzado,
-  permiteQrColor,
-  porcentajeAhorroAnual,
-  precioDelPlan,
-  textoLimite,
-} from "@/lib/plan";
-import { CLAVES_FUENTE } from "@/lib/fuentes";
+import { formatearPrecio, porcentajeAhorroAnual, precioDelPlan } from "@/lib/plan";
+import { filasDeGrupo, gruposConFilas, type FilaComparativa } from "@/lib/comparativa";
 import { PLANES_COPY, PRECIOS } from "@/lib/copy";
 import { NOMBRE_FORMATO, NOMBRE_PLAN } from "@/types/database";
 import type { FormatoMenu, IntervaloCobro, MonedaCobro, NombrePlan, Plan } from "@/types/database";
@@ -25,90 +14,6 @@ import { slideUp } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 const PLAN_RECOMENDADO: NombrePlan = "pro";
-
-type Fila = { etiqueta: string; valor: (p: Plan) => string | boolean; grupo: string };
-
-/**
- * Filas de la tabla comparativa. Cada una lee su valor de la fila de `planes`.
- * Nunca se hardcodea un límite: un `UPDATE` en la base cambia esta tabla sola.
- */
-const CARACTERISTICAS: Fila[] = [
-  { grupo: "Tu menú", etiqueta: "Sucursales", valor: (p) => textoLimite(p.limite_sucursales) },
-  { grupo: "Tu menú", etiqueta: "Productos", valor: (p) => textoLimite(p.limite_productos) },
-  {
-    grupo: "Tu menú",
-    etiqueta: "Grupos de modificadores",
-    valor: (p) => textoLimite(p.limite_grupos_modificadores),
-  },
-  {
-    grupo: "Tu menú",
-    etiqueta: "Formatos",
-    valor: (p) =>
-      p.limite_formatos === null
-        ? "Los 4"
-        : p.limite_formatos === 1
-          ? "Solo Clásico"
-          : `Clásico + ${p.limite_formatos - 1} a elegir`,
-  },
-  {
-    grupo: "Tu menú",
-    etiqueta: "Menú y precios propios por sucursal",
-    valor: (p) => p.menu_independiente_por_sucursal,
-  },
-  { grupo: "Tu menú", etiqueta: "Sin marca de agua", valor: (p) => !p.marca_agua },
-
-  {
-    grupo: "Diseño",
-    etiqueta: "Tipografías",
-    valor: (p) => `${fuentesDelPlan(p).length} de ${CLAVES_FUENTE.length}`,
-  },
-  { grupo: "Diseño", etiqueta: "Colores de la carta", valor: () => true },
-  {
-    grupo: "Diseño",
-    etiqueta: "Color de los modificadores",
-    valor: (p) => permiteColorModificadores(p),
-  },
-  {
-    grupo: "Diseño",
-    etiqueta: "Imagen de fondo",
-    valor: (p) => {
-      const modos = modosImagenDelPlan(p);
-      if (modos.length === 0) return false;
-      return modos.length === 1 ? "Modo marco" : "Marco y fondo completo";
-    },
-  },
-  {
-    grupo: "Diseño",
-    etiqueta: "Desenfoque detrás del texto",
-    valor: (p) => permiteDesenfoque(p),
-  },
-
-  {
-    grupo: "Tu QR",
-    etiqueta: "QR imprimible con tu nombre",
-    valor: () => true,
-  },
-  {
-    grupo: "Tu QR",
-    etiqueta: "Los colores de tu menú",
-    valor: (p) => permiteQrColor(p),
-  },
-  {
-    grupo: "Tu QR",
-    etiqueta: "Tu tipografía, tu logo y tu foto",
-    valor: (p) => permiteQrAvanzado(p),
-  },
-
-  {
-    grupo: "Tu equipo",
-    etiqueta: "Usuarios del panel",
-    valor: (p) => textoLimite(p.limite_usuarios),
-  },
-  { grupo: "Tu equipo", etiqueta: "Multi-usuario", valor: (p) => p.permite_multiusuario },
-  { grupo: "Tu equipo", etiqueta: "Dominio propio", valor: (p) => p.permite_dominio_propio },
-];
-
-const GRUPOS = ["Tu menú", "Diseño", "Tu QR", "Tu equipo"] as const;
 
 function Celda({ valor }: { valor: string | boolean }) {
   if (typeof valor === "boolean") {
@@ -207,6 +112,64 @@ function TarjetaPlan({
   );
 }
 
+function TablaComparativa({
+  planes,
+  titulo,
+  soloDestacadas = false,
+}: {
+  planes: Plan[];
+  titulo: string;
+  soloDestacadas?: boolean;
+}) {
+  const grupos = gruposConFilas(soloDestacadas);
+  return (
+    <div className="mx-auto max-w-5xl overflow-x-auto">
+      <table className="w-full min-w-[640px] border-separate border-spacing-0 overflow-hidden rounded-xl border">
+        <thead>
+          <tr className="bg-vm-bg-soft">
+            <th className="px-5 py-4 text-left text-sm font-medium text-vm-ink">{titulo}</th>
+            {planes.map((p) => (
+              <th key={p.id} className="px-5 py-4 text-center text-sm font-medium text-vm-ink">
+                {NOMBRE_PLAN[p.nombre as NombrePlan]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {grupos.map((grupo) => (
+            <Fragment key={grupo}>
+              <tr>
+                <th
+                  scope="colgroup"
+                  colSpan={planes.length + 1}
+                  className="border-t bg-vm-bg-soft/60 px-5 py-2.5 text-left text-xs font-medium tracking-wide text-vm-primary"
+                >
+                  {grupo.toUpperCase()}
+                </th>
+              </tr>
+              {filasDeGrupo(grupo, soloDestacadas).map((fila: FilaComparativa) => (
+                <tr key={fila.etiqueta}>
+                  <th
+                    scope="row"
+                    className="border-t px-5 py-3.5 text-left text-sm font-normal text-vm-body"
+                  >
+                    {fila.etiqueta}
+                  </th>
+                  {planes.map((p) => (
+                    <td key={p.id} className="border-t px-5 py-3.5 text-center">
+                      <Celda valor={fila.valor(p)} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /** `planesIniciales` los trae el loader de la ruta, para que existan en el SSR. */
 export default function Precios({ planesIniciales }: { planesIniciales?: Plan[] }) {
   const [moneda, setMoneda] = useState<MonedaCobro>("mxn");
@@ -295,57 +258,16 @@ export default function Precios({ planesIniciales }: { planesIniciales?: Plan[] 
               {PRECIOS.notaPrecioCongelado}
             </p>
 
-            <div className="mx-auto mt-20 max-w-5xl overflow-x-auto">
-              <table className="w-full min-w-[640px] border-separate border-spacing-0 overflow-hidden rounded-xl border">
-                <thead>
-                  <tr className="bg-vm-bg-soft">
-                    <th className="px-5 py-4 text-left text-sm font-medium text-vm-ink">
-                      Comparar planes
-                    </th>
-                    {planes.map((p) => (
-                      <th
-                        key={p.id}
-                        className="px-5 py-4 text-center text-sm font-medium text-vm-ink"
-                      >
-                        {NOMBRE_PLAN[p.nombre as NombrePlan]}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {GRUPOS.map((grupo) => (
-                    <Fragment key={grupo}>
-                      <tr>
-                        <th
-                          scope="colgroup"
-                          colSpan={planes.length + 1}
-                          className="border-t bg-vm-bg-soft/60 px-5 py-2.5 text-left text-xs font-medium tracking-wide text-vm-primary"
-                        >
-                          {grupo.toUpperCase()}
-                        </th>
-                      </tr>
+            <div className="mt-16">
+              <TablaComparativa planes={planes} titulo="Comparación rápida" soloDestacadas />
+            </div>
 
-                      {CARACTERISTICAS.filter((c) => c.grupo === grupo).map(
-                        ({ etiqueta, valor }) => (
-                          <tr key={etiqueta}>
-                            <th
-                              scope="row"
-                              className="border-t px-5 py-3.5 text-left text-sm font-normal text-vm-body"
-                            >
-                              {etiqueta}
-                            </th>
-                            {planes.map((p) => (
-                              <td key={p.id} className="border-t px-5 py-3.5 text-center">
-                                <Celda valor={valor(p)} />
-                              </td>
-                            ))}
-                          </tr>
-                        ),
-                      )}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mx-auto mt-20 max-w-5xl text-center">
+              <h2 className="text-2xl md:text-3xl">{PRECIOS.comparativaCompletaTitulo}</h2>
+              <p className="mt-3 text-sm text-vm-body">{PRECIOS.comparativaCompletaNota}</p>
+            </div>
+            <div className="mt-8">
+              <TablaComparativa planes={planes} titulo="Comparar todo" />
             </div>
           </>
         )}
