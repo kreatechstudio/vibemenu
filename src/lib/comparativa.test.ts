@@ -186,6 +186,12 @@ describe("valores por plan", () => {
     expect(valorDe("Dominio propio", PRO)).toBe(true);
     expect(valorDe("Analítica por platillo", PRO)).toBe(false);
   });
+
+  test("Pedir por WhatsApp ahora es de todos los planes", () => {
+    expect(valorDe("Pedir por WhatsApp", plan({ permite_pedidos_whatsapp: true }))).toBe(true);
+    expect(valorDe("Pedir por WhatsApp", BASIC)).toBe(true);
+    expect(valorDe("Pedir por WhatsApp", ENTERPRISE)).toBe(true);
+  });
 });
 
 describe("agrupado", () => {
