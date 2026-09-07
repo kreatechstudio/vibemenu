@@ -187,7 +187,10 @@ export default function SuperAdmin() {
               <button
                 key={f.valor}
                 type="button"
-                onClick={() => setFiltroEstado(f.valor)}
+                onClick={() => {
+                  setFiltroEstado(f.valor);
+                  setSoloBajas(false);
+                }}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium",
                   filtroEstado === f.valor
@@ -200,7 +203,11 @@ export default function SuperAdmin() {
             ))}
             <button
               type="button"
-              onClick={() => setSoloBajas((v) => !v)}
+              aria-pressed={soloBajas}
+              onClick={() => {
+                setSoloBajas((v) => !v);
+                setFiltroEstado("todos");
+              }}
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-medium",
                 soloBajas
@@ -273,6 +280,16 @@ export default function SuperAdmin() {
                           >
                             {t.estado}
                           </span>
+                          {t.situacion.tipo === "suspendido" && (
+                            <span className="rounded-full bg-vm-danger-soft px-2 py-0.5 text-[11px] font-medium text-vm-danger">
+                              {ETIQUETA_SITUACION.suspendido}
+                            </span>
+                          )}
+                          {t.situacion.tipo === "pago_fallido" && (
+                            <span className="rounded-full bg-vm-warning-soft px-2 py-0.5 text-[11px] font-medium text-vm-warning">
+                              {ETIQUETA_SITUACION.pago_fallido}
+                            </span>
+                          )}
                           {t.situacion.tipo === "cancela_al_terminar" && (
                             <span className="rounded-full bg-vm-warning-soft px-2 py-0.5 text-[11px] font-medium text-vm-warning">
                               {ETIQUETA_SITUACION.cancela_al_terminar}

@@ -41,7 +41,6 @@ export function useEsSuperAdmin() {
 
 type SuscripcionResumen = {
   estado: string;
-  motivo_cambio: string | null;
   fecha_fin: string | null;
   precio_congelado_usd: number;
   precio_congelado_mxn: number;
@@ -56,6 +55,8 @@ type FilaTenantSuperAdmin = {
   estado: string;
   created_at: string;
   cancela_al_terminar: boolean | null;
+  trial_iniciado_at: string | null;
+  pago_fallido_desde: string | null;
   /* Migración 013 — para saber a quién falta darle de alta el dominio en Vercel. */
   dominio_personalizado: string | null;
   /* Migración 018 — estado del dominio (verificado, pendiente, etc). */
@@ -86,7 +87,7 @@ export function useTenantsSuperAdmin(habilitado: boolean) {
       const { data, error } = await supabase
         .from("tenants")
         .select(
-          "id, nombre_negocio, slug, estado, created_at, cancela_al_terminar, dominio_personalizado, dominio_estado, dominio_diagnostico, plan:planes(nombre), suscripciones(estado, motivo_cambio, fecha_fin, fecha_renovacion, precio_congelado_usd, precio_congelado_mxn, moneda_cobro)",
+          "id, nombre_negocio, slug, estado, created_at, cancela_al_terminar, trial_iniciado_at, pago_fallido_desde, dominio_personalizado, dominio_estado, dominio_diagnostico, plan:planes(nombre), suscripciones(estado, fecha_fin, fecha_renovacion, precio_congelado_usd, precio_congelado_mxn, moneda_cobro)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -95,7 +96,12 @@ export function useTenantsSuperAdmin(habilitado: boolean) {
         ...t,
         suscripcionActiva: suscripciones.find((s) => s.estado === "activa") ?? null,
         situacion: situacionComercial(
-          { estado: t.estado, cancela_al_terminar: t.cancela_al_terminar },
+          {
+            estado: t.estado,
+            cancela_al_terminar: t.cancela_al_terminar,
+            trial_iniciado_at: t.trial_iniciado_at,
+            pago_fallido_desde: t.pago_fallido_desde,
+          },
           suscripciones,
         ),
       }));
@@ -132,7 +138,7 @@ export type DetalleTenantSuperAdmin = {
   equipo: MiembroEquipo[];
   invitaciones: Invitacion[];
   onboarding: { respuestas: Record<string, string>; created_at: string } | null;
-  salud: { productos: number; algunaSucursalConReservas: boolean };
+  salud: { algunaSucursalConReservas: boolean };
 };
 
 /**
@@ -153,7 +159,6 @@ export function useDetalleTenantSuperAdmin(tenantId: string | undefined) {
         equipoRes,
         invitacionesRes,
         onboardingRes,
-        productosRes,
         sucursalesRes,
       ] = await Promise.all([
         supabase.from("tenants").select("*, plan:planes(*)").eq("id", tenantId!).single(),
@@ -178,10 +183,6 @@ export function useDetalleTenantSuperAdmin(tenantId: string | undefined) {
           .select("respuestas, created_at")
           .eq("tenant_id", tenantId!)
           .maybeSingle(),
-        supabase
-          .from("productos")
-          .select("id", { count: "exact", head: true })
-          .eq("tenant_id", tenantId!),
         supabase.from("sucursales").select("acepta_reservaciones").eq("tenant_id", tenantId!),
       ]);
 
@@ -191,7 +192,6 @@ export function useDetalleTenantSuperAdmin(tenantId: string | undefined) {
       if (equipoRes.error) throw equipoRes.error;
       if (invitacionesRes.error) throw invitacionesRes.error;
       if (onboardingRes.error) console.error(onboardingRes.error);
-      if (productosRes.error) console.error(productosRes.error);
       if (sucursalesRes.error) console.error(sucursalesRes.error);
 
       const { plan, ...tenant } = tenantRes.data as Tenant & { plan: Plan | null };
@@ -210,7 +210,6 @@ export function useDetalleTenantSuperAdmin(tenantId: string | undefined) {
             }
           : null,
         salud: {
-          productos: productosRes.count ?? 0,
           algunaSucursalConReservas: (sucursalesRes.data ?? []).some(
             (s) => s.acepta_reservaciones === true,
           ),

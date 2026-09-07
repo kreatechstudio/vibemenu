@@ -319,35 +319,39 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
               </Bloque>
 
               <Bloque titulo="Señales">
-                <div>
-                  {senalesDeSalud({
-                    tenant: {
-                      created_at: detalle.tenant.created_at,
-                      lealtad_activa: detalle.tenant.lealtad_activa,
-                      formato_activo: detalle.tenant.formato_activo,
-                      logo_url: detalle.tenant.logo_url,
-                      tema: detalle.tenant.tema,
-                    },
-                    productos: detalle.salud.productos,
-                    algunaSucursalConReservas: detalle.salud.algunaSucursalConReservas,
-                    visitas30: visitas?.ultimos30 ?? null,
-                  }).map((s) => (
-                    <div
-                      key={s.etiqueta}
-                      className="flex items-center justify-between border-t py-2.5 text-sm first:border-t-0 first:pt-0"
-                    >
-                      <span className="flex items-center gap-2 text-vm-body">
-                        {s.ok ? (
-                          <Check className="size-4 text-vm-success" aria-label="Sí" />
-                        ) : (
-                          <Minus className="size-4 text-vm-border" aria-label="No" />
-                        )}
-                        {s.etiqueta}
-                      </span>
-                      {s.detalle && <span className="vm-data text-vm-ink">{s.detalle}</span>}
-                    </div>
-                  ))}
-                </div>
+                {uso ? (
+                  <div>
+                    {senalesDeSalud({
+                      tenant: {
+                        created_at: detalle.tenant.created_at,
+                        lealtad_activa: detalle.tenant.lealtad_activa,
+                        formato_activo: detalle.tenant.formato_activo,
+                        logo_url: detalle.tenant.logo_url,
+                        tema: detalle.tenant.tema,
+                      },
+                      productos: uso?.productos ?? 0,
+                      algunaSucursalConReservas: detalle.salud.algunaSucursalConReservas,
+                      visitas30: visitas?.ultimos30 ?? null,
+                    }).map((s) => (
+                      <div
+                        key={s.etiqueta}
+                        className="flex items-center justify-between border-t py-2.5 text-sm first:border-t-0 first:pt-0"
+                      >
+                        <span className="flex items-center gap-2 text-vm-body">
+                          {s.ok ? (
+                            <Check className="size-4 text-vm-success" role="img" aria-label="Sí" />
+                          ) : (
+                            <Minus className="size-4 text-vm-border" role="img" aria-label="No" />
+                          )}
+                          {s.etiqueta}
+                        </span>
+                        {s.detalle && <span className="vm-data text-vm-ink">{s.detalle}</span>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-40 animate-pulse rounded-lg bg-vm-bg-soft" />
+                )}
               </Bloque>
             </div>
 

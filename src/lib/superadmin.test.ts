@@ -8,44 +8,77 @@ import {
 
 const susc = (p: Partial<SuscripcionMin>): SuscripcionMin => ({
   estado: "activa",
-  motivo_cambio: null,
   fecha_fin: null,
   fecha_renovacion: null,
   ...p,
 });
 
+const tnt = (p: Partial<Parameters<typeof situacionComercial>[0]>) => ({
+  estado: "activo",
+  cancela_al_terminar: false,
+  trial_iniciado_at: null,
+  pago_fallido_desde: null,
+  ...p,
+});
+
 describe("situacionComercial", () => {
-  test("fila activa + sin cancelar = pagando", () => {
-    const s = situacionComercial({ estado: "activo", cancela_al_terminar: false }, [susc({})]);
-    expect(s.tipo).toBe("pagando");
+  test("fila activa + sin nada = pagando", () => {
+    expect(situacionComercial(tnt({}), [susc({})]).tipo).toBe("pagando");
   });
 
-  test("fila activa + cancela_al_terminar = cancela_al_terminar con fecha", () => {
-    const s = situacionComercial({ estado: "activo", cancela_al_terminar: true }, [
-      susc({ fecha_renovacion: "2026-11-14T00:00:00Z" }),
-    ]);
-    expect(s).toEqual({ tipo: "cancela_al_terminar", hasta: "2026-11-14T00:00:00Z" });
+  test("estado suspendido gana sobre todo", () => {
+    expect(situacionComercial(tnt({ estado: "suspendido" }), [susc({})])).toEqual({
+      tipo: "suspendido",
+    });
+  });
+
+  test("fila activa + pago_fallido_desde = pago_fallido con fecha", () => {
+    expect(
+      situacionComercial(tnt({ pago_fallido_desde: "2026-09-01T00:00:00Z" }), [susc({})]),
+    ).toEqual({ tipo: "pago_fallido", desde: "2026-09-01T00:00:00Z" });
+  });
+
+  test("fila activa + cancela_al_terminar = cancela_al_terminar", () => {
+    expect(
+      situacionComercial(tnt({ cancela_al_terminar: true }), [
+        susc({ fecha_renovacion: "2026-11-14T00:00:00Z" }),
+      ]),
+    ).toEqual({ tipo: "cancela_al_terminar", hasta: "2026-11-14T00:00:00Z" });
   });
 
   test("sin activa, con canceladas = bajo con la fecha_fin más reciente", () => {
-    const s = situacionComercial({ estado: "activo", cancela_al_terminar: false }, [
-      susc({ estado: "cancelada", fecha_fin: "2026-05-01T00:00:00Z" }),
-      susc({ estado: "cancelada", fecha_fin: "2026-09-01T00:00:00Z" }),
-      susc({ estado: "reemplazada", fecha_fin: "2026-03-01T00:00:00Z" }),
-    ]);
-    expect(s).toEqual({ tipo: "bajo", desde: "2026-09-01T00:00:00Z" });
+    expect(
+      situacionComercial(tnt({}), [
+        susc({ estado: "cancelada", fecha_fin: "2026-05-01T00:00:00Z" }),
+        susc({ estado: "cancelada", fecha_fin: "2026-09-01T00:00:00Z" }),
+      ]),
+    ).toEqual({ tipo: "bajo", desde: "2026-09-01T00:00:00Z" });
   });
 
-  test("sin filas + trial = trial", () => {
-    expect(situacionComercial({ estado: "trial", cancela_al_terminar: false }, []).tipo).toBe(
-      "trial",
-    );
+  test("trial dentro de los 14 días = trial", () => {
+    const ahora = new Date("2026-09-10T00:00:00Z");
+    expect(
+      situacionComercial(
+        tnt({ estado: "trial", trial_iniciado_at: "2026-09-01T00:00:00Z" }),
+        [],
+        ahora,
+      ).tipo,
+    ).toBe("trial");
   });
 
-  test("sin filas + activo = nunca_pago", () => {
-    expect(situacionComercial({ estado: "activo", cancela_al_terminar: null }, []).tipo).toBe(
-      "nunca_pago",
-    );
+  test("trial vencido y nunca pagó = nunca_pago", () => {
+    const ahora = new Date("2026-10-01T00:00:00Z");
+    expect(
+      situacionComercial(
+        tnt({ estado: "trial", trial_iniciado_at: "2026-09-01T00:00:00Z" }),
+        [],
+        ahora,
+      ).tipo,
+    ).toBe("nunca_pago");
+  });
+
+  test("trial sin fecha = trial (aún no arranca el reloj)", () => {
+    expect(situacionComercial(tnt({ estado: "trial" }), []).tipo).toBe("trial");
   });
 });
 
@@ -118,5 +151,18 @@ describe("senalesDeSalud", () => {
         (x) => x.etiqueta === "Personalizó diseño",
       )!.ok,
     ).toBe(true);
+  });
+
+  test("formato_activo distinto de 'clasico' marca 'Personalizó diseño' ok", () => {
+    expect(
+      senalesDeSalud({ ...base, tenant: { ...base.tenant, formato_activo: "tiktok" } }).find(
+        (x) => x.etiqueta === "Personalizó diseño",
+      )!.ok,
+    ).toBe(true);
+    expect(
+      senalesDeSalud({ ...base, tenant: { ...base.tenant, formato_activo: "clasico" } }).find(
+        (x) => x.etiqueta === "Personalizó diseño",
+      )!.ok,
+    ).toBe(false);
   });
 });

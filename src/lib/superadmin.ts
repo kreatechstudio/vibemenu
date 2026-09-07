@@ -30,6 +30,8 @@ export const NOMBRE_ESTADO: Record<string, string> = {
 
 export type SituacionComercial =
   | { tipo: "pagando" }
+  | { tipo: "pago_fallido"; desde: string }
+  | { tipo: "suspendido" }
   | { tipo: "cancela_al_terminar"; hasta: string | null }
   | { tipo: "bajo"; desde: string | null }
   | { tipo: "trial" }
@@ -38,10 +40,13 @@ export type SituacionComercial =
 /** Resumen mínimo de una fila de `suscripciones` que estas funciones necesitan. */
 export type SuscripcionMin = {
   estado: string;
-  motivo_cambio: string | null;
   fecha_fin: string | null;
   fecha_renovacion: string | null;
 };
+
+/** Días de la prueba de Pro. Igual que DIAS_TRIAL en supabase/functions/procesar-trials-vencidos. */
+const DIAS_TRIAL = 14;
+const MS_DIA = 86_400_000;
 
 /**
  * Situación de cobro de un tenant, a partir de su historial de `suscripciones`.
@@ -49,15 +54,27 @@ export type SuscripcionMin = {
  * que nunca pagó no tiene ninguna fila. Ver el spec, sección "Ciclo de vida".
  */
 export function situacionComercial(
-  tenant: { estado: string; cancela_al_terminar: boolean | null },
+  tenant: {
+    estado: string;
+    cancela_al_terminar: boolean | null;
+    trial_iniciado_at: string | null;
+    pago_fallido_desde: string | null;
+  },
   suscripciones: readonly SuscripcionMin[],
+  ahora: Date = new Date(),
 ): SituacionComercial {
+  if (tenant.estado === "suspendido") return { tipo: "suspendido" };
+
   const activa = suscripciones.find((s) => s.estado === "activa");
   if (activa) {
+    if (tenant.pago_fallido_desde) {
+      return { tipo: "pago_fallido", desde: tenant.pago_fallido_desde };
+    }
     return tenant.cancela_al_terminar
       ? { tipo: "cancela_al_terminar", hasta: activa.fecha_renovacion }
       : { tipo: "pagando" };
   }
+
   const canceladas = suscripciones.filter((s) => s.estado === "cancelada");
   if (canceladas.length > 0) {
     const desde =
@@ -68,7 +85,16 @@ export function situacionComercial(
         .at(-1) ?? null;
     return { tipo: "bajo", desde };
   }
-  if (tenant.estado === "trial") return { tipo: "trial" };
+
+  // Sin suscripción de pago nunca. `estado='trial'` es el default y el cron
+  // NUNCA lo cambia (baja plan_id a Free y deja estado='trial'), así que hay
+  // que mirar la fecha para saber si la prueba sigue viva.
+  if (tenant.estado === "trial") {
+    const dentroDeTrial =
+      tenant.trial_iniciado_at === null ||
+      ahora.getTime() - new Date(tenant.trial_iniciado_at).getTime() <= DIAS_TRIAL * MS_DIA;
+    if (dentroDeTrial) return { tipo: "trial" };
+  }
   return { tipo: "nunca_pago" };
 }
 
@@ -85,6 +111,8 @@ export function bajoEnUltimosDias(
 
 export const ETIQUETA_SITUACION: Record<SituacionComercial["tipo"], string> = {
   pagando: "Pagando",
+  pago_fallido: "Pago pendiente",
+  suspendido: "Suspendido",
   cancela_al_terminar: "Cancela al terminar",
   bajo: "Bajó",
   trial: "En prueba",
@@ -122,21 +150,15 @@ export function senalesDeSalud(input: {
     !!input.tenant.tema &&
     typeof input.tenant.tema === "object" &&
     Object.keys(input.tenant.tema as object).length > 0;
+  const formatoTocado = !!input.tenant.formato_activo && input.tenant.formato_activo !== "clasico";
   return [
-    {
-      etiqueta: "Publicó menú",
-      ok: input.productos > 0,
-      detalle: `${input.productos} productos`,
-    },
+    { etiqueta: "Publicó menú", ok: input.productos > 0, detalle: `${input.productos} productos` },
     {
       etiqueta: "Su menú recibe visitas",
       ok: (input.visitas30 ?? 0) > 0,
       detalle: `${input.visitas30 ?? 0} en 30 d`,
     },
-    {
-      etiqueta: "Personalizó diseño",
-      ok: temaTocado || !!input.tenant.logo_url,
-    },
+    { etiqueta: "Personalizó diseño", ok: temaTocado || !!input.tenant.logo_url || formatoTocado },
     { etiqueta: "Activó tarjeta de lealtad", ok: !!input.tenant.lealtad_activa },
     { etiqueta: "Activó reservaciones", ok: input.algunaSucursalConReservas },
     { etiqueta: "Días desde el alta", ok: true, detalle: String(dias) },
