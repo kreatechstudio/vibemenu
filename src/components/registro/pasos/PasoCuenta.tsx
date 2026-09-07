@@ -110,7 +110,11 @@ export default function PasoCuenta({ onListo, onConfirmarCorreo }: PasoCuentaPro
         )}
 
         <p className="text-xs leading-relaxed text-vm-body">
-          Al crear tu cuenta aceptas el{" "}
+          Al crear tu cuenta aceptas los{" "}
+          <Link to="/terminos" className="text-vm-primary hover:underline">
+            Términos y Condiciones
+          </Link>{" "}
+          y el{" "}
           <Link to="/privacidad" className="text-vm-primary hover:underline">
             Aviso de Privacidad
           </Link>{" "}

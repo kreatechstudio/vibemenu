@@ -72,6 +72,11 @@ export default function Footer() {
           <p className="text-sm font-medium text-vm-ink">Legal</p>
           <ul className="mt-4 space-y-3 text-sm text-vm-body">
             <li>
+              <Link to="/terminos" className="hover:text-vm-ink">
+                Términos
+              </Link>
+            </li>
+            <li>
               <Link to="/privacidad" className="hover:text-vm-ink">
                 Privacidad
               </Link>

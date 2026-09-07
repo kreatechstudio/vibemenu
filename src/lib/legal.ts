@@ -23,7 +23,7 @@ export const CONTACTO = {
 } as const;
 
 /** Misma fecha en los tres documentos: si cambia uno, cambian todos. */
-export const VIGENCIA_LEGAL = "20 de agosto de 2026";
+export const VIGENCIA_LEGAL = "7 de septiembre de 2026";
 
 export type Proveedor = {
   nombre: string;
