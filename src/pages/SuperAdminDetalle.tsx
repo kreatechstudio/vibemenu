@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
-import { ArrowLeft, ExternalLink, Loader2, LogOut } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Loader2, LogOut, Minus } from "lucide-react";
 import Logo from "@/components/marca/Logo";
 import AvatarUsuario from "@/components/ui/avatar-usuario";
 import { useSesion, cerrarSesion } from "@/hooks/useSesion";
@@ -15,7 +15,14 @@ import { useUsoDelTenant } from "@/hooks/useTenantActual";
 import { useVisitas } from "@/hooks/useVisitas";
 import { formatearPrecio } from "@/lib/plan";
 import { avisarError, avisarExito } from "@/lib/avisos";
-import { COLOR_ESTADO, FECHA, FECHA_HORA, NOMBRE_ESTADO } from "@/lib/superadmin";
+import {
+  COLOR_ESTADO,
+  FECHA,
+  FECHA_HORA,
+  NOMBRE_ESTADO,
+  PREGUNTAS_ONBOARDING,
+  senalesDeSalud,
+} from "@/lib/superadmin";
 import { motivoProblemaDNS, type DominioDiagnostico } from "@/lib/dominio";
 import { EMPRESA } from "@/lib/legal";
 import {
@@ -166,6 +173,19 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
                   >
                     {detalle.tenant.estado}
                   </span>
+                  {detalle.tenant.cancela_al_terminar && (
+                    <span className="rounded-full bg-vm-warning-soft px-2.5 py-1 text-xs font-medium text-vm-warning">
+                      Cancela el{" "}
+                      {(() => {
+                        const activa = detalle.historialSuscripciones.find(
+                          (s) => s.estado === "activa",
+                        );
+                        return activa?.fecha_renovacion
+                          ? FECHA.format(new Date(activa.fecha_renovacion))
+                          : "terminar el periodo";
+                      })()}
+                    </span>
+                  )}
                 </div>
                 <p className="mt-1 text-sm text-vm-body">
                   {NOMBRE_PLAN[(detalle.plan?.nombre as NombrePlan) ?? "free"]} · Alta el{" "}
@@ -295,6 +315,72 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
                   </div>
                 ) : (
                   <div className="h-16 animate-pulse rounded-lg bg-vm-bg-soft" />
+                )}
+              </Bloque>
+
+              <Bloque titulo="Señales">
+                {uso ? (
+                  <div>
+                    {senalesDeSalud({
+                      tenant: {
+                        created_at: detalle.tenant.created_at,
+                        lealtad_activa: detalle.tenant.lealtad_activa,
+                        formato_activo: detalle.tenant.formato_activo,
+                        logo_url: detalle.tenant.logo_url,
+                        tema: detalle.tenant.tema,
+                      },
+                      productos: uso?.productos ?? 0,
+                      algunaSucursalConReservas: detalle.salud.algunaSucursalConReservas,
+                      visitas30: visitas?.ultimos30 ?? null,
+                    }).map((s) => (
+                      <div
+                        key={s.etiqueta}
+                        className="flex items-center justify-between border-t py-2.5 text-sm first:border-t-0 first:pt-0"
+                      >
+                        <span className="flex items-center gap-2 text-vm-body">
+                          {s.ok ? (
+                            <Check className="size-4 text-vm-success" role="img" aria-label="Sí" />
+                          ) : (
+                            <Minus className="size-4 text-vm-border" role="img" aria-label="No" />
+                          )}
+                          {s.etiqueta}
+                        </span>
+                        {s.detalle && <span className="vm-data text-vm-ink">{s.detalle}</span>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-40 animate-pulse rounded-lg bg-vm-bg-soft" />
+                )}
+              </Bloque>
+            </div>
+
+            <div className="mt-5">
+              <Bloque titulo="Qué nos dijo al registrarse">
+                {detalle.onboarding === null ? (
+                  <p className="text-sm text-vm-body">No respondió el cuestionario del registro.</p>
+                ) : (
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                    {PREGUNTAS_ONBOARDING.map(({ clave, etiqueta }) => {
+                      const r = detalle.onboarding!.respuestas[clave];
+                      const otro = detalle.onboarding!.respuestas[`${clave}_otro`];
+                      return (
+                        <Fragment key={clave}>
+                          <dt className="text-vm-body">{etiqueta}</dt>
+                          <dd className="text-vm-ink">
+                            {r ? (
+                              <>
+                                {r}
+                                {otro ? ` (${otro})` : ""}
+                              </>
+                            ) : (
+                              "—"
+                            )}
+                          </dd>
+                        </Fragment>
+                      );
+                    })}
+                  </dl>
                 )}
               </Bloque>
             </div>

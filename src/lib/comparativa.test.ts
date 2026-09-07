@@ -31,7 +31,7 @@ const plan = (parcial: Partial<Plan>): Plan =>
     permite_desenfoque: false,
     qr_color: false,
     qr_avanzado: false,
-    permite_pedidos_whatsapp: false,
+    permite_pedidos_whatsapp: true,
     permite_embudo_resenas: false,
     permite_reservaciones: false,
     permite_analitica_platillo: false,
@@ -119,6 +119,8 @@ const ETIQUETAS_FIJAS = new Set([
   "QR imprimible con tu nombre",
   "Soporte por correo",
   "Precio congelado al suscribirte",
+  // Free ya trae pedidos por WhatsApp en prod, así que su booleana es true en todos los planes.
+  "Pedir por WhatsApp",
 ]);
 
 describe("cobertura", () => {
@@ -185,6 +187,12 @@ describe("valores por plan", () => {
     expect(valorDe("Tarjeta de lealtad con QR", PRO)).toBe(true);
     expect(valorDe("Dominio propio", PRO)).toBe(true);
     expect(valorDe("Analítica por platillo", PRO)).toBe(false);
+  });
+
+  test("Pedir por WhatsApp ahora es de todos los planes", () => {
+    expect(valorDe("Pedir por WhatsApp", plan({ permite_pedidos_whatsapp: true }))).toBe(true);
+    expect(valorDe("Pedir por WhatsApp", BASIC)).toBe(true);
+    expect(valorDe("Pedir por WhatsApp", ENTERPRISE)).toBe(true);
   });
 });
 

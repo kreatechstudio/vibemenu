@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { situacionComercial, type SituacionComercial } from "@/lib/superadmin";
 import { useSesion } from "@/hooks/useSesion";
 import type { MiembroEquipo } from "@/hooks/useEquipo";
 import type {
@@ -40,6 +41,7 @@ export function useEsSuperAdmin() {
 
 type SuscripcionResumen = {
   estado: string;
+  fecha_fin: string | null;
   precio_congelado_usd: number;
   precio_congelado_mxn: number;
   moneda_cobro: string;
@@ -52,6 +54,9 @@ type FilaTenantSuperAdmin = {
   slug: string;
   estado: string;
   created_at: string;
+  cancela_al_terminar: boolean | null;
+  trial_iniciado_at: string | null;
+  pago_fallido_desde: string | null;
   /* Migración 013 — para saber a quién falta darle de alta el dominio en Vercel. */
   dominio_personalizado: string | null;
   /* Migración 018 — estado del dominio (verificado, pendiente, etc). */
@@ -64,6 +69,7 @@ type FilaTenantSuperAdmin = {
 
 export type TenantSuperAdmin = Omit<FilaTenantSuperAdmin, "suscripciones"> & {
   suscripcionActiva: SuscripcionResumen | null;
+  situacion: SituacionComercial;
 };
 
 /**
@@ -81,7 +87,7 @@ export function useTenantsSuperAdmin(habilitado: boolean) {
       const { data, error } = await supabase
         .from("tenants")
         .select(
-          "id, nombre_negocio, slug, estado, created_at, dominio_personalizado, dominio_estado, dominio_diagnostico, plan:planes(nombre), suscripciones(estado, precio_congelado_usd, precio_congelado_mxn, moneda_cobro, fecha_renovacion)",
+          "id, nombre_negocio, slug, estado, created_at, cancela_al_terminar, trial_iniciado_at, pago_fallido_desde, dominio_personalizado, dominio_estado, dominio_diagnostico, plan:planes(nombre), suscripciones(estado, fecha_fin, fecha_renovacion, precio_congelado_usd, precio_congelado_mxn, moneda_cobro)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -89,6 +95,15 @@ export function useTenantsSuperAdmin(habilitado: boolean) {
       return (data as unknown as FilaTenantSuperAdmin[]).map(({ suscripciones, ...t }) => ({
         ...t,
         suscripcionActiva: suscripciones.find((s) => s.estado === "activa") ?? null,
+        situacion: situacionComercial(
+          {
+            estado: t.estado,
+            cancela_al_terminar: t.cancela_al_terminar,
+            trial_iniciado_at: t.trial_iniciado_at,
+            pago_fallido_desde: t.pago_fallido_desde,
+          },
+          suscripciones,
+        ),
       }));
     },
   });
@@ -122,6 +137,8 @@ export type DetalleTenantSuperAdmin = {
   pagos: Pago[];
   equipo: MiembroEquipo[];
   invitaciones: Invitacion[];
+  onboarding: { respuestas: Record<string, string>; created_at: string } | null;
+  salud: { algunaSucursalConReservas: boolean };
 };
 
 /**
@@ -135,33 +152,47 @@ export function useDetalleTenantSuperAdmin(tenantId: string | undefined) {
     queryKey: ["super-admin-detalle", tenantId],
     enabled: Boolean(tenantId),
     queryFn: async (): Promise<DetalleTenantSuperAdmin> => {
-      const [tenantRes, suscripcionesRes, pagosRes, equipoRes, invitacionesRes] = await Promise.all(
-        [
-          supabase.from("tenants").select("*, plan:planes(*)").eq("id", tenantId!).single(),
-          supabase
-            .from("suscripciones")
-            .select("*")
-            .eq("tenant_id", tenantId!)
-            .order("fecha_inicio", { ascending: false }),
-          supabase
-            .from("pagos")
-            .select("*")
-            .eq("tenant_id", tenantId!)
-            .order("fecha_pago", { ascending: false }),
-          supabase.rpc("super_admin_equipo", { p_tenant_id: tenantId! }),
-          supabase
-            .from("invitaciones")
-            .select("*")
-            .eq("tenant_id", tenantId!)
-            .order("created_at", { ascending: false }),
-        ],
-      );
+      const [
+        tenantRes,
+        suscripcionesRes,
+        pagosRes,
+        equipoRes,
+        invitacionesRes,
+        onboardingRes,
+        sucursalesRes,
+      ] = await Promise.all([
+        supabase.from("tenants").select("*, plan:planes(*)").eq("id", tenantId!).single(),
+        supabase
+          .from("suscripciones")
+          .select("*")
+          .eq("tenant_id", tenantId!)
+          .order("fecha_inicio", { ascending: false }),
+        supabase
+          .from("pagos")
+          .select("*")
+          .eq("tenant_id", tenantId!)
+          .order("fecha_pago", { ascending: false }),
+        supabase.rpc("super_admin_equipo", { p_tenant_id: tenantId! }),
+        supabase
+          .from("invitaciones")
+          .select("*")
+          .eq("tenant_id", tenantId!)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("onboarding_respuestas")
+          .select("respuestas, created_at")
+          .eq("tenant_id", tenantId!)
+          .maybeSingle(),
+        supabase.from("sucursales").select("acepta_reservaciones").eq("tenant_id", tenantId!),
+      ]);
 
       if (tenantRes.error) throw tenantRes.error;
       if (suscripcionesRes.error) throw suscripcionesRes.error;
       if (pagosRes.error) throw pagosRes.error;
       if (equipoRes.error) throw equipoRes.error;
       if (invitacionesRes.error) throw invitacionesRes.error;
+      if (onboardingRes.error) console.error(onboardingRes.error);
+      if (sucursalesRes.error) console.error(sucursalesRes.error);
 
       const { plan, ...tenant } = tenantRes.data as Tenant & { plan: Plan | null };
 
@@ -172,6 +203,17 @@ export function useDetalleTenantSuperAdmin(tenantId: string | undefined) {
         pagos: pagosRes.data ?? [],
         equipo: (equipoRes.data ?? []) as MiembroEquipo[],
         invitaciones: invitacionesRes.data ?? [],
+        onboarding: onboardingRes.data
+          ? {
+              respuestas: (onboardingRes.data.respuestas ?? {}) as Record<string, string>,
+              created_at: onboardingRes.data.created_at,
+            }
+          : null,
+        salud: {
+          algunaSucursalConReservas: (sucursalesRes.data ?? []).some(
+            (s) => s.acepta_reservaciones === true,
+          ),
+        },
       };
     },
   });

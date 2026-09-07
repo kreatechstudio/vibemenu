@@ -15,8 +15,15 @@ export const EMPRESA = {
   domicilio: "Nuevo Laredo, Tamaulipas, México",
 } as const;
 
+/** Canal de ventas y soporte. El WhatsApp es el principal; el correo, alternativa. */
+export const CONTACTO = {
+  whatsapp: "+528671268563",
+  whatsappTexto: "Hola, me interesa Vibemenu para mi negocio.",
+  correo: "clopez@kreatechstudio.com.mx",
+} as const;
+
 /** Misma fecha en los tres documentos: si cambia uno, cambian todos. */
-export const VIGENCIA_LEGAL = "20 de agosto de 2026";
+export const VIGENCIA_LEGAL = "7 de septiembre de 2026";
 
 export type Proveedor = {
   nombre: string;

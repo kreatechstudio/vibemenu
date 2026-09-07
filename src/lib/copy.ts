@@ -90,13 +90,12 @@ export const PLANES_COPY = {
   free: {
     headline: "Empieza sin arriesgar nada",
     descripcion:
-      "Ideal para probar Vibemenu con tu menú real. Gratis para siempre, hasta 20 productos.",
+      "Ideal para probar Vibemenu con tu menú real. Hasta 20 productos, con pedidos por WhatsApp incluidos. Gratis para siempre.",
     cta: "Empezar gratis",
   },
   basic: {
     headline: "Para un solo local, sin límites de menú",
-    descripcion:
-      "Productos ilimitados, sin marca de agua, con pedidos por WhatsApp y embudo a reseñas de Google.",
+    descripcion: "Productos ilimitados, sin marca de agua y con embudo a reseñas de Google.",
     cta: "Elegir plan",
   },
   pro: {

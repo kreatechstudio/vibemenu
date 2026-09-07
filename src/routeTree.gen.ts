@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerminosRouteImport } from './routes/terminos'
 import { Route as SuperadminRouteImport } from './routes/superadmin'
 import { Route as RestablecerRouteImport } from './routes/restablecer'
 import { Route as RegistroRouteImport } from './routes/registro'
@@ -41,6 +42,11 @@ import { Route as AdminAnaliticaRouteImport } from './routes/admin.analitica'
 import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
 import { Route as SlugLealtadTarjetaIdRouteImport } from './routes/$slug.lealtad.$tarjetaId'
 
+const TerminosRoute = TerminosRouteImport.update({
+  id: '/terminos',
+  path: '/terminos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuperadminRoute = SuperadminRouteImport.update({
   id: '/superadmin',
   path: '/superadmin',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/restablecer': typeof RestablecerRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/terminos': typeof TerminosRoute
   '/admin/analitica': typeof AdminAnaliticaRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/registro': typeof RegistroRoute
   '/restablecer': typeof RestablecerRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/terminos': typeof TerminosRoute
   '/admin/analitica': typeof AdminAnaliticaRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/restablecer': typeof RestablecerRoute
   '/superadmin': typeof SuperadminRouteWithChildren
+  '/terminos': typeof TerminosRoute
   '/admin/analitica': typeof AdminAnaliticaRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/empresa': typeof AdminEmpresaRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/restablecer'
     | '/superadmin'
+    | '/terminos'
     | '/admin/analitica'
     | '/admin/diseno'
     | '/admin/empresa'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/restablecer'
     | '/superadmin'
+    | '/terminos'
     | '/admin/analitica'
     | '/admin/diseno'
     | '/admin/empresa'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/restablecer'
     | '/superadmin'
+    | '/terminos'
     | '/admin/analitica'
     | '/admin/diseno'
     | '/admin/empresa'
@@ -412,6 +424,7 @@ export interface RootRouteChildren {
   RegistroRoute: typeof RegistroRoute
   RestablecerRoute: typeof RestablecerRoute
   SuperadminRoute: typeof SuperadminRouteWithChildren
+  TerminosRoute: typeof TerminosRoute
   AdminAnaliticaRoute: typeof AdminAnaliticaRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
   AdminEmpresaRoute: typeof AdminEmpresaRoute
@@ -435,6 +448,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terminos': {
+      id: '/terminos'
+      path: '/terminos'
+      fullPath: '/terminos'
+      preLoaderRoute: typeof TerminosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/superadmin': {
       id: '/superadmin'
       path: '/superadmin'
@@ -679,6 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegistroRoute: RegistroRoute,
   RestablecerRoute: RestablecerRoute,
   SuperadminRoute: SuperadminRouteWithChildren,
+  TerminosRoute: TerminosRoute,
   AdminAnaliticaRoute: AdminAnaliticaRoute,
   AdminDisenoRoute: AdminDisenoRoute,
   AdminEmpresaRoute: AdminEmpresaRoute,

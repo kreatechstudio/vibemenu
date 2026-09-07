@@ -36,7 +36,7 @@ Ofrecer una alternativa a menús impresos con una experiencia visual moderna (4 
 
 | Plan          | USD/mes | MXN/mes | Sucursales | Productos  | Usuarios              | Grupos modif. | Formatos                                                     | Menú por sucursal | Extras                                      |
 | ------------- | ------- | ------- | ---------- | ---------- | --------------------- | ------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------- |
-| Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Marca de agua "Hecho con Vibemenu"          |
+| Free perpetuo | $0      | $0      | 1          | 20         | 1                     | 2             | Solo Clásico                                                 | N/A               | Pedir por WhatsApp · Marca de agua "Hecho con Vibemenu" |
 | Basic         | $9      | $169    | 1          | Ilimitados | 1                     | 5             | Clásico + **1 a elegir** entre Pinterest, Instagram y TikTok | Compartido        | Sin marca de agua · Pedir por WhatsApp · Embudo a reseñas |
 | Pro           | $19     | $349    | hasta 3    | Ilimitados | 2 (owner + encargado) | Ilimitados    | Los 4                                                        | Independiente     | Todo lo de Basic · Reservaciones · Tarjeta de lealtad · Dominio propio (CNAME) |
 | Enterprise    | $39     | $699    | Ilimitado  | Ilimitados | Ilimitados            | Ilimitados    | Los 4                                                        | Independiente     | Todo lo de Pro · Analítica por platillo · Soporte prioritario |
@@ -67,7 +67,7 @@ El catálogo de las 12 fuentes vive en `src/lib/fuentes.ts` y en la restricción
 
 | Función | Free | Basic | Pro | Enterprise | Columna en `planes` |
 | --- | :-: | :-: | :-: | :-: | --- |
-| Pedir por WhatsApp | ❌ | ✅ | ✅ | ✅ | `permite_pedidos_whatsapp` |
+| Pedir por WhatsApp | ✅ | ✅ | ✅ | ✅ | `permite_pedidos_whatsapp` |
 | Embudo a reseñas de Google | ❌ | ✅ | ✅ | ✅ | `permite_embudo_resenas` |
 | Reservaciones | ❌ | ❌ | ✅ | ✅ | `permite_reservaciones` |
 | Tarjeta de lealtad con QR | ❌ | ❌ | ✅ | ✅ | `permite_lealtad` |

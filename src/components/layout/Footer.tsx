@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import Logo from "@/components/marca/Logo";
 import { FOOTER } from "@/lib/copy";
+import { CONTACTO } from "@/lib/legal";
+import { enlaceWhatsApp } from "@/lib/whatsapp";
 
 export default function Footer() {
   return (
@@ -48,12 +50,32 @@ export default function Footer() {
                 Entrar
               </Link>
             </li>
+            <li>
+              <a
+                href={enlaceWhatsApp(CONTACTO.whatsapp, CONTACTO.whatsappTexto) ?? undefined}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-vm-ink"
+              >
+                WhatsApp
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${CONTACTO.correo}`} className="hover:text-vm-ink">
+                Escríbenos
+              </a>
+            </li>
           </ul>
         </nav>
 
         <nav aria-label="Legal">
           <p className="text-sm font-medium text-vm-ink">Legal</p>
           <ul className="mt-4 space-y-3 text-sm text-vm-body">
+            <li>
+              <Link to="/terminos" className="hover:text-vm-ink">
+                Términos
+              </Link>
+            </li>
             <li>
               <Link to="/privacidad" className="hover:text-vm-ink">
                 Privacidad
