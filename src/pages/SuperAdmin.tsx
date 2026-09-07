@@ -13,7 +13,7 @@ import {
   type TenantSuperAdmin,
 } from "@/hooks/useSuperAdmin";
 import { formatearPrecio } from "@/lib/plan";
-import { COLOR_ESTADO, FECHA } from "@/lib/superadmin";
+import { COLOR_ESTADO, FECHA, ETIQUETA_SITUACION, bajoEnUltimosDias } from "@/lib/superadmin";
 import { avisarError } from "@/lib/avisos";
 import { motivoProblemaDNS, type DominioDiagnostico } from "@/lib/dominio";
 import {
@@ -74,6 +74,7 @@ export default function SuperAdmin() {
   const qc = useQueryClient();
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<EstadoTenant | "todos">("todos");
+  const [soloBajas, setSoloBajas] = useState(false);
   const [verificandoId, setVerificandoId] = useState<string | null>(null);
 
   async function verificarDominio(tenantId: string) {
@@ -105,9 +106,13 @@ export default function SuperAdmin() {
   const activos = (tenants ?? []).filter((t) => t.estado === "activo").length;
   const enTrial = (tenants ?? []).filter((t) => t.estado === "trial").length;
   const mrr = calcularMrr(tenants ?? []);
+  const bajas30 = (tenants ?? []).filter((t) => bajoEnUltimosDias(t.situacion, 30)).length;
 
   const visibles = (tenants ?? []).filter(
-    (t) => coincide(t, busqueda) && (filtroEstado === "todos" || t.estado === filtroEstado),
+    (t) =>
+      coincide(t, busqueda) &&
+      (filtroEstado === "todos" || t.estado === filtroEstado) &&
+      (!soloBajas || t.situacion.tipo === "bajo"),
   );
 
   return (
@@ -132,7 +137,7 @@ export default function SuperAdmin() {
         <h1 className="text-2xl">Negocios en Vibemenu</h1>
         <p className="mt-1 text-sm text-vm-body">Vista interna, no visible para tenants.</p>
 
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <div className="rounded-xl border p-5">
             <p className="text-xs text-vm-body">Total de negocios</p>
             <p className="vm-data mt-2 text-2xl text-vm-ink">{total}</p>
@@ -160,6 +165,10 @@ export default function SuperAdmin() {
                 .map(([plan, n]) => `${NOMBRE_PLAN[plan as NombrePlan]}: ${n}`)
                 .join(" · ") || "—"}
             </p>
+          </div>
+          <div className="rounded-xl border p-5">
+            <p className="text-xs text-vm-body">Bajas (30 d)</p>
+            <p className="vm-data mt-2 text-2xl text-vm-ink">{bajas30}</p>
           </div>
         </div>
 
@@ -189,6 +198,18 @@ export default function SuperAdmin() {
                 {f.etiqueta}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setSoloBajas((v) => !v)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-medium",
+                soloBajas
+                  ? "bg-vm-primary text-white"
+                  : "bg-vm-bg-soft text-vm-body hover:text-vm-ink",
+              )}
+            >
+              Bajas
+            </button>
           </div>
         </div>
 
@@ -243,14 +264,32 @@ export default function SuperAdmin() {
                         {NOMBRE_PLAN[nombrePlanDeTenant(t)]}
                       </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={cn(
-                            "rounded-full px-2.5 py-1 text-xs font-medium capitalize",
-                            COLOR_ESTADO[t.estado] ?? "bg-vm-bg-soft text-vm-body",
+                        <div className="flex flex-col items-start gap-1">
+                          <span
+                            className={cn(
+                              "rounded-full px-2.5 py-1 text-xs font-medium capitalize",
+                              COLOR_ESTADO[t.estado] ?? "bg-vm-bg-soft text-vm-body",
+                            )}
+                          >
+                            {t.estado}
+                          </span>
+                          {t.situacion.tipo === "cancela_al_terminar" && (
+                            <span className="rounded-full bg-vm-warning-soft px-2 py-0.5 text-[11px] font-medium text-vm-warning">
+                              {ETIQUETA_SITUACION.cancela_al_terminar}
+                              {t.situacion.hasta
+                                ? ` · ${FECHA.format(new Date(t.situacion.hasta))}`
+                                : ""}
+                            </span>
                           )}
-                        >
-                          {t.estado}
-                        </span>
+                          {t.situacion.tipo === "bajo" && (
+                            <span className="rounded-full bg-vm-bg-soft px-2 py-0.5 text-[11px] font-medium text-vm-body">
+                              {ETIQUETA_SITUACION.bajo}
+                              {t.situacion.desde
+                                ? ` · ${FECHA.format(new Date(t.situacion.desde))}`
+                                : ""}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3.5 text-vm-body">
                         {FECHA.format(new Date(t.created_at))}
