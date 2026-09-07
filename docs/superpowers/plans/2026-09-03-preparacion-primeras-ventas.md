@@ -846,9 +846,71 @@ git commit -m "docs: guion de prueba del ciclo de cobro de Stripe en modo test"
 
 ---
 
+### Task 8: "Pedir por WhatsApp" también en Free — textos
+
+**Files:**
+- Modify: `src/docs/vibemenu_alcance.md`
+- Modify: `src/lib/copy.ts` (`PLANES_COPY`)
+- Modify: `src/lib/comparativa.test.ts`
+
+**Contexto:** El controlador ya aplicó a prod `update planes set permite_pedidos_whatsapp = true where nombre = 'free'` (migración `free_permite_pedidos_whatsapp`, archivo `src/docs/vibemenu_migracion_free_whatsapp.sql` ya commiteado). `src/lib/comparativa.ts` **no cambia** — lee el valor vivo de `planes`, así que `/precios` ya muestra ✓ para Free en "Pedir por WhatsApp". Esta tarea solo alinea los textos hardcodeados.
+
+**Interfaces:** ninguna.
+
+- [ ] **Step 1: `vibemenu_alcance.md` — tabla "Funciones de conversión y fidelización por plan"**
+
+Cambiar la fila (línea ~70):
+```
+| Pedir por WhatsApp | ❌ | ✅ | ✅ | ✅ | `permite_pedidos_whatsapp` |
+```
+por:
+```
+| Pedir por WhatsApp | ✅ | ✅ | ✅ | ✅ | `permite_pedidos_whatsapp` |
+```
+
+- [ ] **Step 2: `vibemenu_alcance.md` — tabla "Modelo de negocio — Planes", columna Extras**
+
+- Fila **Free** (hoy `Marca de agua "Hecho con Vibemenu"`): → `Pedir por WhatsApp · Marca de agua "Hecho con Vibemenu"`
+- Fila **Basic** (hoy `Sin marca de agua · Pedir por WhatsApp · Embudo a reseñas`): → `Todo lo de Free · Sin marca de agua · Embudo a reseñas` (WhatsApp ya no es su diferenciador; queda cubierto por "Todo lo de Free")
+
+- [ ] **Step 3: `src/lib/copy.ts` — `PLANES_COPY`**
+
+- `free.descripcion` (hoy `"Ideal para probar Vibemenu con tu menú real. Gratis para siempre, hasta 20 productos."`):
+  → `"Ideal para probar Vibemenu con tu menú real. Hasta 20 productos, con pedidos por WhatsApp incluidos. Gratis para siempre."`
+- `basic.descripcion` (hoy `"Productos ilimitados, sin marca de agua, con pedidos por WhatsApp y embudo a reseñas de Google."`):
+  → `"Productos ilimitados, sin marca de agua y con embudo a reseñas de Google."`
+- `pro` y `enterprise` no cambian.
+
+- [ ] **Step 4: `src/lib/comparativa.test.ts` — reflejar que Free ya trae WhatsApp**
+
+El test "Free: las booleanas son false salvo las fijas" usa un `FREE` hipotético totalmente restringido — **déjalo así** (es un invariante válido: "un plan sin nada muestra ✗ salvo filas fijas"). Añadir un test nuevo en el `describe("valores por plan")`:
+
+```ts
+test("Pedir por WhatsApp ahora es de todos los planes", () => {
+  const fila = FILAS_COMPARATIVA.find((f) => f.etiqueta === "Pedir por WhatsApp")!;
+  expect(fila.valor(plan({ permite_pedidos_whatsapp: true }))).toBe(true);
+  expect(fila.valor(BASIC)).toBe(true);
+  expect(fila.valor(ENTERPRISE)).toBe(true);
+});
+```
+
+- [ ] **Step 5: Verificar**
+
+Run: `bun test && bunx tsc --noEmit && bunx eslint src/lib/copy.ts src/lib/comparativa.test.ts`
+Expected: verde (≥224), 0 / 0.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/docs/vibemenu_alcance.md src/lib/copy.ts src/lib/comparativa.test.ts
+git commit -m "feat(planes): 'pedir por WhatsApp' también en Free — alinea textos"
+```
+
+---
+
 ## Self-Review
 
-- **Cobertura del spec:** A0→Task 1; A1→Task 3; A2/A3/A4→Task 4 (+ Task 2 los datos); B→Task 5; C→Task 6; D→Task 7. Migración: ya aplicada por el controlador antes de la ejecución.
+- **Cobertura del spec:** A0→Task 1; A1→Task 3; A2/A3/A4→Task 4 (+ Task 2 los datos); B→Task 5; C→Task 6; D→Task 7. Task 8 = añadido del usuario mid-ejecución (Free + WhatsApp). Migraciones: ambas ya aplicadas por el controlador antes de la ejecución (`onboarding_respuestas_select_super_admin`, `free_permite_pedidos_whatsapp`).
 - **Sin placeholders:** Task 1 trae el código completo; Tasks 2–6 traen los diffs concretos; Task 7 es un documento con estructura fija y fuente (spec §D).
 - **Consistencia de tipos:** `SituacionComercial` / `SuscripcionMin` / `Senal` se definen en Task 1 y se consumen con la misma firma en Tasks 2–4. `TenantSuperAdmin.situacion` (Task 2) → usado en Task 3. `DetalleTenantSuperAdmin.onboarding` / `.salud` (Task 2) → usados en Task 4. `CONTACTO` (Task 5) reusado en Task… solo Task 5. `VIGENCIA_LEGAL` lo tocan Task 6.
 - **Orden:** 1 (lib) → 2 (hooks) → 3, 4 (páginas, dependen de 2) → 5, 6, 7 (independientes). 5 y 6 tocan ambos `Footer.tsx` y `legal.ts` — secuenciales, nunca en paralelo; regiones distintas (5: nav Cuenta + `CONTACTO`; 6: nav Legal + `VIGENCIA_LEGAL`).
