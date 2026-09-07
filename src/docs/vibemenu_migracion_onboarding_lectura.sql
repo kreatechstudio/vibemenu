@@ -1,5 +1,7 @@
 -- Migración: lectura de onboarding_respuestas para el super-admin
--- Aplicada a prod (iaiiwtqqiaqxnzxjqcnt) como `onboarding_respuestas_lectura_super_admin`.
+-- Aplicada a prod (iaiiwtqqiaqxnzxjqcnt). Nombre de la migración en el historial de
+-- Supabase: `onboarding_respuestas_lectura_super_admin`. Nombre de la POLICY que
+-- crea (lo que se ve en pg_policies): `onboarding_respuestas_select_super_admin`.
 --
 -- Contexto: `onboarding_respuestas` guarda las 3 preguntas del registro
 -- ("¿cómo manejas tu menú?", dolor principal, cómo nos conociste). Hasta ahora

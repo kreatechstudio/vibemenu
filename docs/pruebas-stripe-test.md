@@ -75,8 +75,9 @@ pago (ej. Pro mensual, MXN) → checkout → paga con `4242 4242 4242 4242`.
 - [ ] `eventos_stripe` tiene `checkout.session.completed` (y no lo procesa dos
       veces si Stripe reintenta).
 - [ ] Llega el **correo de bienvenida** al negocio.
-- [ ] En `/superadmin`: el tenant aparece como **Pagando**, con monto en
-      "Suscripción activa" y fecha en "Renueva". El MRR sube.
+- [ ] En `/superadmin`: el tenant no lleva ningún badge extra en "Estado" (Pagando
+      es el estado normal, sin badge), con monto en "Suscripción activa" y fecha en
+      "Renueva". El MRR sube.
 
 ## Paso 2 — Cambio de plan (upgrade y downgrade)
 
@@ -109,6 +110,7 @@ a Enterprise. Luego baja a Basic.
 - [ ] Llega el **correo de aviso de pago fallido**.
 - [ ] En el panel del tenant se ve el **banner de periodo de gracia** (7 días).
 - [ ] El menú público sigue funcionando normal.
+- [ ] En `/superadmin` el tenant lleva el badge ámbar **"Pago pendiente"** en "Estado".
 
 ## Paso 4 — Gracia vencida (suspensión)
 
@@ -123,6 +125,7 @@ vencida.)
       nada).
 - [ ] El **menú público sigue en línea**, con los límites de Free.
 - [ ] La suscripción en Stripe NO se tocó — sigue su propio dunning.
+- [ ] En `/superadmin` el badge de "Estado" muestra **"suspendido"** (rojo).
 
 ## Paso 5 — Recuperación
 
@@ -163,8 +166,9 @@ Stripe borra la suscripción → `customer.subscription.deleted`.
 
 ## Paso 7 — Revisión final en `/superadmin`
 
-- [ ] Recorre la lista: cada tenant de prueba muestra la situación correcta
-      (Pagando / Cancela al terminar / Bajó / En prueba / Nunca pagó).
+- [ ] Recorre la lista: cada tenant de prueba muestra el badge de situación
+      correcto en "Estado" — "Pago pendiente", "suspendido", "Cancela al terminar ·
+      {fecha}" o "Bajó · {fecha}". Un tenant al corriente no lleva badge extra.
 - [ ] Abre la ficha de uno: el bloque **"Pagos"** tiene el historial con recibos
       de Stripe; el historial de plan cuadra con lo que hiciste.
 - [ ] Los totales de arriba (Activos, MRR, Bajas 30 d) reflejan la realidad.
