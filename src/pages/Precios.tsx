@@ -12,6 +12,8 @@ import { NOMBRE_FORMATO, NOMBRE_PLAN } from "@/types/database";
 import type { FormatoMenu, IntervaloCobro, MonedaCobro, NombrePlan, Plan } from "@/types/database";
 import { slideUp } from "@/lib/animations";
 import { cn } from "@/lib/utils";
+import { CONTACTO } from "@/lib/legal";
+import { enlaceWhatsApp } from "@/lib/whatsapp";
 
 const PLAN_RECOMENDADO: NombrePlan = "pro";
 
@@ -95,19 +97,31 @@ function TarjetaPlan({
         <span className="font-medium text-vm-ink">Formatos:</span> {formatos}
       </p>
 
-      {/* Enterprise dice "Contactar ventas" pero por ahora cae al mismo registro:
-          no hay canal de ventas todavia (copywriting.md deja el WhatsApp por definir). */}
-      <Link
-        to="/registro"
-        className={cn(
-          "mt-6 inline-flex h-12 items-center justify-center rounded-lg text-sm font-medium transition-colors",
-          esRecomendado
-            ? "bg-vm-primary text-white hover:bg-vm-primary-hover"
-            : "border text-vm-ink hover:bg-vm-bg-soft",
-        )}
-      >
-        {copy.cta}
-      </Link>
+      {nombre === "enterprise" ? (
+        <a
+          href={enlaceWhatsApp(CONTACTO.whatsapp, CONTACTO.whatsappTexto) ?? undefined}
+          target="_blank"
+          rel="noreferrer"
+          className={cn(
+            "mt-6 inline-flex h-12 items-center justify-center rounded-lg text-sm font-medium transition-colors",
+            "border text-vm-ink hover:bg-vm-bg-soft",
+          )}
+        >
+          {copy.cta}
+        </a>
+      ) : (
+        <Link
+          to="/registro"
+          className={cn(
+            "mt-6 inline-flex h-12 items-center justify-center rounded-lg text-sm font-medium transition-colors",
+            esRecomendado
+              ? "bg-vm-primary text-white hover:bg-vm-primary-hover"
+              : "border text-vm-ink hover:bg-vm-bg-soft",
+          )}
+        >
+          {copy.cta}
+        </Link>
+      )}
     </motion.article>
   );
 }
