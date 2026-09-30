@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { ExternalLink, Info, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
-import { useTenantActual } from "@/hooks/useTenantActual";
+import { DialogoConfirmar } from "@/components/ui/dialogo";
+import { useTenantActual, useUsoDelTenant } from "@/hooks/useTenantActual";
 import { usePlanes } from "@/hooks/usePlanes";
 import { useCheckout, usePortalStripe } from "@/hooks/useStripe";
 import { trackEvent } from "@/lib/analytics";
@@ -10,8 +11,14 @@ import { suscripcionActiva, useHistorialSuscripciones } from "@/hooks/useSuscrip
 import type { SuscripcionConPlan } from "@/hooks/useSuscripciones";
 import { usePagos } from "@/hooks/usePagos";
 import { useDatosFiscales, useGuardarDatosFiscales } from "@/hooks/useDatosFiscales";
-import type { DatosFiscales as DatosFiscalesTipo, Pago } from "@/types/database";
-import { formatearPrecio, porcentajeAhorroAnual, precioDelPlan, textoLimite } from "@/lib/plan";
+import type { DatosFiscales as DatosFiscalesTipo, Pago, Plan } from "@/types/database";
+import {
+  formatearPrecio,
+  porcentajeAhorroAnual,
+  precioDelPlan,
+  seBloquearianAlBajar,
+  textoLimite,
+} from "@/lib/plan";
 import { BOTONES, FACTURACION, PRECIOS } from "@/lib/copy";
 import { codigoPostalValido, REGIMENES_FISCALES, rfcValido, USOS_CFDI } from "@/lib/facturacion";
 import { traducirError } from "@/lib/errores";
@@ -313,6 +320,7 @@ function Contenido() {
     ctx?.esOwner ?? false,
   );
   const { data: pagos } = usePagos(ctx?.tenant.id, ctx?.esOwner ?? false);
+  const { data: uso } = useUsoDelTenant(ctx?.tenant.id);
   const { data: datosFiscales, isLoading: cargandoFiscales } = useDatosFiscales(
     ctx?.tenant.id,
     ctx?.esOwner ?? false,
@@ -324,6 +332,7 @@ function Contenido() {
   // del portal, que está en otra sección. Antes parecía que fallaba el equivocado.
   const [errorPortal, setErrorPortal] = useState<string | null>(null);
   const [errorCheckout, setErrorCheckout] = useState<string | null>(null);
+  const [planABajar, setPlanABajar] = useState<Plan | null>(null);
 
   // Stripe regresa aqui con ?checkout=ok tras un pago exitoso (ver success_url
   // en supabase/functions/crear-checkout). Se limpia el query param al leerlo
@@ -551,9 +560,25 @@ function Contenido() {
                 disabled={esActual || sinStripe || checkout.isPending}
                 onClick={() => {
                   setErrorCheckout(null);
-                  checkout
-                    .mutateAsync({ tenantId: tenant.id, planId: p.id, moneda, intervalo })
-                    .catch((e: Error) => setErrorCheckout(e.message));
+                  const bloqueos = uso
+                    ? seBloquearianAlBajar(
+                        {
+                          productos: uso.productos,
+                          sucursales: uso.sucursales,
+                          usuarios: uso.usuarios,
+                          gruposModificadores: uso.gruposModificadores,
+                        },
+                        p,
+                      )
+                    : { productos: 0, sucursales: 0, usuarios: 0, gruposModificadores: 0 };
+                  const hayBloqueos = Object.values(bloqueos).some((n) => n > 0);
+                  if (hayBloqueos) {
+                    setPlanABajar(p);
+                  } else {
+                    checkout
+                      .mutateAsync({ tenantId: tenant.id, planId: p.id, moneda, intervalo })
+                      .catch((e: Error) => setErrorCheckout(e.message));
+                  }
                 }}
                 title={sinStripe ? "Falta configurar Stripe para este plan." : undefined}
                 className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-vm-primary text-xs font-medium text-white hover:bg-vm-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
@@ -579,6 +604,40 @@ function Contenido() {
           cargarlos, el checkout no puede abrirse.
         </p>
       )}
+
+      <DialogoConfirmar
+        abierto={planABajar !== null}
+        titulo={`¿Cambiar a ${planABajar ? NOMBRE_PLAN[planABajar.nombre as NombrePlan] : ""}?`}
+        mensaje={(() => {
+          if (!planABajar || !uso) return "";
+          const b = seBloquearianAlBajar(
+            {
+              productos: uso.productos,
+              sucursales: uso.sucursales,
+              usuarios: uso.usuarios,
+              gruposModificadores: uso.gruposModificadores,
+            },
+            planABajar,
+          );
+          const partes: string[] = [];
+          if (b.productos > 0) partes.push(`${b.productos} productos`);
+          if (b.sucursales > 0) partes.push(`${b.sucursales} sucursales`);
+          if (b.usuarios > 0) partes.push(`${b.usuarios} usuarios`);
+          if (b.gruposModificadores > 0) partes.push(`${b.gruposModificadores} grupos de modificadores`);
+          return `Con este plan se bloquearán: ${partes.join(", ")}. No se borra nada — vuelven a estar disponibles en cuanto subas de plan.`;
+        })()}
+        textoConfirmar="Cambiar de plan"
+        destructivo={false}
+        alConfirmar={() => {
+          if (!planABajar) return;
+          setErrorCheckout(null);
+          checkout
+            .mutateAsync({ tenantId: tenant.id, planId: planABajar.id, moneda, intervalo })
+            .catch((e: Error) => setErrorCheckout(e.message));
+          setPlanABajar(null);
+        }}
+        alCancelar={() => setPlanABajar(null)}
+      />
     </>
   );
 }
