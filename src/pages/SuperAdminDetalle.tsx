@@ -62,16 +62,25 @@ function FilaUso({
   etiqueta,
   usados,
   limite,
+  bloqueados,
 }: {
   etiqueta: string;
   usados: number;
   limite: number | null;
+  bloqueados?: number;
 }) {
   return (
     <div className="flex items-center justify-between border-t py-2.5 text-sm first:border-t-0 first:pt-0">
       <span className="text-vm-body">{etiqueta}</span>
-      <span className="vm-data text-vm-ink">
-        {limite === null ? `${usados}` : `${usados} de ${limite}`}
+      <span className="flex items-center gap-2">
+        <span className="vm-data text-vm-ink">
+          {limite === null ? `${usados}` : `${usados} de ${limite}`}
+        </span>
+        {Boolean(bloqueados) && (
+          <span className="rounded-full bg-vm-warning-soft px-2 py-0.5 text-[11px] font-medium text-vm-warning">
+            {bloqueados} bloqueado{bloqueados === 1 ? "" : "s"}
+          </span>
+        )}
       </span>
     </div>
   );
@@ -275,21 +284,25 @@ export default function SuperAdminDetalle({ tenantId }: { tenantId: string }) {
                       etiqueta="Productos"
                       usados={uso.productos}
                       limite={detalle.plan?.limite_productos ?? null}
+                      bloqueados={uso.productosBloqueados}
                     />
                     <FilaUso
                       etiqueta="Sucursales"
                       usados={uso.sucursales}
                       limite={detalle.plan?.limite_sucursales ?? null}
+                      bloqueados={uso.sucursalesBloqueadas}
                     />
                     <FilaUso
                       etiqueta="Usuarios"
                       usados={uso.usuarios}
                       limite={detalle.plan?.limite_usuarios ?? null}
+                      bloqueados={uso.usuariosBloqueados}
                     />
                     <FilaUso
                       etiqueta="Grupos de modificadores"
                       usados={uso.gruposModificadores}
                       limite={detalle.plan?.limite_grupos_modificadores ?? null}
+                      bloqueados={uso.gruposBloqueados}
                     />
                   </div>
                 ) : (
