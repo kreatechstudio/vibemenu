@@ -152,3 +152,43 @@ export function textoLimite(limite: number | null): string {
 export function textoUso(usados: number, limite: number | null, sustantivo: string): string {
   return limite === null ? `${usados} ${sustantivo}` : `${usados} de ${limite} ${sustantivo}`;
 }
+
+/* ── Bloqueo retroactivo de límites (migración 020) ────────────────── */
+
+export type UsoDelTenant = {
+  productos: number;
+  sucursales: number;
+  usuarios: number;
+  gruposModificadores: number;
+};
+
+/**
+ * Cuántos de cada tipo se bloquearían si el tenant bajara AHORA al plan dado,
+ * con el mismo criterio de corte que `recalcular_bloqueos_plan` en la base:
+ * los más antiguos sobreviven, el exceso se bloquea. Para el aviso previo en
+ * el flujo de downgrade — el bloqueo real siempre lo hace el trigger.
+ */
+export function seBloquearianAlBajar(
+  uso: UsoDelTenant,
+  planNuevo: Pick<
+    Plan,
+    "limite_productos" | "limite_sucursales" | "limite_usuarios" | "permite_multiusuario" | "limite_grupos_modificadores"
+  >,
+): UsoDelTenant {
+  const exceso = (limite: number | null, usados: number) =>
+    limite === null ? 0 : Math.max(0, usados - limite);
+
+  const encargados = Math.max(0, uso.usuarios - 1); // -1: el owner nunca se bloquea
+  const cupoEncargados =
+    planNuevo.limite_usuarios === null ? null : Math.max(0, planNuevo.limite_usuarios - 1);
+  const usuariosBloqueados = !planNuevo.permite_multiusuario
+    ? encargados
+    : exceso(cupoEncargados, encargados);
+
+  return {
+    productos: exceso(planNuevo.limite_productos, uso.productos),
+    sucursales: exceso(planNuevo.limite_sucursales, uso.sucursales),
+    usuarios: usuariosBloqueados,
+    gruposModificadores: exceso(planNuevo.limite_grupos_modificadores, uso.gruposModificadores),
+  };
+}

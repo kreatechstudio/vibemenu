@@ -10,6 +10,7 @@ import {
   permiteImagenDeFondo,
   puedeDesbloquearOtroFormato,
   restantes,
+  seBloquearianAlBajar,
   textoLimite,
 } from "@/lib/plan";
 import type { Plan } from "@/types/database";
@@ -158,5 +159,64 @@ describe("precios", () => {
 
   test("el plan gratis muestra cero, no vacío", () => {
     expect(formatearPrecio(0, "mxn")).toContain("0");
+  });
+});
+
+describe("qué se bloquearía al bajar de plan", () => {
+  test("nada se bloquea si todo cabe en el plan nuevo", () => {
+    const nuevo = plan({ limite_productos: 20, limite_sucursales: 1, limite_usuarios: 1, permite_multiusuario: false, limite_grupos_modificadores: 2 });
+    const resultado = seBloquearianAlBajar(
+      { productos: 10, sucursales: 1, usuarios: 1, gruposModificadores: 2 },
+      nuevo,
+    );
+    expect(resultado).toEqual({ productos: 0, sucursales: 0, usuarios: 0, gruposModificadores: 0 });
+  });
+
+  test("cuenta el exceso exacto de productos y sucursales", () => {
+    const nuevo = plan({ limite_productos: 20, limite_sucursales: 1, limite_usuarios: 1, permite_multiusuario: false, limite_grupos_modificadores: 2 });
+    const resultado = seBloquearianAlBajar(
+      { productos: 35, sucursales: 3, usuarios: 1, gruposModificadores: 2 },
+      nuevo,
+    );
+    expect(resultado.productos).toBe(15);
+    expect(resultado.sucursales).toBe(2);
+  });
+
+  test("un plan ilimitado (null) nunca bloquea nada", () => {
+    const nuevo = plan({ limite_productos: null, limite_sucursales: null, limite_usuarios: null, permite_multiusuario: true, limite_grupos_modificadores: null });
+    const resultado = seBloquearianAlBajar(
+      { productos: 500, sucursales: 20, usuarios: 10, gruposModificadores: 50 },
+      nuevo,
+    );
+    expect(resultado).toEqual({ productos: 0, sucursales: 0, usuarios: 0, gruposModificadores: 0 });
+  });
+
+  test("si el plan nuevo no permite multiusuario, todos los encargados se bloquean", () => {
+    const free = plan({ permite_multiusuario: false, limite_usuarios: 1 });
+    // usuarios: 3 = 1 owner + 2 encargados
+    const resultado = seBloquearianAlBajar(
+      { productos: 0, sucursales: 0, usuarios: 3, gruposModificadores: 0 },
+      free,
+    );
+    expect(resultado.usuarios).toBe(2);
+  });
+
+  test("el owner nunca cuenta como bloqueable, incluso con 1 solo usuario", () => {
+    const free = plan({ permite_multiusuario: false, limite_usuarios: 1 });
+    const resultado = seBloquearianAlBajar(
+      { productos: 0, sucursales: 0, usuarios: 1, gruposModificadores: 0 },
+      free,
+    );
+    expect(resultado.usuarios).toBe(0);
+  });
+
+  test("con multiusuario permitido, limite_usuarios cuenta owner + encargados", () => {
+    // Basic: limite_usuarios 3 = 1 owner + 2 encargados caben.
+    const basic = plan({ permite_multiusuario: true, limite_usuarios: 3 });
+    const resultado = seBloquearianAlBajar(
+      { productos: 0, sucursales: 0, usuarios: 5, gruposModificadores: 0 }, // 1 owner + 4 encargados
+      basic,
+    );
+    expect(resultado.usuarios).toBe(2); // 4 encargados - 2 que caben = 2 bloqueados
   });
 });
