@@ -491,7 +491,7 @@ Deno.serve(async (req) => {
         // recibo puntual se pierde — aceptable para v1, no hay reintento.
         const { data: fila } = await db
           .from("suscripciones")
-          .select("id, tenant_id")
+          .select("id, tenant_id, plan_id")
           .eq("stripe_subscription_id", suscripcionId)
           .order("fecha_inicio", { ascending: false })
           .limit(1)
@@ -520,6 +520,20 @@ Deno.serve(async (req) => {
           .from("tenants")
           .update({ pago_fallido_desde: null, estado: "activo" })
           .eq("id", fila.tenant_id);
+
+        // Recuperacion tardia: si el cron forzo una baja a Free por impago
+        // (ver procesar-trials-vencidos), tenants.plan_id quedo por detras de
+        // la fila `activa` de suscripciones -- esa fila nunca se toco, sigue
+        // apuntando al plan pagado. Si difieren, se restaura. El .neq hace
+        // que esto sea un no-op (0 filas) en el caso normal, sin disparar el
+        // recalculo de bloqueos de mas en cada renovacion.
+        if (fila.plan_id) {
+          await db
+            .from("tenants")
+            .update({ plan_id: fila.plan_id })
+            .eq("id", fila.tenant_id)
+            .neq("plan_id", fila.plan_id);
+        }
         break;
       }
 
