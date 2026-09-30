@@ -56,9 +56,13 @@ export function useTenantActual() {
   });
 }
 
+type TablaConLimite = "productos" | "sucursales" | "tenant_usuarios" | "grupos_modificadores";
+
 /**
  * Conteos de uso del tenant, para pintar "2 de 3 sucursales" y deshabilitar
  * botones antes de que el trigger reviente. Usa head:true: cuenta sin traer filas.
+ * Los *Bloqueados son lo que recalcular_bloqueos_plan (migración 020) ya marcó
+ * bloqueado_por_plan=true — para el candado en las listas del panel.
  */
 export function useUsoDelTenant(tenantId: string | undefined) {
   return useQuery({
@@ -66,25 +70,47 @@ export function useUsoDelTenant(tenantId: string | undefined) {
     enabled: Boolean(tenantId),
     staleTime: 10_000,
     queryFn: async () => {
-      const contar = async (
-        tabla: "productos" | "sucursales" | "tenant_usuarios" | "grupos_modificadores",
-      ) => {
-        const { count, error } = await supabase
+      const contar = async (tabla: TablaConLimite, soloBloqueados = false) => {
+        let query = supabase
           .from(tabla)
           .select("*", { count: "exact", head: true })
           .eq("tenant_id", tenantId!);
+        if (soloBloqueados) query = query.eq("bloqueado_por_plan", true);
+        const { count, error } = await query;
         if (error) throw error;
         return count ?? 0;
       };
 
-      const [productos, sucursales, usuarios, gruposModificadores] = await Promise.all([
+      const [
+        productos,
+        sucursales,
+        usuarios,
+        gruposModificadores,
+        productosBloqueados,
+        sucursalesBloqueadas,
+        usuariosBloqueados,
+        gruposBloqueados,
+      ] = await Promise.all([
         contar("productos"),
         contar("sucursales"),
         contar("tenant_usuarios"),
         contar("grupos_modificadores"),
+        contar("productos", true),
+        contar("sucursales", true),
+        contar("tenant_usuarios", true),
+        contar("grupos_modificadores", true),
       ]);
 
-      return { productos, sucursales, usuarios, gruposModificadores };
+      return {
+        productos,
+        sucursales,
+        usuarios,
+        gruposModificadores,
+        productosBloqueados,
+        sucursalesBloqueadas,
+        usuariosBloqueados,
+        gruposBloqueados,
+      };
     },
   });
 }
