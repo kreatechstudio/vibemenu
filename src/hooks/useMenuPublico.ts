@@ -134,6 +134,7 @@ async function armarMenuPublico(
     )
     .eq("tenant_id", tenant.id)
     .eq("activa", true)
+    .eq("bloqueado_por_plan", false)
     .order("created_at")
     .returns<Sucursal[]>();
   if (errorSuc) throw errorSuc;
@@ -157,11 +158,13 @@ async function armarMenuPublico(
       .select("*")
       .eq("tenant_id", tenant.id)
       .eq("activo", true)
+      .eq("bloqueado_por_plan", false)
       .order("orden"),
     supabase
       .from("grupos_modificadores")
       .select("*, opciones:opciones_modificador(*)")
       .eq("tenant_id", tenant.id)
+      .eq("bloqueado_por_plan", false)
       .order("orden"),
     supabase.from("producto_modificadores").select("producto_id, grupo_id"),
     // Los precios sobrescritos solo existen dentro de una sucursal concreta.
