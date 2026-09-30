@@ -5,7 +5,7 @@ import { enlaceMaps } from "@/lib/maps";
 import { enlaceWhatsApp, telefonoParaWaMe } from "@/lib/whatsapp";
 import type { Sucursal, Tenant } from "@/types/database";
 
-type Fila = {
+export type FilaContacto = {
   etiqueta: string;
   href: string;
   externo: boolean;
@@ -13,10 +13,42 @@ type Fila = {
 };
 
 /**
- * Fila de contacto al pie del menú: llamar, WhatsApp, cómo llegar, reseñas.
- * Cada dato se resuelve sucursal → empresa (`contactoSucursal`). Solo pinta
- * las filas con dato; sin ninguna, no se monta. Usa el tema del tenant, nunca
- * colores de marca externos — igual que `RedesSociales`.
+ * Datos de contacto resueltos sucursal → empresa (`contactoSucursal`), listos
+ * para pintar como pills. Pura — sin JSX — para que `BarraInferior` pueda
+ * decidir si hay algo que mostrar antes de montar la franja fija.
+ */
+export function filasContacto(tenant: Tenant, sucursal: Sucursal | null): FilaContacto[] {
+  const c = contactoSucursal(sucursal, tenant);
+  const mapa = enlaceMaps(
+    { direccion: sucursal?.direccion ?? null, maps_url: sucursal?.maps_url ?? null },
+    tenant.nombre_negocio,
+  );
+  const wa = enlaceWhatsApp(c.whatsapp);
+  const tel =
+    telefonoParaWaMe(c.telefono) !== null ? `tel:${c.telefono!.replace(/[^\d+]/g, "")}` : null;
+
+  const filas: FilaContacto[] = [];
+  if (tel) filas.push({ etiqueta: "Llamar", href: tel, externo: false, Icono: Phone });
+  if (wa) filas.push({ etiqueta: "WhatsApp", href: wa, externo: true, Icono: MessageCircle });
+  if (mapa) filas.push({ etiqueta: "Cómo llegar", href: mapa, externo: true, Icono: MapPin });
+  if (c.googleReviewsUrl) {
+    filas.push({ etiqueta: "Reseñas", href: c.googleReviewsUrl, externo: true, Icono: Star });
+  }
+  return filas;
+}
+
+/** Clase compartida con `ReservarMenu` para que sus pills se vean idénticas. */
+export const CLASE_PILL_ACCION =
+  "inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium transition-opacity hover:opacity-75";
+export const ESTILO_PILL_ACCION = {
+  background: "color-mix(in srgb, var(--menu-primario) 10%, transparent)",
+  color: "var(--menu-primario)",
+};
+
+/**
+ * Pills de contacto (llamar, WhatsApp, cómo llegar, reseñas). Sin envoltura ni
+ * posicionamiento propio — vive dentro de la franja de `BarraInferior`, junto
+ * a `ReservarMenu`, para que ambos queden en una sola fila.
  *
  * El WhatsApp aquí es "abrir chat" a secas. El botón de pedido con carrito es
  * otra cosa (sub-proyecto #3).
@@ -28,42 +60,23 @@ export default function ContactoMenu({
   tenant: Tenant;
   sucursal: Sucursal | null;
 }): ReactElement | null {
-  const c = contactoSucursal(sucursal, tenant);
-  const mapa = enlaceMaps(
-    { direccion: sucursal?.direccion ?? null, maps_url: sucursal?.maps_url ?? null },
-    tenant.nombre_negocio,
-  );
-  const wa = enlaceWhatsApp(c.whatsapp);
-  const tel =
-    telefonoParaWaMe(c.telefono) !== null ? `tel:${c.telefono!.replace(/[^\d+]/g, "")}` : null;
-
-  const filas: Fila[] = [];
-  if (tel) filas.push({ etiqueta: "Llamar", href: tel, externo: false, Icono: Phone });
-  if (wa) filas.push({ etiqueta: "WhatsApp", href: wa, externo: true, Icono: MessageCircle });
-  if (mapa) filas.push({ etiqueta: "Cómo llegar", href: mapa, externo: true, Icono: MapPin });
-  if (c.googleReviewsUrl) {
-    filas.push({ etiqueta: "Reseñas", href: c.googleReviewsUrl, externo: true, Icono: Star });
-  }
-
+  const filas = filasContacto(tenant, sucursal);
   if (filas.length === 0) return null;
 
   return (
-    <nav className="mx-auto mt-6 flex max-w-2xl flex-wrap gap-2 px-4 pb-8" aria-label="Contacto">
+    <>
       {filas.map(({ etiqueta, href, externo, Icono }) => (
         <a
           key={etiqueta}
           href={href}
           {...(externo ? { target: "_blank", rel: "noreferrer noopener" } : {})}
-          className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium transition-opacity hover:opacity-75"
-          style={{
-            background: "color-mix(in srgb, var(--menu-primario) 10%, transparent)",
-            color: "var(--menu-primario)",
-          }}
+          className={CLASE_PILL_ACCION}
+          style={ESTILO_PILL_ACCION}
         >
           <Icono className="size-4" aria-hidden />
           {etiqueta}
         </a>
       ))}
-    </nav>
+    </>
   );
 }

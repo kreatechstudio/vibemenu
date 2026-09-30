@@ -1,16 +1,16 @@
-import { Facebook, Instagram, Star } from "lucide-react";
+import { Facebook, Instagram } from "lucide-react";
 import type { Tenant } from "@/types/database";
 
 /**
- * Enlaces del negocio en la cabecera del menu.
+ * Enlaces del negocio en la cabecera del menu: solo redes sociales.
  *
  * No llevan color propio: usan `--menu-primario` y `--menu-texto`, asi que combinan
  * solos con lo que el dueno elija en Diseno. Un icono azul de Facebook sobre un
  * menu terracota se ve como un banner pegado encima.
  *
- * Las resenas de Google van como estrella, no como la "G" multicolor: es el unico
- * de los cuatro que no es una red social, y lo que el comensal busca ahi es la
- * calificacion.
+ * Las resenas de Google NO van aqui: ya viven como pill con etiqueta en
+ * `BarraInferior`, siempre visible sin scrollear arriba. Repetirlas como un
+ * icono suelto en la cabecera era el mismo enlace dos veces en la misma pantalla.
  */
 
 /** lucide-react no trae TikTok. Trazo oficial de la nota musical, simplificado. */
@@ -23,7 +23,7 @@ function IconoTikTok({ className }: { className?: string }) {
 }
 
 type Enlace = {
-  clave: keyof Pick<Tenant, "facebook_url" | "instagram_url" | "tiktok_url" | "google_reviews_url">;
+  clave: keyof Pick<Tenant, "facebook_url" | "instagram_url" | "tiktok_url">;
   etiqueta: string;
   /** Los iconos de lucide son forwardRef; el de TikTok es una función. `ComponentType` cubre ambos. */
   Icono: React.ComponentType<{ className?: string }>;
@@ -33,44 +33,26 @@ const ENLACES: Enlace[] = [
   { clave: "instagram_url", etiqueta: "Instagram", Icono: Instagram },
   { clave: "facebook_url", etiqueta: "Facebook", Icono: Facebook },
   { clave: "tiktok_url", etiqueta: "TikTok", Icono: IconoTikTok },
-  { clave: "google_reviews_url", etiqueta: "Reseñas en Google", Icono: Star },
 ];
 
-/**
- * Href real de cada enlace. Para reseñas, `resenasUrlOverride` (si se pasa,
- * incluido `null` explícito) manda sobre `tenant.google_reviews_url` — así la
- * cabecera de una sucursal apunta a las reseñas de ESA sucursal.
- */
-function hrefDe(
-  tenant: Tenant,
-  clave: Enlace["clave"],
-  resenasUrlOverride: string | null | undefined,
-): string | null {
-  if (clave === "google_reviews_url" && resenasUrlOverride !== undefined) {
-    return resenasUrlOverride;
-  }
+function hrefDe(tenant: Tenant, clave: Enlace["clave"]): string | null {
   return tenant[clave] ?? null;
 }
 
 /** Sin ningún enlace, la cabecera no debe reservar espacio para la fila. */
-export const tieneRedes = (tenant: Tenant, resenasUrlOverride?: string | null): boolean =>
-  ENLACES.some(({ clave }) => Boolean(hrefDe(tenant, clave, resenasUrlOverride)));
+export const tieneRedes = (tenant: Tenant): boolean =>
+  ENLACES.some(({ clave }) => Boolean(hrefDe(tenant, clave)));
 
 export default function RedesSociales({
   tenant,
   sobreOscuro = false,
-  resenasUrlOverride,
 }: {
   tenant: Tenant;
   /** En fondo completo el texto ya es blanco: los iconos también. */
   sobreOscuro?: boolean;
-  /** Reseñas de la sucursal activa (o null si no tiene ni ella ni la empresa). */
-  resenasUrlOverride?: string | null;
 }) {
   // Sin la migración 007 estas columnas llegan como `undefined`, no como null.
-  const visibles = ENLACES.filter(({ clave }) =>
-    Boolean(hrefDe(tenant, clave, resenasUrlOverride)),
-  );
+  const visibles = ENLACES.filter(({ clave }) => Boolean(hrefDe(tenant, clave)));
   if (visibles.length === 0) return null;
 
   const estilo = sobreOscuro
@@ -85,7 +67,7 @@ export default function RedesSociales({
       {visibles.map(({ clave, etiqueta, Icono }) => (
         <a
           key={clave}
-          href={hrefDe(tenant, clave, resenasUrlOverride)!}
+          href={hrefDe(tenant, clave)!}
           target="_blank"
           rel="noreferrer noopener"
           aria-label={etiqueta}

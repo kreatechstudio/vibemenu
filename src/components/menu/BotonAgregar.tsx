@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
+import { createPortal } from "react-dom";
+import HojaSeleccionModificadores from "@/components/menu/HojaSeleccionModificadores";
 import { useAnalitica } from "@/hooks/useAnalitica";
 import { useCarritoWhatsApp } from "@/hooks/useCarritoWhatsApp";
 import type { ProductoConModificadores } from "@/hooks/useMenuPublico";
@@ -13,6 +17,11 @@ import type { ProductoConModificadores } from "@/hooks/useMenuPublico";
  *   Con `n > 0` muestra el número. Solo suma; para restar desde el grid se abre
  *   el modal o la hoja de resumen.
  *
+ * Con modificadores (`producto.grupos.length > 0`) ninguna variante suma
+ * directo: siempre abre `HojaSeleccionModificadores`, porque dos selecciones
+ * del mismo producto son líneas distintas del carrito y no hay un "−"
+ * inequívoco aquí (ese ajuste fino vive en `HojaPedido`, por línea).
+ *
  * Estilo: solo variables `--menu-*`.
  */
 export default function BotonAgregar({
@@ -24,30 +33,90 @@ export default function BotonAgregar({
 }) {
   const c = useCarritoWhatsApp();
   const analitica = useAnalitica();
+  const [seleccionando, setSeleccionando] = useState(false);
   if (!c.habilitado) return null;
 
+  const tieneModificadores = producto.grupos.length > 0;
   const n = c.cantidadDe(producto.id);
+
+  // Portal a <body>: sin esto, un ancestro con transform (framer-motion en el
+  // grid, p. ej. Pinterest) rompe el `position: fixed` del backdrop y lo dejaria
+  // encerrado en su contenedor en vez de cubrir la pantalla. `AnimatePresence`
+  // va DENTRO del portal (no al revés): envolviendo un `Portal` no detecta un
+  // elemento valido y lo descarta en silencio.
+  const hoja =
+    tieneModificadores &&
+    typeof document !== "undefined" &&
+    createPortal(
+      <AnimatePresence>
+        {seleccionando && (
+          <HojaSeleccionModificadores
+            producto={producto}
+            alConfirmar={(seleccion) => {
+              c.agregar(producto, seleccion);
+              analitica.registrarAgregado(producto.id);
+              setSeleccionando(false);
+            }}
+            alCerrar={() => setSeleccionando(false)}
+          />
+        )}
+      </AnimatePresence>,
+      document.body,
+    );
 
   if (variante === "badge") {
     return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          c.agregar(producto);
-          analitica.registrarAgregado(producto.id);
-        }}
-        aria-label={
-          n > 0
-            ? `${producto.nombre}: ${n} en el pedido. Agregar otro`
-            : `Agregar ${producto.nombre} al pedido`
-        }
-        className="grid size-8 place-items-center rounded-full text-sm font-bold shadow-md tabular-nums"
-        style={{ background: "var(--menu-primario)", color: "var(--menu-fondo)" }}
-      >
-        {n > 0 ? n : <Plus className="size-4" aria-hidden />}
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (tieneModificadores) {
+              setSeleccionando(true);
+              return;
+            }
+            c.agregar(producto);
+            analitica.registrarAgregado(producto.id);
+          }}
+          aria-label={
+            n > 0
+              ? `${producto.nombre}: ${n} en el pedido. Agregar otro`
+              : `Agregar ${producto.nombre} al pedido`
+          }
+          className="grid size-8 place-items-center rounded-full text-sm font-bold shadow-md tabular-nums"
+          style={{ background: "var(--menu-primario)", color: "var(--menu-fondo)" }}
+        >
+          {n > 0 ? n : <Plus className="size-4" aria-hidden />}
+        </button>
+        {hoja}
+      </>
+    );
+  }
+
+  if (tieneModificadores) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setSeleccionando(true);
+          }}
+          aria-label={
+            n > 0
+              ? `${producto.nombre}: ${n} en el pedido. Agregar otro`
+              : `Agregar ${producto.nombre} al pedido`
+          }
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-sm font-medium"
+          style={{ background: "var(--menu-primario)", color: "var(--menu-fondo)" }}
+        >
+          <Plus className="size-4" aria-hidden />
+          {n > 0 ? `Agregar (${n})` : "Agregar"}
+        </button>
+        {hoja}
+      </>
     );
   }
 

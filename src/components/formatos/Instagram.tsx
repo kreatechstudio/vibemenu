@@ -25,8 +25,6 @@ function Post({
   producto: ProductoConModificadores;
   alCerrar: () => void;
 }) {
-  const obligatorios = producto.grupos.filter((g) => g.obligatorio);
-
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 sm:items-center sm:p-4"
@@ -164,12 +162,6 @@ function Post({
                   </ul>
                 </div>
               ))}
-
-              {obligatorios.length > 0 && (
-                <p className="text-[11px]" style={{ color: "var(--menu-modificadores)" }}>
-                  Los grupos obligatorios se eligen al ordenar en el mostrador.
-                </p>
-              )}
             </div>
           )}
         </div>

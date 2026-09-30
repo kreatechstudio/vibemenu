@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import * as carrito from "@/lib/carrito";
-import type { ItemCarrito } from "@/lib/carrito";
+import type { ItemCarrito, SeleccionModificadores } from "@/lib/carrito";
 import type { ProductoConModificadores } from "@/hooks/useMenuPublico";
 
-export type { ItemCarrito };
+export type { ItemCarrito, SeleccionModificadores };
 
 export type CarritoWhatsApp = {
   /** Orden estable de inserción. */
@@ -11,11 +11,13 @@ export type CarritoWhatsApp = {
   /** Σ cantidad. */
   cantidadTotal: number;
   habilitado: boolean;
-  agregar: (p: ProductoConModificadores) => void;
-  /** `n <= 0` quita la línea. */
-  fijarCantidad: (productoId: string, n: number) => void;
-  quitar: (productoId: string) => void;
+  /** Sin `seleccion`, o `{}`, agrega/suma a la línea sin modificadores. */
+  agregar: (p: ProductoConModificadores, seleccion?: SeleccionModificadores) => void;
+  /** `n <= 0` quita la línea. `itemId` es `ItemCarrito.id`, no `producto.id`. */
+  fijarCantidad: (itemId: string, n: number) => void;
+  quitar: (itemId: string) => void;
   vaciar: () => void;
+  /** Σ cantidad de todas las líneas de ese producto (con cualquier selección). */
   cantidadDe: (productoId: string) => number;
 };
 
@@ -40,23 +42,23 @@ export function CarritoWhatsAppProvider({
   const [items, setItems] = useState<ItemCarrito[]>([]);
 
   const agregar = useCallback(
-    (p: ProductoConModificadores) => {
+    (p: ProductoConModificadores, seleccion?: SeleccionModificadores) => {
       if (!habilitado) return;
-      setItems((prev) => carrito.agregarProducto(prev, p));
+      setItems((prev) => carrito.agregarProducto(prev, p, seleccion));
     },
     [habilitado],
   );
 
   const fijarCantidad = useCallback(
-    (productoId: string, n: number) => {
+    (itemId: string, n: number) => {
       if (!habilitado) return;
-      setItems((prev) => carrito.fijarCantidad(prev, productoId, n));
+      setItems((prev) => carrito.fijarCantidad(prev, itemId, n));
     },
     [habilitado],
   );
 
-  const quitar = useCallback((productoId: string) => {
-    setItems((prev) => carrito.quitarProducto(prev, productoId));
+  const quitar = useCallback((itemId: string) => {
+    setItems((prev) => carrito.quitarProducto(prev, itemId));
   }, []);
 
   const vaciar = useCallback(() => setItems([]), []);

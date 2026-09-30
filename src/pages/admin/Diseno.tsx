@@ -98,7 +98,7 @@ function Contenido() {
   const { tour } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
 
-  useIniciarTour(Boolean(tour), true, PASOS_TOUR_DISENO, navigate);
+  useIniciarTour("diseno", Boolean(tour), true, PASOS_TOUR_DISENO, navigate);
 
   if (!ctx) return null;
 

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Lock, Store, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Lock, Plus, Store, Trash2, X } from "lucide-react";
 import Modal from "@/components/ui/modal";
+import { DialogoTexto } from "@/components/ui/dialogo";
 import {
   borrarImagen,
   subirFotoProducto,
@@ -8,7 +9,12 @@ import {
   useGuardarProducto,
   type BorradorProducto,
 } from "@/hooks/useCarta";
-import { sincronizarModificadores, useGrupos, useGruposDeProducto } from "@/hooks/useModificadores";
+import {
+  sincronizarModificadores,
+  useGrupos,
+  useGruposDeProducto,
+  useGuardarGrupo,
+} from "@/hooks/useModificadores";
 import {
   sincronizarPreciosSucursal,
   usePreciosDeProducto,
@@ -80,6 +86,7 @@ export default function EditorProducto({
 
   const guardar = useGuardarProducto(tenantId);
   const borrar = useBorrarProducto(tenantId);
+  const guardarGrupo = useGuardarGrupo(tenantId);
 
   const { data: grupos } = useGrupos(tenantId);
   const { data: yaAsignados, isLoading: cargandoGrupos } = useGruposDeProducto(producto?.id);
@@ -88,6 +95,33 @@ export default function EditorProducto({
   // `undefined` = todavía no llega la consulta; entonces se usa lo que hay en la base.
   const [seleccion, setSeleccion] = useState<Set<string> | null>(null);
   const asignados = seleccion ?? new Set(yaAsignados ?? []);
+
+  // Un grupo etiquetado con categorías solo se ofrece aquí si una de ellas es
+  // la de este producto; sin ninguna etiqueta, aparece para cualquier
+  // categoría. "Ver todos" es la salida para el caso raro de querer uno
+  // etiquetado para otra categoría.
+  const [verTodosLosGrupos, setVerTodosLosGrupos] = useState(false);
+  const gruposFiltrados = (grupos ?? []).filter(
+    (g) =>
+      verTodosLosGrupos || g.categoriaIds.length === 0 || g.categoriaIds.includes(categoria.id),
+  );
+  const hayOcultosPorCategoria = (grupos?.length ?? 0) > gruposFiltrados.length;
+
+  const [creandoGrupo, setCreandoGrupo] = useState(false);
+  async function crearGrupoRapido(nombre: string) {
+    setCreandoGrupo(false);
+    const nuevoId = await guardarGrupo.mutateAsync({
+      datos: {
+        nombre,
+        tipo_seleccion: "unica",
+        obligatorio: false,
+        min_selecciones: 0,
+        max_selecciones: 1,
+      },
+      categoriaIds: [categoria.id],
+    });
+    alternarGrupo(nuevoId);
+  }
 
   const [precios, setPrecios] = useState<Record<string, string> | null>(null);
   const preciosVisibles =
@@ -378,41 +412,73 @@ export default function EditorProducto({
         </div>
 
         <div>
-          <p className="text-sm font-medium text-vm-ink">Modificadores</p>
-          <p className="text-xs text-vm-body">
-            Los grupos que apliquen a este producto. Se administran en Modificadores.
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-vm-ink">Modificadores</p>
+              <p className="text-xs text-vm-body">
+                Los grupos que apliquen a este producto. Se administran en Modificadores.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCreandoGrupo(true)}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium text-vm-ink hover:bg-vm-bg-soft"
+            >
+              <Plus className="size-3.5" aria-hidden />
+              Nuevo modificador
+            </button>
+          </div>
 
           {!grupos?.length ? (
             <p className="mt-3 rounded-lg border border-dashed px-3.5 py-3 text-xs text-vm-body">
-              Todavía no tienes grupos de modificadores.
+              Todavía no tienes grupos de modificadores. Crea el primero con "Nuevo modificador".
             </p>
           ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {grupos.map((g) => {
-                const activo = asignados.has(g.id);
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    disabled={!datosListos}
-                    onClick={() => alternarGrupo(g.id)}
-                    aria-pressed={activo}
-                    className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
-                      activo
-                        ? "border-vm-primary bg-vm-primary text-white"
-                        : "text-vm-body hover:bg-vm-bg-soft",
-                      !datosListos && "opacity-50",
-                    )}
-                  >
-                    {g.nombre}
-                  </button>
-                );
-              })}
-            </div>
+            <>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {gruposFiltrados.map((g) => {
+                  const activo = asignados.has(g.id);
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      disabled={!datosListos}
+                      onClick={() => alternarGrupo(g.id)}
+                      aria-pressed={activo}
+                      className={cn(
+                        "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                        activo
+                          ? "border-vm-primary bg-vm-primary text-white"
+                          : "text-vm-body hover:bg-vm-bg-soft",
+                        !datosListos && "opacity-50",
+                      )}
+                    >
+                      {g.nombre}
+                    </button>
+                  );
+                })}
+              </div>
+              {hayOcultosPorCategoria && !verTodosLosGrupos && (
+                <button
+                  type="button"
+                  onClick={() => setVerTodosLosGrupos(true)}
+                  className="mt-2 text-xs font-medium text-vm-primary hover:underline"
+                >
+                  Ver todos los modificadores, no solo los de esta categoría
+                </button>
+              )}
+            </>
           )}
         </div>
+
+        <DialogoTexto
+          abierto={creandoGrupo}
+          titulo="Nuevo grupo de modificadores"
+          etiqueta="Nombre"
+          marcador="Tamaño de café"
+          alConfirmar={(nombre) => void crearGrupoRapido(nombre)}
+          alCancelar={() => setCreandoGrupo(false)}
+        />
 
         {error && (
           <p className="rounded-lg bg-vm-danger-soft px-3.5 py-2.5 text-sm text-vm-danger">

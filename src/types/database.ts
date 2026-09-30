@@ -8,6 +8,36 @@ export type Database = {
   };
   public: {
     Tables: {
+      categoria_modificadores: {
+        Row: {
+          categoria_id: string;
+          grupo_id: string;
+        };
+        Insert: {
+          categoria_id: string;
+          grupo_id: string;
+        };
+        Update: {
+          categoria_id?: string;
+          grupo_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categoria_modificadores_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "categorias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "categoria_modificadores_grupo_id_fkey";
+            columns: ["grupo_id"];
+            isOneToOne: false;
+            referencedRelation: "grupos_modificadores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categorias: {
         Row: {
           created_at: string;
@@ -185,6 +215,8 @@ export type Database = {
       };
       grupos_modificadores: {
         Row: {
+          bloqueado_por_plan: boolean;
+          created_at: string;
           id: string;
           max_selecciones: number | null;
           min_selecciones: number;
@@ -195,6 +227,8 @@ export type Database = {
           tipo_seleccion: string;
         };
         Insert: {
+          bloqueado_por_plan?: boolean;
+          created_at?: string;
           id?: string;
           max_selecciones?: number | null;
           min_selecciones?: number;
@@ -205,6 +239,8 @@ export type Database = {
           tipo_seleccion?: string;
         };
         Update: {
+          bloqueado_por_plan?: boolean;
+          created_at?: string;
           id?: string;
           max_selecciones?: number | null;
           min_selecciones?: number;
@@ -722,6 +758,7 @@ export type Database = {
       productos: {
         Row: {
           activo: boolean;
+          bloqueado_por_plan: boolean;
           categoria_id: string;
           created_at: string;
           descripcion: string | null;
@@ -737,6 +774,7 @@ export type Database = {
         };
         Insert: {
           activo?: boolean;
+          bloqueado_por_plan?: boolean;
           categoria_id: string;
           created_at?: string;
           descripcion?: string | null;
@@ -752,6 +790,7 @@ export type Database = {
         };
         Update: {
           activo?: boolean;
+          bloqueado_por_plan?: boolean;
           categoria_id?: string;
           created_at?: string;
           descripcion?: string | null;
@@ -868,6 +907,7 @@ export type Database = {
         Row: {
           acepta_reservaciones: boolean;
           activa: boolean;
+          bloqueado_por_plan: boolean;
           created_at: string;
           direccion: string | null;
           google_reviews_url: string | null;
@@ -884,6 +924,7 @@ export type Database = {
         Insert: {
           acepta_reservaciones?: boolean;
           activa?: boolean;
+          bloqueado_por_plan?: boolean;
           created_at?: string;
           direccion?: string | null;
           google_reviews_url?: string | null;
@@ -900,6 +941,7 @@ export type Database = {
         Update: {
           acepta_reservaciones?: boolean;
           activa?: boolean;
+          bloqueado_por_plan?: boolean;
           created_at?: string;
           direccion?: string | null;
           google_reviews_url?: string | null;
@@ -1008,6 +1050,7 @@ export type Database = {
           contacto: string | null;
           contacto_tipo: string | null;
           creada_at: string;
+          fase1_canjeada_ciclo: boolean;
           id: string;
           premios_canjeados: number;
           sellos: number;
@@ -1021,6 +1064,7 @@ export type Database = {
           contacto?: string | null;
           contacto_tipo?: string | null;
           creada_at?: string;
+          fase1_canjeada_ciclo?: boolean;
           id?: string;
           premios_canjeados?: number;
           sellos?: number;
@@ -1034,6 +1078,7 @@ export type Database = {
           contacto?: string | null;
           contacto_tipo?: string | null;
           creada_at?: string;
+          fase1_canjeada_ciclo?: boolean;
           id?: string;
           premios_canjeados?: number;
           sellos?: number;
@@ -1053,6 +1098,7 @@ export type Database = {
       };
       tenant_usuarios: {
         Row: {
+          bloqueado_por_plan: boolean;
           created_at: string;
           id: string;
           rol: string;
@@ -1060,6 +1106,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          bloqueado_por_plan?: boolean;
           created_at?: string;
           id?: string;
           rol?: string;
@@ -1067,6 +1114,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          bloqueado_por_plan?: boolean;
           created_at?: string;
           id?: string;
           rol?: string;
@@ -1104,7 +1152,9 @@ export type Database = {
           id: string;
           instagram_url: string | null;
           lealtad_activa: boolean;
+          lealtad_meta_fase1: number | null;
           lealtad_premio: string | null;
+          lealtad_premio_fase1: string | null;
           lealtad_sellos_meta: number | null;
           logo_url: string | null;
           nombre_negocio: string;
@@ -1139,7 +1189,9 @@ export type Database = {
           id?: string;
           instagram_url?: string | null;
           lealtad_activa?: boolean;
+          lealtad_meta_fase1?: number | null;
           lealtad_premio?: string | null;
+          lealtad_premio_fase1?: string | null;
           lealtad_sellos_meta?: number | null;
           logo_url?: string | null;
           nombre_negocio: string;
@@ -1174,7 +1226,9 @@ export type Database = {
           id?: string;
           instagram_url?: string | null;
           lealtad_activa?: boolean;
+          lealtad_meta_fase1?: number | null;
           lealtad_premio?: string | null;
+          lealtad_premio_fase1?: string | null;
           lealtad_sellos_meta?: number | null;
           logo_url?: string | null;
           nombre_negocio?: string;
@@ -1256,6 +1310,7 @@ export type Database = {
           contacto: string | null;
           contacto_tipo: string | null;
           creada_at: string;
+          fase1_canjeada_ciclo: boolean;
           id: string;
           premios_canjeados: number;
           sellos: number;
@@ -1277,24 +1332,32 @@ export type Database = {
         };
         Returns: {
           codigo: string;
+          fase1_canjeada_ciclo: boolean;
           listo_para_canje: boolean;
+          listo_para_canje_fase1: boolean;
           premio: string;
+          premio_fase1: string;
           premios_canjeados: number;
           sello_repetido_hoy: boolean;
           sellos: number;
           sellos_meta: number;
+          sellos_meta_fase1: number;
         }[];
       };
       buscar_tarjeta: {
         Args: { p_codigo: string; p_sucursal_id?: string };
         Returns: {
           codigo: string;
+          fase1_canjeada_ciclo: boolean;
           listo_para_canje: boolean;
+          listo_para_canje_fase1: boolean;
           premio: string;
+          premio_fase1: string;
           premios_canjeados: number;
           sello_repetido_hoy: boolean;
           sellos: number;
           sellos_meta: number;
+          sellos_meta_fase1: number;
         }[];
       };
       buscar_tarjetas_por_contacto: {
@@ -1313,15 +1376,19 @@ export type Database = {
         Returns: undefined;
       };
       canjear_premio: {
-        Args: { p_codigo: string; p_sucursal_id?: string };
+        Args: { p_codigo: string; p_fase?: string; p_sucursal_id?: string };
         Returns: {
           codigo: string;
+          fase1_canjeada_ciclo: boolean;
           listo_para_canje: boolean;
+          listo_para_canje_fase1: boolean;
           premio: string;
+          premio_fase1: string;
           premios_canjeados: number;
           sello_repetido_hoy: boolean;
           sellos: number;
           sellos_meta: number;
+          sellos_meta_fase1: number;
         }[];
       };
       combinar_fecha_hora_sucursal: {
@@ -1336,6 +1403,7 @@ export type Database = {
           contacto: string | null;
           contacto_tipo: string | null;
           creada_at: string;
+          fase1_canjeada_ciclo: boolean;
           id: string;
           premios_canjeados: number;
           sellos: number;
@@ -1354,6 +1422,7 @@ export type Database = {
         Args: { p_tenant_id: string };
         Returns: {
           avatar_url: string;
+          bloqueado_por_plan: boolean;
           created_at: string;
           email: string;
           nombre: string;
@@ -1394,10 +1463,13 @@ export type Database = {
         Returns: {
           codigo: string;
           contacto_enmascarado: string;
+          fase1_canjeada_ciclo: boolean;
           premio: string;
+          premio_fase1: string;
           premios_canjeados: number;
           sellos: number;
           sellos_meta: number;
+          sellos_meta_fase1: number;
           tenant_nombre: string;
           tenant_slug: string;
           tiene_contacto: boolean;
@@ -1410,6 +1482,10 @@ export type Database = {
       purgar_interacciones_producto: { Args: never; Returns: number };
       purgar_reservaciones_viejas: { Args: never; Returns: number };
       purgar_tarjetas_lealtad: { Args: never; Returns: number };
+      recalcular_bloqueos_plan: {
+        Args: { p_tenant_id: string };
+        Returns: undefined;
+      };
       registrar_feedback: {
         Args: {
           p_comentario?: string;
@@ -1436,12 +1512,16 @@ export type Database = {
         Args: { p_codigo: string; p_sucursal_id?: string };
         Returns: {
           codigo: string;
+          fase1_canjeada_ciclo: boolean;
           listo_para_canje: boolean;
+          listo_para_canje_fase1: boolean;
           premio: string;
+          premio_fase1: string;
           premios_canjeados: number;
           sello_repetido_hoy: boolean;
           sellos: number;
           sellos_meta: number;
+          sellos_meta_fase1: number;
         }[];
       };
       sucursal_esta_abierta: {

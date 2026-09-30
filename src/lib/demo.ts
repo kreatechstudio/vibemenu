@@ -47,6 +47,8 @@ export const TENANT_DEMO: Tenant = {
   lealtad_activa: false,
   lealtad_premio: null,
   lealtad_sellos_meta: null,
+  lealtad_meta_fase1: null,
+  lealtad_premio_fase1: null,
   pago_fallido_desde: null,
   cancela_al_terminar: false,
   trial_iniciado_at: new Date().toISOString(),
@@ -69,6 +71,7 @@ export const SUCURSAL_DEMO: Sucursal = {
   activa: true,
   acepta_reservaciones: false,
   reservaciones_email: null,
+  bloqueado_por_plan: false,
   created_at: new Date().toISOString(),
 };
 
@@ -81,6 +84,8 @@ const grupoTortilla = {
   min_selecciones: 1,
   max_selecciones: 1,
   orden: 0,
+  bloqueado_por_plan: false,
+  created_at: new Date().toISOString(),
   opciones: [
     { id: "o-maiz", grupo_id: "g-tortilla", nombre: "Maíz", precio_extra: 0, orden: 0 },
     { id: "o-harina", grupo_id: "g-tortilla", nombre: "Harina", precio_extra: 4, orden: 1 },
@@ -96,6 +101,8 @@ const grupoExtras = {
   min_selecciones: 0,
   max_selecciones: null,
   orden: 1,
+  bloqueado_por_plan: false,
+  created_at: new Date().toISOString(),
   opciones: [
     { id: "o-queso", grupo_id: "g-extras", nombre: "Queso", precio_extra: 12, orden: 0 },
     { id: "o-aguacate", grupo_id: "g-extras", nombre: "Aguacate", precio_extra: 15, orden: 1 },
@@ -107,6 +114,7 @@ const base = {
   tenant_id: "demo-tenant",
   sucursal_id: null,
   activo: true,
+  bloqueado_por_plan: false,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
   video_url: null,

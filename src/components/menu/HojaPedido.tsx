@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
-import BotonAgregar from "@/components/menu/BotonAgregar";
+import { Minus, Plus, X } from "lucide-react";
 import { useCarritoWhatsApp } from "@/hooks/useCarritoWhatsApp";
-import { lineasDePedido } from "@/lib/carrito";
+import { lineasDePedido, nombreLinea, precioLinea } from "@/lib/carrito";
 import { contactoSucursal } from "@/lib/contacto";
 import { construirMensajePedido, totalPedido } from "@/lib/pedido";
 import { precioMenu } from "@/lib/tema";
@@ -88,17 +87,42 @@ export default function HojaPedido({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <ul className="space-y-4">
             {c.items.map((it) => (
-              <li key={it.producto.id} className="flex items-center gap-3">
+              <li key={it.id} className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{it.producto.nombre}</p>
+                  <p className="truncate text-sm font-medium">{nombreLinea(it)}</p>
                   <p className="vm-data text-xs" style={{ color: "var(--menu-texto-suave)" }}>
-                    {precioMenu(it.cantidad * it.producto.precio)}
+                    {precioMenu(it.cantidad * precioLinea(it))}
                   </p>
                 </div>
-                <BotonAgregar producto={it.producto} variante="stepper" />
+                <div
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full border px-1.5 py-1"
+                  style={{ borderColor: "var(--menu-primario)", color: "var(--menu-texto)" }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => c.fijarCantidad(it.id, it.cantidad - 1)}
+                    aria-label={`Quitar uno de ${it.producto.nombre}`}
+                    className="grid size-6 place-items-center rounded-full"
+                    style={{ color: "var(--menu-primario)" }}
+                  >
+                    <Minus className="size-4" aria-hidden />
+                  </button>
+                  <span className="min-w-4 text-center text-sm font-semibold tabular-nums">
+                    {it.cantidad}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => c.fijarCantidad(it.id, it.cantidad + 1)}
+                    aria-label={`Agregar otro ${it.producto.nombre}`}
+                    className="grid size-6 place-items-center rounded-full"
+                    style={{ color: "var(--menu-primario)" }}
+                  >
+                    <Plus className="size-4" aria-hidden />
+                  </button>
+                </div>
                 <button
                   type="button"
-                  onClick={() => c.quitar(it.producto.id)}
+                  onClick={() => c.quitar(it.id)}
                   aria-label={`Quitar ${it.producto.nombre} del pedido`}
                   style={{ color: "var(--menu-texto-suave)" }}
                 >

@@ -1,14 +1,14 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { Loader2 } from "lucide-react";
-import BarraPedido from "@/components/menu/BarraPedido";
+import BarraInferior from "@/components/menu/BarraInferior";
 import BotonPedidoTikTok from "@/components/menu/BotonPedidoTikTok";
-import ContactoMenu from "@/components/menu/ContactoMenu";
+import { filasContacto } from "@/components/menu/ContactoMenu";
 import EmbudoResenas from "@/components/menu/EmbudoResenas";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import LealtadMenu from "@/components/menu/LealtadMenu";
 import MarcaAgua from "@/components/menu/MarcaAgua";
 import MenuNoEncontrado from "@/components/menu/MenuNoEncontrado";
-import ReservarMenu from "@/components/menu/ReservarMenu";
+import { reservarHabilitado } from "@/components/menu/ReservarMenu";
 import Clasico from "@/components/formatos/Clasico";
 import Pinterest from "@/components/formatos/Pinterest";
 import Instagram from "@/components/formatos/Instagram";
@@ -188,6 +188,13 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
   );
   const pedidosOn = data.permitePedidosWhatsApp && numeroPedido !== null;
 
+  // Cuánto aire dejarle al final del contenido para que la franja fija de
+  // BarraInferior (pedido + acciones, apilados) no le tape la última fila.
+  const hayAcciones =
+    filasContacto(data.tenant, data.sucursalActiva).length > 0 ||
+    reservarHabilitado(data.sucursalActiva, data.sucursales, data.permiteReservaciones);
+  const espacioInferior = pedidosOn && hayAcciones ? "pb-40" : pedidosOn || hayAcciones ? "pb-24" : "";
+
   const propsFormato: PropsFormato = {
     categorias: data.categorias,
     logoUrl: data.tenant.logo_url,
@@ -232,8 +239,7 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
       habilitado={data.permiteAnaliticaPlatillo}
     >
       <CarritoWhatsAppProvider key={data.sucursalActiva?.id ?? "principal"} habilitado={pedidosOn}>
-        {/* pb-24: deja aire para que BarraPedido (fixed) no tape el final de ContactoMenu */}
-        <div className={cn(pedidosOn && "pb-24")}>
+        <div className={cn(espacioInferior)}>
           <HeaderMenu
             tenant={data.tenant}
             sucursales={data.sucursales}
@@ -254,17 +260,7 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
             <Formato {...propsFormato} />
           )}
 
-          <ContactoMenu tenant={data.tenant} sucursal={data.sucursalActiva} />
-
-          <ReservarMenu
-            sucursalActiva={data.sucursalActiva}
-            sucursales={data.sucursales}
-            habilitado={data.permiteReservaciones}
-          />
-
           <LealtadMenu tenantId={data.tenant.id} slug={data.tenant.slug} lealtad={data.lealtad} />
-
-          <BarraPedido tenant={data.tenant} sucursal={data.sucursalActiva} />
 
           <EmbudoResenas
             tenant={data.tenant}
@@ -274,6 +270,13 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
 
           {data.marcaAgua && <MarcaAgua />}
         </div>
+
+        <BarraInferior
+          tenant={data.tenant}
+          sucursal={data.sucursalActiva}
+          sucursales={data.sucursales}
+          permiteReservaciones={data.permiteReservaciones}
+        />
       </CarritoWhatsAppProvider>
     </AnaliticaProvider>
   );

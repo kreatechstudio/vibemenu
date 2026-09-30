@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { Check, Copy, Gift, Lock, QrCode, Stamp } from "lucide-react";
 import QRCode from "react-qr-code";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -18,6 +18,8 @@ import {
   type VistaTarjeta,
 } from "@/hooks/useAdminLealtad";
 import { codigoValido, normalizarCodigo } from "@/lib/lealtad";
+
+const routeApi = getRouteApi("/admin/lealtad");
 
 export default function Lealtad() {
   return (
@@ -122,6 +124,11 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
   const [activa, setActiva] = useState(ctx.tenant.lealtad_activa);
   const [meta, setMeta] = useState<number>(ctx.tenant.lealtad_sellos_meta ?? 6);
   const [premio, setPremio] = useState(ctx.tenant.lealtad_premio ?? "");
+  const [fase1Activa, setFase1Activa] = useState(ctx.tenant.lealtad_meta_fase1 != null);
+  const [metaFase1, setMetaFase1] = useState<number>(
+    ctx.tenant.lealtad_meta_fase1 ?? Math.max(1, Math.floor((ctx.tenant.lealtad_sellos_meta ?? 6) / 2)),
+  );
+  const [premioFase1, setPremioFase1] = useState(ctx.tenant.lealtad_premio_fase1 ?? "");
 
   const [codigo, setCodigo] = useState("");
   const [sucursalSel, setSucursalSel] = useState<string | null>(null);
@@ -143,9 +150,29 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
     return () => clearTimeout(t);
   }, [guardadoOk]);
 
+  // Llega del botón flotante de escaneo (fuera de esta página): un código ya
+  // leído por cámara. Lo consumimos, lo buscamos, y limpiamos el parámetro de
+  // la URL para que un refresh no repita la búsqueda.
+  const { codigo: codigoEscaneado } = routeApi.useSearch();
+  const navigate = routeApi.useNavigate();
+  useEffect(() => {
+    if (!codigoEscaneado) return;
+    const normalizado = normalizarCodigo(codigoEscaneado);
+    setCodigo(normalizado);
+    void navigate({ search: (prev) => ({ ...prev, codigo: undefined }), replace: true });
+    if (codigoValido(normalizado)) {
+      setTarjetaActiva(null);
+      sellar.reset();
+      canjear.reset();
+      buscar.mutate({ codigo: normalizado, sucursalId: null }, { onSuccess: setTarjetaActiva });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codigoEscaneado]);
+
   const multi = (sucursales?.length ?? 0) > 1;
   const sucursalEfectiva = multi ? (sucursalSel ?? sucursales?.[0]?.id ?? null) : null;
-  const premioListo = Boolean(meta && premio.trim());
+  const fase1Valida = !fase1Activa || (metaFase1 >= 1 && metaFase1 < meta && premioFase1.trim().length > 0);
+  const premioListo = Boolean(meta && premio.trim()) && fase1Valida;
   const errorAccion = buscar.error ?? sellar.error ?? canjear.error;
 
   return (
@@ -168,6 +195,8 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
                 lealtad_activa: activa,
                 lealtad_sellos_meta: meta,
                 lealtad_premio: premio.trim(),
+                lealtad_meta_fase1: fase1Activa ? metaFase1 : null,
+                lealtad_premio_fase1: fase1Activa ? premioFase1.trim() : null,
               },
               { onSuccess: () => setGuardadoOk(true) },
             );
@@ -196,6 +225,56 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
               className={`mt-1 block w-full max-w-sm ${INPUT}`}
             />
           </label>
+
+          <div className="rounded-lg border p-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={fase1Activa}
+                onChange={(e) => setFase1Activa(e.target.checked)}
+                className="size-4"
+              />
+              <span>Agregar un premio a la mitad (fase 1)</span>
+            </label>
+            <p className="mt-1 text-xs text-vm-body">
+              Un checkpoint que se canjea sin gastar los sellos — el cliente sigue acumulando hacia
+              el premio final.
+            </p>
+
+            {fase1Activa && (
+              <div className="mt-3 space-y-3">
+                <label className="block text-sm">
+                  <span className="text-vm-body">Sellos para el premio de fase 1</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={Math.max(1, meta - 1)}
+                    value={metaFase1}
+                    onChange={(e) => setMetaFase1(Number(e.target.value))}
+                    className={`mt-1 block w-24 ${INPUT}`}
+                  />
+                </label>
+
+                <label className="block text-sm">
+                  <span className="text-vm-body">Premio de fase 1</span>
+                  <input
+                    type="text"
+                    maxLength={80}
+                    value={premioFase1}
+                    onChange={(e) => setPremioFase1(e.target.value)}
+                    placeholder="Una galleta gratis"
+                    className={`mt-1 block w-full max-w-sm ${INPUT}`}
+                  />
+                </label>
+
+                {metaFase1 >= meta && (
+                  <p className="text-xs text-vm-danger">
+                    Debe ser menor a los sellos del premio final ({meta}).
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -300,6 +379,12 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
               {tarjetaActiva.premiosCanjeados === 1 ? "premio canjeado" : "premios canjeados"}
             </p>
             <p className="mt-0.5 text-xs text-vm-body">Premio: {tarjetaActiva.premio}</p>
+            {tarjetaActiva.premioFase1 && (
+              <p className="mt-0.5 text-xs text-vm-body">
+                Fase 1 ({tarjetaActiva.sellosMetaFase1} sellos): {tarjetaActiva.premioFase1}
+                {tarjetaActiva.fase1CanjeadaCiclo && " · ya canjeada este ciclo"}
+              </p>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
@@ -316,18 +401,34 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
                 <Stamp className="size-4" aria-hidden />
                 {tarjetaActiva.selloRepetidoHoy ? "Ya recibió su sello de hoy" : "Sellar"}
               </button>
+              {tarjetaActiva.premioFase1 && (
+                <button
+                  type="button"
+                  disabled={!tarjetaActiva.listoParaCanjeFase1 || canjear.isPending}
+                  onClick={() =>
+                    canjear.mutate(
+                      { codigo: tarjetaActiva.codigo, sucursalId: sucursalEfectiva, fase: "fase1" },
+                      { onSuccess: setTarjetaActiva },
+                    )
+                  }
+                  className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-4 text-sm font-medium text-vm-ink disabled:opacity-50"
+                >
+                  <Gift className="size-4" aria-hidden />
+                  {tarjetaActiva.fase1CanjeadaCiclo ? "Fase 1 ya canjeada" : "Canjear fase 1"}
+                </button>
+              )}
               <button
                 type="button"
                 disabled={!tarjetaActiva.listoParaCanje || canjear.isPending}
                 onClick={() =>
                   canjear.mutate(
-                    { codigo: tarjetaActiva.codigo, sucursalId: sucursalEfectiva },
+                    { codigo: tarjetaActiva.codigo, sucursalId: sucursalEfectiva, fase: "final" },
                     { onSuccess: setTarjetaActiva },
                   )
                 }
                 className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-4 text-sm font-medium text-vm-ink disabled:opacity-50"
               >
-                <Gift className="size-4" aria-hidden /> Canjear premio
+                <Gift className="size-4" aria-hidden /> Canjear premio final
               </button>
             </div>
           </div>
@@ -460,7 +561,13 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
                     <td className="py-2 pr-4 text-vm-body">
                       {new Date(m.creado_at).toLocaleString("es-MX")}
                     </td>
-                    <td className="py-2 pr-4">{m.tipo === "canje" ? "Canje" : "Sello"}</td>
+                    <td className="py-2 pr-4">
+                      {m.tipo === "canje"
+                        ? "Canje"
+                        : m.tipo === "canje_fase1"
+                          ? "Canje fase 1"
+                          : "Sello"}
+                    </td>
                     <td className="py-2 pr-4 font-mono">{m.tarjeta?.codigo ?? "—"}</td>
                     <td className="py-2 pr-4">{m.sucursal?.nombre ?? "General"}</td>
                     <td className="py-2 text-vm-body">{nombreEncargado(m.encargado_id)}</td>

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { Check, Copy, Download, Loader2, Lock } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -127,7 +127,14 @@ function Contenido() {
   const { tour } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
 
-  useIniciarTour(Boolean(tour), sucursales !== undefined, PASOS_TOUR_QR, navigate);
+  useIniciarTour("qr", Boolean(tour), sucursales !== undefined, PASOS_TOUR_QR, navigate);
+
+  // Con una sola sucursal, el link "general" solo la redirige a ella de
+  // cualquier forma (ver $slug.index.tsx) — mejor default directo a la
+  // sucursal real. Con 2+ o 0, se queda en "Menú general" como antes.
+  useEffect(() => {
+    if (sucursales && sucursales.length === 1) setSucursalId(sucursales[0].id);
+  }, [sucursales]);
 
   if (!ctx) return null;
 

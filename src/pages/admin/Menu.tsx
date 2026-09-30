@@ -192,6 +192,7 @@ function Contenido() {
   }, [idsVisibles, seleccionada]);
 
   useIniciarTour(
+    "carta",
     Boolean(tour),
     categorias !== undefined && productos !== undefined,
     PASOS_TOUR_CARTA,

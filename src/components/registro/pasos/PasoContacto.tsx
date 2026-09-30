@@ -55,11 +55,11 @@ export default function PasoContacto({ tenantId, onContinuar }: PasoContactoProp
               aria-label="Lada de teléfono"
               value={ladaTelefono}
               onChange={(e) => setLadaTelefono(e.target.value)}
-              className="h-12 rounded-lg border bg-white px-2 text-sm text-vm-ink outline-none focus:border-vm-primary"
+              className="vm-data h-12 w-[4.5rem] shrink-0 truncate rounded-lg border bg-white px-2 text-sm text-vm-ink outline-none focus:border-vm-primary sm:w-24"
             >
               {PAISES_LADA.map((p) => (
                 <option key={p.pais} value={p.lada}>
-                  {p.pais} ({p.lada})
+                  {p.lada} {p.pais}
                 </option>
               ))}
             </select>
@@ -70,7 +70,7 @@ export default function PasoContacto({ tenantId, onContinuar }: PasoContactoProp
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
               placeholder="55 1234 5678"
-              className="h-12 flex-1 rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+              className="h-12 min-w-0 flex-1 rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
             />
           </div>
         </div>
@@ -84,11 +84,11 @@ export default function PasoContacto({ tenantId, onContinuar }: PasoContactoProp
               aria-label="Lada de WhatsApp"
               value={ladaWhatsapp}
               onChange={(e) => setLadaWhatsapp(e.target.value)}
-              className="h-12 rounded-lg border bg-white px-2 text-sm text-vm-ink outline-none focus:border-vm-primary"
+              className="vm-data h-12 w-[4.5rem] shrink-0 truncate rounded-lg border bg-white px-2 text-sm text-vm-ink outline-none focus:border-vm-primary sm:w-24"
             >
               {PAISES_LADA.map((p) => (
                 <option key={p.pais} value={p.lada}>
-                  {p.pais} ({p.lada})
+                  {p.lada} {p.pais}
                 </option>
               ))}
             </select>
@@ -99,7 +99,7 @@ export default function PasoContacto({ tenantId, onContinuar }: PasoContactoProp
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               placeholder="55 1234 5678"
-              className="h-12 flex-1 rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
+              className="h-12 min-w-0 flex-1 rounded-lg border px-4 text-sm outline-none focus:border-vm-primary focus:ring-2 focus:ring-vm-primary/20"
             />
           </div>
         </div>

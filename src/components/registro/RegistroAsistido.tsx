@@ -5,21 +5,39 @@ import { MailCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useSesion } from "@/hooks/useSesion";
 import { useTenantActual } from "@/hooks/useTenantActual";
+import {
+  guardarProgresoWizard,
+  leerProgresoWizard,
+  limpiarProgresoWizard,
+} from "@/lib/registro";
 import PasoCuenta from "@/components/registro/pasos/PasoCuenta";
 import PasoBienvenida from "@/components/registro/pasos/PasoBienvenida";
 import PasoNegocio from "@/components/registro/pasos/PasoNegocio";
 import PasoContacto from "@/components/registro/pasos/PasoContacto";
+import PasoSucursal from "@/components/registro/pasos/PasoSucursal";
 import PasoLogo from "@/components/registro/pasos/PasoLogo";
 import PasoMetricas from "@/components/registro/pasos/PasoMetricas";
 import PasoFelicidades from "@/components/registro/pasos/PasoFelicidades";
 
-type Paso = "cuenta" | "bienvenida" | "negocio" | "contacto" | "logo" | "metricas" | "felicidades";
+type Paso =
+  | "cuenta"
+  | "bienvenida"
+  | "negocio"
+  | "contacto"
+  | "sucursal"
+  | "logo"
+  | "metricas"
+  | "felicidades";
 
+const PASOS_CON_TENANT: Paso[] = ["contacto", "sucursal", "logo", "metricas"];
+
+const TOTAL_PASOS = 5;
 const PROGRESO: Partial<Record<Paso, number>> = {
   negocio: 1,
   contacto: 2,
-  logo: 3,
-  metricas: 4,
+  sucursal: 3,
+  logo: 4,
+  metricas: 5,
 };
 
 function Cargando() {
@@ -36,19 +54,57 @@ export default function RegistroAsistido() {
   const [correoConfirmacion, setCorreoConfirmacion] = useState<string | null>(null);
   const [reenviado, setReenviado] = useState(false);
 
-  // Con sesión ya puesta (OAuth, o una recarga después de crear la cuenta) el
-  // wizard arranca en Bienvenida — el copy de ahí ("Tu cuenta ya está lista")
-  // solo tiene sentido si ya hay sesión. Sin sesión, arranca en Cuenta.
+  // Decide dónde arranca, UNA vez que sabemos si hay sesión y si el tenant
+  // actual ya existe. Va antes que el guard de abajo a propósito: mientras
+  // `paso` siga null, `Cargando` se muestra y el guard nunca llega a evaluar
+  // con datos a medias.
   useEffect(() => {
-    if (cargandoSesion || paso !== null) return;
-    setPaso(user ? "bienvenida" : "cuenta");
-  }, [cargandoSesion, user, paso]);
+    if (cargandoSesion || cargandoTenant || paso !== null) return;
+
+    if (!user) {
+      setPaso("cuenta");
+      return;
+    }
+
+    // Progreso guardado de una sesión anterior del wizard (mismo usuario, el
+    // tenant que se estaba armando sigue coincidiendo con el que ve el server,
+    // o el server todavía no lo ve porque el trigger que crea tenant_usuarios
+    // corrió pero la consulta no había refrescado). Sin esto, refrescar en
+    // Contacto/Sucursal/Logo/Métricas expulsaba a /admin a medio armar.
+    const guardado = leerProgresoWizard();
+    if (
+      guardado &&
+      guardado.userId === user.id &&
+      guardado.paso !== "felicidades" &&
+      (!ctx || ctx.tenant.id === guardado.tenantId)
+    ) {
+      setTenantId(guardado.tenantId);
+      setNombreNegocio(guardado.nombreNegocio);
+      setPaso(guardado.paso as Paso);
+      return;
+    }
+
+    setPaso("bienvenida");
+  }, [cargandoSesion, cargandoTenant, user, ctx, paso]);
+
+  // Mantiene el progreso al día en cada paso, para que un refresh a medio
+  // camino retome justo aquí en vez de mandar a /admin (ver efecto de arriba).
+  useEffect(() => {
+    if (!tenantId || !paso || !user) return;
+    if (paso === "felicidades") {
+      limpiarProgresoWizard();
+      return;
+    }
+    if (PASOS_CON_TENANT.includes(paso)) {
+      guardarProgresoWizard({ userId: user.id, tenantId, paso, nombreNegocio });
+    }
+  }, [tenantId, paso, nombreNegocio, user]);
 
   // Solo redirige si el tenant ya existía ANTES de esta sesión del wizard
-  // (p.ej. OAuth con tenant previo). Una vez que PasoNegocio crea el tenant
-  // localmente (tenantId), cualquier tenant que aparezca en la cache es obra
-  // de este mismo wizard — no debe expulsar al usuario a mitad de flujo.
-  if (!tenantId && !cargandoTenant && ctx) return <Navigate to="/admin" />;
+  // (p.ej. OAuth con tenant previo, o esta pestaña nunca lo creó ni lo retomó).
+  // Al llegar aquí, `paso` ya no es null: el efecto de arriba ya tuvo su
+  // oportunidad de restaurar `tenantId` desde el progreso guardado.
+  if (!tenantId && ctx) return <Navigate to="/admin" />;
 
   if (correoConfirmacion) {
     return (
@@ -96,12 +152,14 @@ export default function RegistroAsistido() {
         <div className="mb-4">
           <div className="flex items-center justify-between text-xs font-medium text-vm-body">
             <span>Vibemenu</span>
-            <span>Paso {progreso} de 4</span>
+            <span>
+              Paso {progreso} de {TOTAL_PASOS}
+            </span>
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-vm-bg-soft">
             <div
               className="h-full rounded-full bg-vm-primary transition-all duration-300"
-              style={{ width: `${(progreso / 4) * 100}%` }}
+              style={{ width: `${(progreso / TOTAL_PASOS) * 100}%` }}
             />
           </div>
         </div>
@@ -137,7 +195,11 @@ export default function RegistroAsistido() {
           )}
 
           {paso === "contacto" && tenantId && (
-            <PasoContacto tenantId={tenantId} onContinuar={() => setPaso("logo")} />
+            <PasoContacto tenantId={tenantId} onContinuar={() => setPaso("sucursal")} />
+          )}
+
+          {paso === "sucursal" && tenantId && (
+            <PasoSucursal tenantId={tenantId} onContinuar={() => setPaso("logo")} />
           )}
 
           {paso === "logo" && tenantId && (

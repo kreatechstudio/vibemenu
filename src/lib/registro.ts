@@ -87,6 +87,46 @@ export async function asegurarTenantDelUsuario(userId: string): Promise<boolean>
  * necesite para funcionar. Si `respuestas` viene vacío (el usuario omitió las
  * 3 preguntas), no inserta nada.
  */
+/**
+ * Progreso del wizard después de creado el tenant (paso "negocio"). A partir de
+ * ahí el tenant ya existe en la BD, así que un refresh donde `tenantId` viva
+ * solo en memoria haría que `RegistroAsistido` lo mandara a /admin a medias —
+ * esto es lo que le permite retomar exactamente donde iba.
+ *
+ * Lleva `userId` para no restaurar el progreso de otra cuenta que haya
+ * empezado el wizard antes en el mismo navegador.
+ */
+export type ProgresoWizard = {
+  userId: string;
+  tenantId: string;
+  paso: string;
+  nombreNegocio: string;
+};
+
+const CLAVE_PROGRESO = "vm:wizard-progreso";
+
+export function guardarProgresoWizard(p: ProgresoWizard) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(CLAVE_PROGRESO, JSON.stringify(p));
+}
+
+export function leerProgresoWizard(): ProgresoWizard | null {
+  if (typeof window === "undefined") return null;
+  const crudo = window.localStorage.getItem(CLAVE_PROGRESO);
+  if (!crudo) return null;
+  try {
+    return JSON.parse(crudo) as ProgresoWizard;
+  } catch {
+    window.localStorage.removeItem(CLAVE_PROGRESO);
+    return null;
+  }
+}
+
+export function limpiarProgresoWizard() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(CLAVE_PROGRESO);
+}
+
 export async function guardarRespuestasOnboarding(
   tenantId: string,
   respuestas: Record<string, string>,

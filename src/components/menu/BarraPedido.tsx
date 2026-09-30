@@ -9,9 +9,12 @@ import { precioMenu } from "@/lib/tema";
 import type { Sucursal, Tenant } from "@/types/database";
 
 /**
- * Barra fija al fondo con el resumen del pedido. Solo aparece si el carrito está
- * habilitado y tiene al menos un ítem — por eso nunca coincide con el aviso del
- * embudo (#2), que espera a que el carrito esté vacío. Dueña del sheet.
+ * Resumen del pedido. Solo aparece si el carrito está habilitado y tiene al
+ * menos un ítem — por eso nunca coincide con el aviso del embudo (#2), que
+ * espera a que el carrito esté vacío. Dueña del sheet.
+ *
+ * Sin posicionamiento propio: la fija al fondo `BarraInferior`, que también
+ * apila debajo la franja de contacto/reservar para que nunca se encimen.
  */
 export default function BarraPedido({
   tenant,
@@ -38,7 +41,7 @@ export default function BarraPedido({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             transition={{ duration: 0.28 }}
-            className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md p-3"
+            className="mx-auto w-full max-w-md p-3"
           >
             <button
               type="button"

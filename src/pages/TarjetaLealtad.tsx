@@ -180,6 +180,16 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
             : `Te faltan ${prog.faltan} para tu ${data.premio}.`}
         </p>
 
+        {data.premioFase1 && data.sellosMetaFase1 != null && (
+          <p className="mt-1 text-sm" style={{ color: SUAVE }}>
+            {data.fase1CanjeadaCiclo
+              ? `Ya enseñaste tu tarjeta para ${data.premioFase1}.`
+              : data.sellos >= data.sellosMetaFase1
+                ? `También puedes enseñarla ya para tu ${data.premioFase1}.`
+                : `A los ${data.sellosMetaFase1} sellos: ${data.premioFase1}.`}
+          </p>
+        )}
+
         <div className="mt-10 text-center">
           <p className="text-xs" style={{ color: SUAVE }}>
             Enséñale esto al mesero
@@ -364,6 +374,12 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
         {/* Cómo funciona */}
         <div className="mt-8 space-y-1 text-xs" style={{ color: SUAVE }}>
           <p>Junta 1 sello por visita (máximo 1 al día).</p>
+          {data.premioFase1 && data.sellosMetaFase1 != null && (
+            <p>
+              Al llegar a {data.sellosMetaFase1} sellos, enseña tu tarjeta para tu{" "}
+              {data.premioFase1}.
+            </p>
+          )}
           <p>
             Al llegar a {data.sellosMeta} sellos, enseña tu tarjeta para tu {data.premio}.
           </p>

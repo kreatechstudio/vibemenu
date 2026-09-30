@@ -10,6 +10,7 @@ import {
   QrCode,
   UtensilsCrossed,
 } from "lucide-react";
+import BotonEscanerLealtad from "@/components/admin/BotonEscanerLealtad";
 import BannerFacturacion from "@/components/layout/BannerFacturacion";
 import PanelBloqueado from "@/components/layout/PanelBloqueado";
 import TutorialAyuda from "@/components/layout/TutorialAyuda";
@@ -305,6 +306,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         <main className="min-w-0 flex-1 p-4 pb-24 md:p-8 md:pb-24 lg:pb-8">{children}</main>
       </div>
+
+      {ctx.tenant.lealtad_activa && <BotonEscanerLealtad />}
 
       <BarraInferior />
     </div>

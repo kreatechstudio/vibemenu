@@ -13,7 +13,8 @@ export function totalPedido(lineas: LineaPedido[]): number {
 
 /**
  * Texto del pedido para `wa.me` (sin URL-encode — eso lo hace `enlaceWhatsApp`).
- * Sin modificadores en v1. La nota va al final solo si trae contenido tras `trim`.
+ * Los modificadores elegidos van ya incluidos en `nombre` (ver `nombreLinea` en
+ * `carrito.ts`). La nota va al final solo si trae contenido tras `trim`.
  */
 export function construirMensajePedido(params: {
   negocio: string;

@@ -43,20 +43,42 @@ export function crearTour(pasos: PasoTour[]) {
 }
 
 /**
- * Función `navigate` de `routeApi.useNavigate()`. Las tres páginas que usan
+ * Función `navigate` de `routeApi.useNavigate()`. Las páginas que usan
  * `useIniciarTour` traen cada una su propio tipo (distinto por la ruta de
  * origen), pero todas aceptan `{ search, replace }` — se tipa laxo a
- * propósito para aceptar las tres sin fricción de generics de TanStack Router.
+ * propósito para aceptar todas sin fricción de generics de TanStack Router.
  */
 type NavegarTour = (opciones: { search: Record<string, never>; replace: boolean }) => unknown;
 
+const CLAVE_TOUR_VISTO = (seccion: string) => `vm:tour-visto:${seccion}`;
+
+function tourVisto(seccion: string): boolean {
+  try {
+    return window.localStorage.getItem(CLAVE_TOUR_VISTO(seccion)) === "1";
+  } catch {
+    return true; // Safari privado / storage bloqueado: mejor no insistir en cada visita.
+  }
+}
+
+function marcarTourVisto(seccion: string): void {
+  try {
+    window.localStorage.setItem(CLAVE_TOUR_VISTO(seccion), "1");
+  } catch {
+    /* Safari privado */
+  }
+}
+
 /**
- * Arranca un tour guiado una sola vez, cuando el flag `?tour=1` está activo
- * Y los datos propios de la página ya están listos (evita que driver.js
- * busque un `data-tour` que el primer render, con las queries todavía en
- * curso, aún no puso en el DOM). El `useRef` asegura que arranca una sola
- * vez — a salvo de StrictMode y de que `activo`/`listo`/`navigate` cambien
- * de referencia entre renders.
+ * Arranca un tour guiado, una sola vez por montaje, en dos casos: el flag
+ * `?tour=1` está activo (botón "Ver tour" del "?" de ayuda — siempre lo
+ * vuelve a mostrar, lo haya visto o no), o es la primera vez que este
+ * navegador entra a `seccion` (se guarda en localStorage, por sección, para
+ * no repetirlo después). En ambos casos espera a que `listo` sea true, para
+ * que driver.js no busque un `data-tour` que el primer render, con las
+ * queries todavía en curso, aún no puso en el DOM.
+ *
+ * El `useRef` asegura que arranca una sola vez — a salvo de StrictMode y de
+ * que `activo`/`listo`/`navigate` cambien de referencia entre renders.
  *
  * La creación del tour y el `.drive()` van separados: el tour se crea (y se
  * guarda para poder destruirlo) apenas se cumplen las condiciones, pero
@@ -67,6 +89,7 @@ type NavegarTour = (opciones: { search: Record<string, never>; replace: boolean 
  * fuera de la página.
  */
 export function useIniciarTour(
+  seccion: string,
   activo: boolean,
   listo: boolean,
   pasos: PasoTour[],
@@ -77,16 +100,20 @@ export function useIniciarTour(
   const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!activo || !listo || iniciado.current) return;
+    if (!listo || iniciado.current) return;
+    const primeraVez = !tourVisto(seccion);
+    if (!activo && !primeraVez) return;
+
     iniciado.current = true;
+    marcarTourVisto(seccion);
 
     frameRef.current = requestAnimationFrame(() => {
       const tour = crearTour(pasos);
       instanciaRef.current = tour;
       tour.drive();
     });
-    void navigate({ search: {}, replace: true });
-  }, [activo, listo, pasos, navigate]);
+    if (activo) void navigate({ search: {}, replace: true });
+  }, [seccion, activo, listo, pasos, navigate]);
 
   // Efecto aparte, solo de desmontaje: si estuviera en el mismo efecto de
   // arriba, React dispararía este cleanup en cuanto `activo` cambiara a

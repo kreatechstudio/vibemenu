@@ -6,15 +6,36 @@ import {
   cantidadTotal,
   fijarCantidad,
   lineasDePedido,
+  precioLinea,
   quitarProducto,
   type ItemCarrito,
 } from "@/lib/carrito";
 
-const prod = (id: string, nombre: string, precio: number) =>
-  ({ id, nombre, precio, grupos: [] }) as unknown as ProductoConModificadores;
+const prod = (id: string, nombre: string, precio: number, grupos: unknown[] = []) =>
+  ({ id, nombre, precio, grupos }) as unknown as ProductoConModificadores;
 
 const cafe = prod("p1", "Cappuccino", 180);
 const pan = prod("p2", "Concha", 45);
+
+const tortilla = {
+  id: "g-tortilla",
+  nombre: "Tortilla",
+  tipo_seleccion: "unica",
+  opciones: [
+    { id: "o-maiz", nombre: "Maíz", precio_extra: 0 },
+    { id: "o-harina", nombre: "Harina", precio_extra: 4 },
+  ],
+};
+const extras = {
+  id: "g-extras",
+  nombre: "Extras",
+  tipo_seleccion: "multiple",
+  opciones: [
+    { id: "o-queso", nombre: "Queso", precio_extra: 12 },
+    { id: "o-aguacate", nombre: "Aguacate", precio_extra: 15 },
+  ],
+};
+const taco = prod("p3", "Taco", 28, [tortilla, extras]);
 
 describe("carrito", () => {
   test("agregar dos veces el mismo producto => una linea, cantidad 2, orden preservado", () => {
@@ -61,5 +82,44 @@ describe("carrito", () => {
       { nombre: "Cappuccino", cantidad: 2, precioUnitario: 180 },
       { nombre: "Concha", cantidad: 1, precioUnitario: 45 },
     ]);
+  });
+
+  test("mismo producto con selecciones distintas => lineas separadas", () => {
+    let items: ItemCarrito[] = [];
+    items = agregarProducto(items, taco, { "g-tortilla": ["o-maiz"] });
+    items = agregarProducto(items, taco, { "g-tortilla": ["o-harina"] });
+    items = agregarProducto(items, taco, { "g-tortilla": ["o-maiz"] });
+    expect(items).toHaveLength(2);
+    expect(cantidadDe(items, "p3")).toBe(3);
+    expect(items[0].cantidad).toBe(2);
+    expect(items[1].cantidad).toBe(1);
+  });
+
+  test("precioLinea suma el extra de las opciones elegidas", () => {
+    const items = agregarProducto([], taco, {
+      "g-tortilla": ["o-harina"],
+      "g-extras": ["o-queso", "o-aguacate"],
+    });
+    expect(precioLinea(items[0])).toBe(28 + 4 + 12 + 15);
+  });
+
+  test("lineasDePedido agrega los nombres elegidos entre parentesis", () => {
+    const items = agregarProducto([], taco, {
+      "g-tortilla": ["o-harina"],
+      "g-extras": ["o-queso"],
+    });
+    expect(lineasDePedido(items)).toEqual([
+      { nombre: "Taco (Harina, Queso)", cantidad: 1, precioUnitario: 28 + 4 + 12 },
+    ]);
+  });
+
+  test("fijarCantidad e quitarProducto usan el id de la linea, no el del producto", () => {
+    let items = agregarProducto([], taco, { "g-tortilla": ["o-maiz"] });
+    const id = items[0].id;
+    expect(id).not.toBe("p3");
+    items = fijarCantidad(items, id, 3);
+    expect(items[0].cantidad).toBe(3);
+    items = quitarProducto(items, id);
+    expect(items).toEqual([]);
   });
 });

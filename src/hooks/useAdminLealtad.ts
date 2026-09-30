@@ -8,8 +8,12 @@ export type VistaTarjeta = {
   sellos: number;
   sellosMeta: number;
   premio: string;
+  sellosMetaFase1: number | null;
+  premioFase1: string | null;
+  fase1CanjeadaCiclo: boolean;
   premiosCanjeados: number;
   listoParaCanje: boolean;
+  listoParaCanjeFase1: boolean;
   selloRepetidoHoy: boolean;
 };
 
@@ -18,8 +22,12 @@ const mapVista = (f: Record<string, unknown>): VistaTarjeta => ({
   sellos: f.sellos as number,
   sellosMeta: f.sellos_meta as number,
   premio: f.premio as string,
+  sellosMetaFase1: (f.sellos_meta_fase1 as number | null) ?? null,
+  premioFase1: (f.premio_fase1 as string | null) ?? null,
+  fase1CanjeadaCiclo: f.fase1_canjeada_ciclo as boolean,
   premiosCanjeados: f.premios_canjeados as number,
   listoParaCanje: f.listo_para_canje as boolean,
+  listoParaCanjeFase1: f.listo_para_canje_fase1 as boolean,
   selloRepetidoHoy: f.sello_repetido_hoy as boolean,
 });
 
@@ -66,10 +74,15 @@ export function useSellar(tenantId: string | undefined) {
 export function useCanjear(tenantId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { codigo: string; sucursalId: string | null }): Promise<VistaTarjeta> => {
+    mutationFn: async (v: {
+      codigo: string;
+      sucursalId: string | null;
+      fase?: "fase1" | "final";
+    }): Promise<VistaTarjeta> => {
       const { data, error } = await supabase.rpc("canjear_premio", {
         p_codigo: v.codigo,
         p_sucursal_id: v.sucursalId ?? undefined,
+        p_fase: v.fase ?? "final",
       });
       if (error) throw new Error(traducirError(error).mensaje);
       return mapVista(primera(data)!);

@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHost } from "@tanstack/react-start/server";
 import Index from "@/pages/Index";
 import MenuPublico from "@/pages/MenuPublico";
+import SeleccionarSucursal from "@/pages/SeleccionarSucursal";
 import {
   obtenerMenuPublicoPorDominio,
   type MenuPublico as DatosMenu,
@@ -38,7 +39,20 @@ export const Route = createFileRoute("/")({
   loader: async (): Promise<DatosMenu | null> => {
     const host = obtenerHost().replace(/:\d+$/, "").toLowerCase();
     if (esDominioPrincipal(host)) return null;
-    return obtenerMenuPublicoPorDominio(host);
+    const menu = await obtenerMenuPublicoPorDominio(host);
+    if (!menu) return null;
+
+    // Mismo criterio que /$slug/: con una sola sucursal, directo a ella
+    // (misma lógica que $slug.index.tsx, pero aquí el dominio ya fija el
+    // tenant, así que solo hace falta el slug de la sucursal en la ruta).
+    if (menu.sucursales.length === 1) {
+      throw redirect({
+        to: "/sucursal/$sucursalSlug",
+        params: { sucursalSlug: menu.sucursales[0].slug },
+      });
+    }
+
+    return menu;
   },
   // Sin esto, un menu servido en dominio propio compartiria en WhatsApp/Instagram
   // el titulo e imagen genericos de Vibemenu en vez de los del negocio.
@@ -60,5 +74,6 @@ function RouteComponent() {
   // Sin match: no es un error del dominio, tal vez el DNS aun no propaga o el
   // dueno todavia no configura nada. Se cae al landing en vez de un 404 feo.
   if (!menu) return <Index />;
+  if (menu.sucursales.length > 1) return <SeleccionarSucursal menu={menu} dominioPersonalizado />;
   return <MenuPublico slug={menu.tenant.slug} inicial={menu} />;
 }

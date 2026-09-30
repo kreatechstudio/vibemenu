@@ -2,7 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { GrupoModificador, OpcionModificador, TipoSeleccion } from "@/types/database";
 
-export type GrupoConOpciones = GrupoModificador & { opciones: OpcionModificador[] };
+export type GrupoConOpciones = GrupoModificador & {
+  opciones: OpcionModificador[];
+  /** Categorías a las que se etiquetó este grupo. Vacío = visible para todas. */
+  categoriaIds: string[];
+};
 
 export type BorradorGrupo = {
   nombre: string;
@@ -25,13 +29,16 @@ export function useGrupos(tenantId: string | undefined) {
     queryFn: async (): Promise<GrupoConOpciones[]> => {
       const { data, error } = await supabase
         .from("grupos_modificadores")
-        .select("*, opciones:opciones_modificador(*)")
+        .select(
+          "*, opciones:opciones_modificador(*), categorias:categoria_modificadores(categoria_id)",
+        )
         .eq("tenant_id", tenantId!)
         .order("orden");
       if (error) throw error;
       return data.map((g) => ({
         ...g,
         opciones: [...g.opciones].sort((a, b) => a.orden - b.orden),
+        categoriaIds: g.categorias.map((c) => c.categoria_id),
       }));
     },
   });
@@ -45,22 +52,94 @@ function useInvalidarGrupos(tenantId: string | undefined) {
   };
 }
 
+/**
+ * Reescribe las categorías etiquetadas de un grupo: borra las que sobran e
+ * inserta las nuevas. Mismo patrón que `sincronizarModificadores`.
+ */
+async function sincronizarCategoriasDeGrupo(grupoId: string, categoriaIds: string[]) {
+  const { data: actuales, error: errorLectura } = await supabase
+    .from("categoria_modificadores")
+    .select("categoria_id")
+    .eq("grupo_id", grupoId);
+  if (errorLectura) throw errorLectura;
+
+  const antes = new Set(actuales.map((f) => f.categoria_id));
+  const despues = new Set(categoriaIds);
+
+  const aBorrar = [...antes].filter((c) => !despues.has(c));
+  const aInsertar = [...despues].filter((c) => !antes.has(c));
+
+  if (aBorrar.length) {
+    const { error } = await supabase
+      .from("categoria_modificadores")
+      .delete()
+      .eq("grupo_id", grupoId)
+      .in("categoria_id", aBorrar);
+    if (error) throw error;
+  }
+
+  if (aInsertar.length) {
+    const { error } = await supabase
+      .from("categoria_modificadores")
+      .insert(aInsertar.map((categoria_id) => ({ categoria_id, grupo_id: grupoId })));
+    if (error) throw error;
+  }
+}
+
 export function useGuardarGrupo(tenantId: string | undefined) {
   const invalidar = useInvalidarGrupos(tenantId);
   return useMutation({
-    mutationFn: async ({ id, datos }: { id?: string; datos: BorradorGrupo }) => {
-      if (id) {
-        const { error } = await supabase.from("grupos_modificadores").update(datos).eq("id", id);
+    mutationFn: async ({
+      id,
+      datos,
+      categoriaIds,
+    }: {
+      id?: string;
+      datos: BorradorGrupo;
+      /** `undefined` = no tocar las categorías etiquetadas. */
+      categoriaIds?: string[];
+    }) => {
+      let grupoId = id;
+      if (grupoId) {
+        const { error } = await supabase
+          .from("grupos_modificadores")
+          .update(datos)
+          .eq("id", grupoId);
         if (error) throw error;
-        return id;
+      } else {
+        const { data, error } = await supabase
+          .from("grupos_modificadores")
+          .insert({ ...datos, tenant_id: tenantId! })
+          .select("id")
+          .single();
+        if (error) throw error;
+        grupoId = data.id;
       }
-      const { data, error } = await supabase
-        .from("grupos_modificadores")
-        .insert({ ...datos, tenant_id: tenantId! })
-        .select("id")
-        .single();
+
+      if (categoriaIds !== undefined) await sincronizarCategoriasDeGrupo(grupoId, categoriaIds);
+      return grupoId;
+    },
+    onSuccess: invalidar,
+  });
+}
+
+export function useGuardarOpcion(tenantId: string | undefined) {
+  const invalidar = useInvalidarGrupos(tenantId);
+  return useMutation({
+    mutationFn: async ({
+      id,
+      nombre,
+      precio_extra,
+    }: {
+      id: string;
+      nombre: string;
+      precio_extra: number;
+    }) => {
+      const { error } = await supabase
+        .from("opciones_modificador")
+        .update({ nombre, precio_extra })
+        .eq("id", id);
       if (error) throw error;
-      return data.id;
     },
     onSuccess: invalidar,
   });

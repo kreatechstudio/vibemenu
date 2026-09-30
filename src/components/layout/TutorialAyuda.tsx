@@ -31,26 +31,29 @@ const ICONOS = [LayoutDashboard, UtensilsCrossed, Building2, Palette, QrCode];
  * 3 de las 5 secciones (Mi carta, Diseño, QR — índices 1, 3, 4) además
  * arrancan un recorrido guiado (driver.js) sobre la página real: navega ahí
  * con `?tour=1` y la propia página lo arranca (ver PASOS_TOUR_* en cada
- * página). Resumen y Mi negocio (0, 2) se quedan sin esa opción — son de
- * solo-lectura/datos, no de crear-editar-personalizar.
+ * página, y `useIniciarTour` en lib/tour.ts). Ese mismo tour ya se dispara
+ * solo la primera vez que alguien entra a la sección — este botón es solo
+ * para volver a verlo cuando se quiera. Resumen y Mi negocio (0, 2) se quedan
+ * sin esa opción — son de solo-lectura/datos, no de crear-editar-personalizar.
+ * "Mi carta" trae dos: el tour de productos y el de modificadores, que vive
+ * en una pestaña aparte dentro de la misma sección.
  */
 export default function TutorialAyuda() {
   const [abierto, setAbierto] = useState(false);
   const navigate = useNavigate();
 
-  const accionesTour: Partial<Record<number, () => void>> = {
-    1: () => {
-      setAbierto(false);
-      void navigate({ to: "/admin/menu", search: { tour: true } });
-    },
-    3: () => {
-      setAbierto(false);
-      void navigate({ to: "/admin/diseno", search: { tour: true } });
-    },
-    4: () => {
-      setAbierto(false);
-      void navigate({ to: "/admin/qr", search: { tour: true } });
-    },
+  const irA = (to: string) => {
+    setAbierto(false);
+    void navigate({ to, search: { tour: true } });
+  };
+
+  const accionesTour: Partial<Record<number, { etiqueta: string; accion: () => void }[]>> = {
+    1: [
+      { etiqueta: "Ver tour de productos", accion: () => irA("/admin/menu") },
+      { etiqueta: "Ver tour de modificadores", accion: () => irA("/admin/modificadores") },
+    ],
+    3: [{ etiqueta: "Ver tour", accion: () => irA("/admin/diseno") }],
+    4: [{ etiqueta: "Ver tour", accion: () => irA("/admin/qr") }],
   };
 
   return (
@@ -89,7 +92,7 @@ export default function TutorialAyuda() {
               <ul className="space-y-4">
                 {TUTORIAL.secciones.map((seccion, i) => {
                   const Icono = ICONOS[i];
-                  const iniciarTour = accionesTour[i];
+                  const tours = accionesTour[i];
 
                   const contenido = (
                     <>
@@ -103,7 +106,7 @@ export default function TutorialAyuda() {
                     </>
                   );
 
-                  if (!iniciarTour) {
+                  if (!tours || tours.length === 0) {
                     return (
                       <li key={seccion.etiqueta} className="flex gap-3">
                         {contenido}
@@ -112,18 +115,21 @@ export default function TutorialAyuda() {
                   }
 
                   return (
-                    <li key={seccion.etiqueta}>
-                      <button
-                        type="button"
-                        onClick={iniciarTour}
-                        className="group -m-1.5 flex w-full items-start gap-3 rounded-lg p-1.5 text-left transition-colors hover:bg-vm-bg-soft focus-visible:bg-vm-bg-soft"
-                      >
-                        {contenido}
-                        <span className="mt-1 flex shrink-0 items-center gap-0.5 text-xs font-medium text-vm-primary opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 group-focus-visible:opacity-100">
-                          Ver tour
-                          <ChevronRight className="size-3.5" aria-hidden />
-                        </span>
-                      </button>
+                    <li key={seccion.etiqueta} className="space-y-1.5">
+                      <div className="flex items-start gap-3">{contenido}</div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 pl-12">
+                        {tours.map(({ etiqueta, accion }) => (
+                          <button
+                            key={etiqueta}
+                            type="button"
+                            onClick={accion}
+                            className="group flex items-center gap-0.5 text-xs font-medium text-vm-primary hover:underline"
+                          >
+                            {etiqueta}
+                            <ChevronRight className="size-3.5" aria-hidden />
+                          </button>
+                        ))}
+                      </div>
                     </li>
                   );
                 })}

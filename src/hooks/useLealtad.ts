@@ -8,6 +8,9 @@ export type TarjetaPublica = {
   sellos: number;
   sellosMeta: number;
   premio: string;
+  sellosMetaFase1: number | null;
+  premioFase1: string | null;
+  fase1CanjeadaCiclo: boolean;
   codigo: string;
   premiosCanjeados: number;
   tenantNombre: string;
@@ -52,6 +55,9 @@ export function useTarjeta(slug: string, uuid: string | null) {
         sellos: fila.sellos,
         sellosMeta: fila.sellos_meta,
         premio: fila.premio,
+        sellosMetaFase1: fila.sellos_meta_fase1 ?? null,
+        premioFase1: fila.premio_fase1 ?? null,
+        fase1CanjeadaCiclo: fila.fase1_canjeada_ciclo,
         codigo: fila.codigo,
         premiosCanjeados: fila.premios_canjeados,
         tenantNombre: fila.tenant_nombre,

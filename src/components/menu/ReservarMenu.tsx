@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarPlus, Check, Loader2, X } from "lucide-react";
 import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components/ui/captcha";
 import PhoneInput from "@/components/ui/phone-input";
+import { CLASE_PILL_ACCION, ESTILO_PILL_ACCION } from "@/components/menu/ContactoMenu";
 import { useCrearReservacion } from "@/hooks/useReservaciones";
 import {
   formatearFechaHora,
@@ -19,6 +20,16 @@ export function sucursalParaReservar(
 ): Sucursal | null {
   if (sucursalActiva) return sucursalActiva;
   return sucursales.length === 1 ? sucursales[0] : null;
+}
+
+/** Pura — para que `BarraInferior` sepa si el botón "Reservar" va a aparecer. */
+export function reservarHabilitado(
+  sucursalActiva: Sucursal | null,
+  sucursales: Sucursal[],
+  habilitado: boolean,
+): boolean {
+  if (!habilitado) return false;
+  return Boolean(sucursalParaReservar(sucursalActiva, sucursales)?.acepta_reservaciones);
 }
 
 /**
@@ -59,15 +70,12 @@ export default function ReservarMenu({
   if (!habilitado || !sucursal?.acepta_reservaciones) return null;
 
   return (
-    <div className="mx-auto -mt-2 max-w-2xl px-4 pb-8">
+    <>
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium transition-opacity hover:opacity-75"
-        style={{
-          background: "color-mix(in srgb, var(--menu-primario) 10%, transparent)",
-          color: "var(--menu-primario)",
-        }}
+        className={CLASE_PILL_ACCION}
+        style={ESTILO_PILL_ACCION}
       >
         <CalendarPlus className="size-4" aria-hidden />
         Reservar
@@ -82,7 +90,7 @@ export default function ReservarMenu({
           />
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
 

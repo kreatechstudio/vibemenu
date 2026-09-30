@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import BarraPedido from "@/components/menu/BarraPedido";
+import BarraInferior from "@/components/menu/BarraInferior";
 import BotonPedidoTikTok from "@/components/menu/BotonPedidoTikTok";
-import ContactoMenu from "@/components/menu/ContactoMenu";
 import HeaderMenu from "@/components/menu/HeaderMenu";
 import { CarritoWhatsAppProvider } from "@/hooks/useCarritoWhatsApp";
 import Clasico from "@/components/formatos/Clasico";
@@ -110,8 +109,12 @@ export default function Demo() {
                   logoUrl={TENANT_DEMO.logo_url}
                   inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
                 />
-                <ContactoMenu tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} />
-                <BarraPedido tenant={TENANT_DEMO} sucursal={SUCURSAL_DEMO} />
+                <BarraInferior
+                  tenant={TENANT_DEMO}
+                  sucursal={SUCURSAL_DEMO}
+                  sucursales={[SUCURSAL_DEMO]}
+                  permiteReservaciones={false}
+                />
               </div>
             )}
           </CarritoWhatsAppProvider>

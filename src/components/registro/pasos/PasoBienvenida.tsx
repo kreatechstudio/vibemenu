@@ -1,4 +1,4 @@
-import { UtensilsCrossed } from "lucide-react";
+import Isotipo from "@/components/marca/Isotipo";
 import { REGISTRO } from "@/lib/copy";
 
 type PasoBienvenidaProps = {
@@ -9,7 +9,7 @@ export default function PasoBienvenida({ onContinuar }: PasoBienvenidaProps) {
   return (
     <div className="flex flex-col items-center gap-6 text-center">
       <div className="flex size-16 items-center justify-center rounded-2xl bg-vm-primary/10">
-        <UtensilsCrossed className="size-8 text-vm-primary" aria-hidden />
+        <Isotipo className="size-9" />
       </div>
 
       <div>
