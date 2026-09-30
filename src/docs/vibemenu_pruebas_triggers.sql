@@ -33,6 +33,8 @@ declare
   v_grupo      uuid;
   v_fallo      text;
   v_pasadas    int := 0;
+  v_otro_usuario uuid;
+  v_encargado    uuid;
 begin
   select tenant_id, plan_free, plan_pro into v_tenant, v_free, v_pro from _ctx;
   if v_tenant is null then
@@ -170,11 +172,101 @@ begin
   end if;
   v_pasadas := v_pasadas + 1;
 
+  -- ── 12. bloqueo_por_plan: bajar de Pro a Free bloquea el exceso de productos ──
+  update tenants set plan_id = v_pro where id = v_tenant;
+  delete from productos where tenant_id = v_tenant;
+  insert into productos (tenant_id, categoria_id, nombre, precio, created_at)
+  select v_tenant, v_categoria, '_bp_' || i, 10, now() - (30 - i) * interval '1 minute'
+    from generate_series(1, 30) i;
+
+  update tenants set plan_id = v_free where id = v_tenant;
+
+  if (select count(*) from productos where tenant_id = v_tenant and bloqueado_por_plan) <> 10 then
+    raise exception 'FALLO: se esperaban 10 productos bloqueados al bajar a Free con 30, hay %',
+      (select count(*) from productos where tenant_id = v_tenant and bloqueado_por_plan);
+  end if;
+  if exists (
+    select 1 from productos
+     where tenant_id = v_tenant and bloqueado_por_plan
+       and nombre in (select '_bp_' || i from generate_series(1, 20) i)
+  ) then
+    raise exception 'FALLO: se bloqueo uno de los 20 productos mas viejos';
+  end if;
+  v_pasadas := v_pasadas + 1;
+
+  -- ── 13. Subir de plan desbloquea todo ────────────────────────────────────
+  update tenants set plan_id = v_pro where id = v_tenant;
+  if (select count(*) from productos where tenant_id = v_tenant and bloqueado_por_plan) <> 0 then
+    raise exception 'FALLO: subir a Pro deberia desbloquear los 30 productos';
+  end if;
+  v_pasadas := v_pasadas + 1;
+
+  -- ── 14. bloqueo de sucursales al bajar de plan ───────────────────────────
+  insert into sucursales (tenant_id, nombre, slug, created_at)
+    values (v_tenant, '_bs2_', '_bs2_', now());
+  update tenants set plan_id = v_free where id = v_tenant;
+  if (select count(*) from sucursales where tenant_id = v_tenant and bloqueado_por_plan) <> 1 then
+    raise exception 'FALLO: al bajar a Free (limite 1) deberia quedar 1 sucursal bloqueada';
+  end if;
+  if (select bloqueado_por_plan from sucursales where id = v_sucursal) then
+    raise exception 'FALLO: se bloqueo la sucursal mas vieja, no la mas nueva';
+  end if;
+  v_pasadas := v_pasadas + 1;
+
+  -- ── 15. Borrar un producto activo libera cupo para el bloqueado mas viejo ──
+  update tenants set plan_id = v_pro where id = v_tenant; -- vuelve a caber todo
+  update tenants set plan_id = v_free where id = v_tenant; -- 10 bloqueados de nuevo
+  delete from productos where tenant_id = v_tenant and nombre = '_bp_1'; -- el mas viejo activo
+  if (select bloqueado_por_plan from productos where tenant_id = v_tenant and nombre = '_bp_21') then
+    raise exception 'FALLO: al borrar un activo, el bloqueado mas viejo deberia desbloquearse solo';
+  end if;
+  v_pasadas := v_pasadas + 1;
+
+  -- ── 16. grupos_modificadores se bloquean igual al bajar de plan (limite 2) ──
+  -- El tenant sigue en Free con 2 grupos (limite exacto) desde la prueba 5:
+  -- el trigger BEFORE INSERT validar_limite_grupos_modificadores cuenta TODOS
+  -- los grupos sin filtrar por bloqueado_por_plan, así que insertar un tercero
+  -- estando en Free lo rechaza antes de llegar a recalcular_bloqueos_plan.
+  -- Mismo patrón que la prueba 14: se crea de más mientras el plan lo permite
+  -- y se baja después, para probar el bloqueo retroactivo.
+  update tenants set plan_id = v_pro where id = v_tenant;
+  insert into grupos_modificadores (tenant_id, nombre, created_at) values (v_tenant, '_g3_', now());
+  update tenants set plan_id = v_free where id = v_tenant;
+  if (select count(*) from grupos_modificadores where tenant_id = v_tenant and bloqueado_por_plan) <> 1 then
+    raise exception 'FALLO: con 3 grupos y limite 2 deberia quedar 1 bloqueado';
+  end if;
+  v_pasadas := v_pasadas + 1;
+
+  -- ── 17. Encargados: se bloquean si el plan no permite multiusuario ───────
+  -- Hace falta un usuario SIN tenant todavía: hay un índice único de producción
+  -- (uniq_tenant_por_usuario, sobre user_id solo) que impide que un usuario
+  -- pertenezca a más de un tenant — así que no sirve tomar el user_id de otro
+  -- tenant_usuarios existente, como haría creer un query "tenant_id <> v_tenant".
+  select id into v_otro_usuario
+    from auth.users u
+   where not exists (select 1 from tenant_usuarios tu where tu.user_id = u.id)
+   limit 1;
+
+  if v_otro_usuario is null then
+    raise notice 'Prueba 17 omitida: no hay un segundo usuario en la base para simular un encargado.';
+    v_pasadas := v_pasadas + 1;
+  else
+    update tenants set plan_id = v_pro where id = v_tenant;
+    insert into tenant_usuarios (tenant_id, user_id, rol) values (v_tenant, v_otro_usuario, 'encargado')
+      returning id into v_encargado;
+    update tenants set plan_id = v_free where id = v_tenant;
+    if not (select bloqueado_por_plan from tenant_usuarios where id = v_encargado) then
+      raise exception 'FALLO: Free no permite multiusuario, el encargado deberia quedar bloqueado';
+    end if;
+    delete from tenant_usuarios where id = v_encargado;
+    v_pasadas := v_pasadas + 1;
+  end if;
+
   raise notice '───────────────────────────────';
-  raise notice '  % de 11 pruebas pasaron', v_pasadas;
+  raise notice '  % de 17 pruebas pasaron', v_pasadas;
   raise notice '───────────────────────────────';
 
-  if v_pasadas <> 11 then
+  if v_pasadas <> 17 then
     raise exception 'Faltaron pruebas por pasar';
   end if;
 end;
@@ -184,7 +276,7 @@ $$;
 rollback;
 
 -- ============================================================================
---  Si ves "11 de 11 pruebas pasaron" en los mensajes, los triggers están vivos.
+--  Si ves "17 de 17 pruebas pasaron" en los mensajes, los triggers están vivos.
 --  Cualquier "FALLO:" nombra exactamente qué trigger dejó de proteger.
 --
 --  Después del rollback, comprueba que tu tenant quedó intacto:
