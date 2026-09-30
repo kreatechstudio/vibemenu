@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ExternalLink, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Lock, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
 import EditorSucursal from "@/components/admin/EditorSucursal";
@@ -12,6 +12,7 @@ import { alcanzoLimite } from "@/lib/plan";
 import { ESTADOS } from "@/lib/copy";
 import type { ErrorTraducido } from "@/lib/errores";
 import type { Sucursal } from "@/types/database";
+import { cn } from "@/lib/utils";
 
 export default function SucursalesPage() {
   return (
@@ -81,7 +82,13 @@ function Contenido() {
       ) : (
         <ul className="mt-7 grid gap-3 md:grid-cols-2">
           {sucursales!.map((s) => (
-            <li key={s.id} className="flex flex-col rounded-xl border p-4">
+            <li
+              key={s.id}
+              className={cn(
+                "flex flex-col rounded-xl border p-4",
+                s.bloqueado_por_plan && "opacity-60",
+              )}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-vm-ink">{s.nombre}</p>
@@ -94,6 +101,13 @@ function Contenido() {
                   <p className="mt-2 text-[11px] text-vm-body">
                     <span className="rounded-full bg-vm-bg-soft px-2 py-0.5">{s.timezone}</span>
                   </p>
+
+                  {s.bloqueado_por_plan && (
+                    <p className="mt-2 flex items-center gap-1 text-xs text-vm-warning">
+                      <Lock className="size-3 shrink-0" aria-hidden />
+                      Bloqueada por tu plan actual
+                    </p>
+                  )}
                 </div>
 
                 <button

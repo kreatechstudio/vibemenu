@@ -9,6 +9,7 @@ import { useEquipo, useInvitarEncargado, useQuitarDelEquipo } from "@/hooks/useE
 import { useSesion } from "@/hooks/useSesion";
 import { traducirErrorEdge } from "@/lib/erroresEdge";
 import { alcanzoLimite } from "@/lib/plan";
+import { cn } from "@/lib/utils";
 import type { MiembroEquipo } from "@/hooks/useEquipo";
 
 export default function Equipo() {
@@ -30,6 +31,7 @@ const EJEMPLO: MiembroEquipo[] = [
     avatar_url: null,
     rol: "owner",
     created_at: "2026-01-10",
+    bloqueado_por_plan: false,
   },
   {
     user_id: "2",
@@ -38,6 +40,7 @@ const EJEMPLO: MiembroEquipo[] = [
     avatar_url: null,
     rol: "encargado",
     created_at: "2026-03-02",
+    bloqueado_por_plan: false,
   },
 ];
 
@@ -67,7 +70,7 @@ function Tabla({
           {miembros.map((m) => {
             const esOwner = m.rol === "owner";
             return (
-              <tr key={m.user_id} className="border-t">
+              <tr key={m.user_id} className={cn("border-t", m.bloqueado_por_plan && "opacity-60")}>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center gap-2.5">
                     <AvatarUsuario nombre={m.nombre || m.email} avatarUrl={m.avatar_url} />
@@ -81,6 +84,12 @@ function Tabla({
                         )}
                       </p>
                       {m.nombre && <p className="truncate text-xs text-vm-body">{m.email}</p>}
+                      {m.bloqueado_por_plan && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-vm-warning">
+                          <Lock className="size-3 shrink-0" aria-hidden />
+                          Sin acceso — sube de plan para reactivarlo
+                        </p>
+                      )}
                     </div>
                   </div>
                 </td>

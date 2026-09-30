@@ -10,6 +10,8 @@ export type MiembroEquipo = {
   avatar_url: string | null;
   rol: RolUsuario;
   created_at: string;
+  /* Migración 020 — true si el plan actual ya no permite este asiento. */
+  bloqueado_por_plan: boolean;
 };
 
 /**

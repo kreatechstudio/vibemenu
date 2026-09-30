@@ -366,7 +366,10 @@ function Contenido() {
                 return (
                   <li
                     key={p.id}
-                    className="group relative flex gap-3 rounded-xl border p-3 transition-colors hover:border-vm-primary/40 hover:bg-vm-bg-soft/50"
+                    className={cn(
+                      "group relative flex gap-3 rounded-xl border p-3 transition-colors hover:border-vm-primary/40 hover:bg-vm-bg-soft/50",
+                      p.bloqueado_por_plan && "opacity-60",
+                    )}
                   >
                     {/*
                       Toda la tarjeta abre el editor, no solo el nombre. El botón va
@@ -419,6 +422,13 @@ function Contenido() {
                         />
                         {p.activo ? "Activo" : "Borrador"}
                       </label>
+
+                      {p.bloqueado_por_plan && (
+                        <p className="mt-2 flex items-center gap-1 text-xs text-vm-warning">
+                          <Lock className="size-3 shrink-0" aria-hidden />
+                          Bloqueado por tu plan actual
+                        </p>
+                      )}
                     </div>
                   </li>
                 );
