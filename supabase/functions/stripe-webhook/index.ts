@@ -528,11 +528,12 @@ Deno.serve(async (req) => {
         // que esto sea un no-op (0 filas) en el caso normal, sin disparar el
         // recalculo de bloqueos de mas en cada renovacion.
         if (fila.plan_id) {
-          await db
+          const { error: errorRestaurarPlan } = await db
             .from("tenants")
             .update({ plan_id: fila.plan_id })
             .eq("id", fila.tenant_id)
             .neq("plan_id", fila.plan_id);
+          if (errorRestaurarPlan) throw errorRestaurarPlan;
         }
         break;
       }
