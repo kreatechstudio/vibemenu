@@ -227,12 +227,17 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ---- 3. Pago fallido: suspender tras 7 dias de gracia -----------------
+  // ---- 3. Pago fallido: baja a Free tras 7 dias de gracia ----------------
   // stripe-webhook pone pago_fallido_desde en el PRIMER past_due/unpaid y lo
   // limpia si el tenant se pone al corriente. Aqui se corta a los que llevan
-  // >= 7 dias sin regularizar. La suscripcion de Stripe NO se toca: sigue su
-  // propio dunning; si al final Stripe la borra, cae en subscription.deleted
-  // -> baja a Free. Ver docs/superpowers/specs/2026-08-27-endurecer-facturacion-design.md
+  // >= 7 dias sin regularizar -- igual que un downgrade manual, NO se
+  // suspende el panel (el dueno sigue operando con lo que le cabe en Free).
+  // pago_fallido_desde se queda puesto: todavia no ha pagado. Si Stripe
+  // logra cobrar despues (sigue reintentando por su cuenta), invoice.paid
+  // restaura el plan_id pagado -- ver stripe-webhook. Si al final Stripe
+  // cancela la suscripcion del todo, cae en subscription.deleted -> bajarAFree
+  // (no-op sobre plan_id, ya esta en Free). Ver
+  // docs/superpowers/specs/2026-09-30-bloqueo-retroactivo-limites-design.md
   const DIAS_GRACIA = 7;
   const limiteGracia = new Date(ahora - DIAS_GRACIA * msPorDia).toISOString();
 
@@ -249,7 +254,8 @@ Deno.serve(async (req) => {
 
   let suspendidos = 0;
   for (const t of enGracia ?? []) {
-    const { error } = await db.from("tenants").update({ estado: "suspendido" }).eq("id", t.id);
+    if (!planFree) continue;
+    const { error } = await db.from("tenants").update({ plan_id: planFree.id }).eq("id", t.id);
     if (!error) suspendidos++;
   }
 
