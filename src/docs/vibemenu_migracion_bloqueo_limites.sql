@@ -91,6 +91,13 @@ begin
 
   -- Productos: solo compiten por cupo los visibles (activo=true). Uno que el
   -- dueno ya oculto no consume limite ni se marca bloqueado por esto.
+  --
+  -- El "and ... is distinct from ..." en cada UPDATE de abajo no es opcional:
+  -- sin el, esta funcion reescribe bloqueado_por_plan en CADA fila rankeada
+  -- en CADA insert/delete/toggle/cambio de plan, aunque el valor no cambie.
+  -- Eso dispara de mas los triggers propios de cada tabla (ej. updated_at,
+  -- validadores BEFORE UPDATE) sobre filas que no tenian nada que ver con el
+  -- evento que origino el recalculo.
   with rankeados as (
     select id, row_number() over (order by created_at, id) as rank
       from productos
@@ -99,7 +106,8 @@ begin
   update productos p
      set bloqueado_por_plan = (r.rank > coalesce(v_limite_productos, r.rank))
     from rankeados r
-   where p.id = r.id;
+   where p.id = r.id
+     and p.bloqueado_por_plan is distinct from (r.rank > coalesce(v_limite_productos, r.rank));
 
   update productos
      set bloqueado_por_plan = false
@@ -114,7 +122,8 @@ begin
   update sucursales s
      set bloqueado_por_plan = (r.rank > coalesce(v_limite_sucursales, r.rank))
     from rankeadas r
-   where s.id = r.id;
+   where s.id = r.id
+     and s.bloqueado_por_plan is distinct from (r.rank > coalesce(v_limite_sucursales, r.rank));
 
   update sucursales
      set bloqueado_por_plan = false
@@ -129,7 +138,8 @@ begin
   update grupos_modificadores g
      set bloqueado_por_plan = (r.rank > coalesce(v_limite_grupos, r.rank))
     from rankeados r
-   where g.id = r.id;
+   where g.id = r.id
+     and g.bloqueado_por_plan is distinct from (r.rank > coalesce(v_limite_grupos, r.rank));
 
   -- Encargados: el owner nunca entra al ranking (nunca se bloquea a si
   -- mismo). limite_usuarios cuenta owner + encargados juntos (igual que
@@ -147,7 +157,11 @@ begin
        or r.rank > coalesce(v_limite_usuarios - 1, r.rank)
      )
     from rankeados r
-   where u.id = r.id;
+   where u.id = r.id
+     and u.bloqueado_por_plan is distinct from (
+       not coalesce(v_permite_multiusuario, false)
+       or r.rank > coalesce(v_limite_usuarios - 1, r.rank)
+     );
 end;
 $$;
 
@@ -260,6 +274,105 @@ revoke all on function equipo_del_tenant(uuid) from public;
 revoke execute on function equipo_del_tenant(uuid) from anon;
 grant execute on function equipo_del_tenant(uuid) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 6. Cierra el acceso tambien donde la politica de escritura real lo checa
+--    (tenant_puede_escribir, no pertenece_a_tenant) y en las RPCs de lealtad
+--
+--    `vibemenu_schema.sql` (el doc checked-in) no refleja el estado real de
+--    produccion: las policies *_write_miembros (productos, sucursales,
+--    grupos_modificadores, categorias, horarios, opciones_modificador,
+--    precios_sucursal, producto_modificadores, tenants_update_miembros, y el
+--    insert policy de storage.objects) no llaman a pertenece_a_tenant() —
+--    llaman a tenant_puede_escribir(), agregada por una migracion posterior
+--    que no esta en ese doc. Sin este bloque, un encargado bloqueado
+--    conserva acceso de escritura completo: la seccion 4 de arriba
+--    (pertenece_a_tenant) no alcanza por si sola.
+-- ---------------------------------------------------------------------------
+create or replace function tenant_puede_escribir(check_tenant_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $$
+  select exists (
+    select 1
+    from tenant_usuarios tu
+    join tenants t on t.id = tu.tenant_id
+    where tu.tenant_id = check_tenant_id
+      and tu.user_id = auth.uid()
+      and t.estado <> 'suspendido'
+      and not tu.bloqueado_por_plan
+  );
+$$;
+
+-- Dos RPCs de lealtad hacen su propio lookup de tenant sin pasar por
+-- tenant_puede_escribir ni pertenece_a_tenant — cualquier usuario autenticado
+-- con una fila en tenant_usuarios puede llamarlas. buscar_tarjeta,
+-- sellar_tarjeta y canjear_premio quedan correctamente cerradas de rebote
+-- porque llaman a estas dos; no requieren cambios propios.
+create or replace function public._tarjeta_del_encargado(p_codigo text)
+returns tarjetas_lealtad
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  v_tenant uuid;
+  v_fila   tarjetas_lealtad;
+begin
+  select tenant_id into v_tenant from tenant_usuarios where user_id = auth.uid() and not bloqueado_por_plan;
+  if v_tenant is null then
+    raise exception 'sin_tenant';
+  end if;
+
+  select * into v_fila from tarjetas_lealtad
+   where tenant_id = v_tenant and upper(codigo) = upper(trim(p_codigo));
+  if v_fila.id is null then
+    raise exception 'tarjeta_no_encontrada';
+  end if;
+
+  return v_fila;
+end;
+$$;
+
+create or replace function public.buscar_tarjetas_por_contacto(p_contacto text)
+returns table(id uuid, codigo text, sellos smallint, sellos_meta smallint, contacto_enmascarado text, creada_at timestamp with time zone)
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  v_tenant uuid;
+  v_q      text := nullif(trim(coalesce(p_contacto, '')), '');
+  v_digitos text := regexp_replace(coalesce(p_contacto, ''), '\D', '', 'g');
+begin
+  select tenant_id into v_tenant from tenant_usuarios where user_id = auth.uid() and not bloqueado_por_plan;
+  if v_tenant is null then
+    raise exception 'sin_tenant';
+  end if;
+  if v_q is null then
+    return;
+  end if;
+
+  return query
+  select
+    t.id, t.codigo, t.sellos,
+    (select lealtad_sellos_meta from tenants where tenants.id = v_tenant),
+    _enmascarar_contacto(t.contacto, t.contacto_tipo),
+    t.creada_at
+  from tarjetas_lealtad t
+  where t.tenant_id = v_tenant
+    and t.contacto is not null
+    and (
+      lower(t.contacto) = lower(v_q)
+      or (length(v_digitos) >= 7 and regexp_replace(t.contacto, '\D', '', 'g') like '%' || v_digitos || '%')
+    )
+  order by t.ultima_actividad_at desc nulls last
+  limit 25;
+end;
+$$;
+
 commit;
 
 -- ============================================================================
@@ -278,4 +391,12 @@ commit;
 --
 --    Correr src/docs/vibemenu_pruebas_triggers.sql completo (pruebas 12-17
 --    nuevas al final).
+--
+--    select prosrc from pg_proc where proname = 'tenant_puede_escribir';
+--    -- confirma que el cuerpo incluye "not tu.bloqueado_por_plan".
+--
+--    select proname from pg_proc
+--     where proname in ('_tarjeta_del_encargado','buscar_tarjetas_por_contacto')
+--       and prosrc like '%not bloqueado_por_plan%';
+--    -- 2 filas.
 -- ============================================================================

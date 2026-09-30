@@ -202,8 +202,13 @@ begin
   v_pasadas := v_pasadas + 1;
 
   -- ── 14. bloqueo de sucursales al bajar de plan ───────────────────────────
+  -- _bs2_ necesita un created_at estrictamente mas nuevo que v_sucursal (_s1_,
+  -- insertada en la prueba 3 con el default now()): sin el offset, ambas
+  -- podrian caer en el mismo instante dentro de la transaccion y el
+  -- row_number() por (created_at, id) desempataria por gen_random_uuid(),
+  -- volviendo la aserción de abajo ~50% aleatoria.
   insert into sucursales (tenant_id, nombre, slug, created_at)
-    values (v_tenant, '_bs2_', '_bs2_', now());
+    values (v_tenant, '_bs2_', '_bs2_', now() + interval '1 minute');
   update tenants set plan_id = v_free where id = v_tenant;
   if (select count(*) from sucursales where tenant_id = v_tenant and bloqueado_por_plan) <> 1 then
     raise exception 'FALLO: al bajar a Free (limite 1) deberia quedar 1 sucursal bloqueada';
