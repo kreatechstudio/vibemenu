@@ -115,7 +115,6 @@ function Contenido() {
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** null = el menú general del negocio. Si no, el id de una sucursal. */
   const [sucursalId, setSucursalId] = useState<string | null>(null);
 
   const [usarColores, setUsarColores] = useState(true);
@@ -129,12 +128,14 @@ function Contenido() {
 
   useIniciarTour("qr", Boolean(tour), sucursales !== undefined, PASOS_TOUR_QR, navigate);
 
-  // Con una sola sucursal, el link "general" solo la redirige a ella de
-  // cualquier forma (ver $slug.index.tsx) — mejor default directo a la
-  // sucursal real. Con 2+ o 0, se queda en "Menú general" como antes.
+  // Ya no existe el "menú general": toda carta vive bajo una sucursal. Con una
+  // sola, se usa directo (ver $slug.index.tsx, que de todas formas redirige
+  // ahí). Con 2+, se arranca en la primera — el selector de abajo deja elegir.
   useEffect(() => {
-    if (sucursales && sucursales.length === 1) setSucursalId(sucursales[0].id);
-  }, [sucursales]);
+    if (sucursales && sucursales.length > 0 && sucursalId === null) {
+      setSucursalId(sucursales[0].id);
+    }
+  }, [sucursales, sucursalId]);
 
   if (!ctx) return null;
 
@@ -215,6 +216,25 @@ function Contenido() {
     setTimeout(() => setCopiado(false), 2000);
   }
 
+  if (sucursales && sucursales.length === 0) {
+    return (
+      <>
+        <h1 className="text-2xl">Tu código QR</h1>
+        <div className="mt-8 grid place-items-center gap-2 rounded-xl border border-dashed py-16 text-center">
+          <p className="text-sm text-vm-body">
+            Crea tu primera sucursal para generar el código QR de tu menú.
+          </p>
+          <Link
+            to="/admin/sucursales"
+            className="mt-1 text-sm font-medium text-vm-primary hover:underline"
+          >
+            Ir a Sucursales
+          </Link>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <h1 className="text-2xl">Tu código QR</h1>
@@ -223,24 +243,12 @@ function Contenido() {
         a tu carta más reciente.
       </p>
 
-      {/* Un QR por sucursal: cada uno lleva a su carta y a su horario. */}
-      {sucursales && sucursales.length > 0 && (
+      {/* Un QR por sucursal: cada uno lleva a su carta y a su horario. Con una
+          sola no hay nada que elegir — ya quedó seleccionada sola arriba. */}
+      {sucursales && sucursales.length > 1 && (
         <div data-tour="qr-sucursal" className="mt-6">
           <p className="text-sm font-medium text-vm-ink">¿Para qué mesa?</p>
           <div className="tira-scroll mt-2.5 flex gap-2 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setSucursalId(null)}
-              aria-pressed={sucursalId === null}
-              className={cn(
-                "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
-                sucursalId === null
-                  ? "border-vm-primary bg-vm-primary text-white"
-                  : "text-vm-body hover:bg-vm-bg-soft",
-              )}
-            >
-              Menú general
-            </button>
             {sucursales.map((s) => (
               <button
                 key={s.id}

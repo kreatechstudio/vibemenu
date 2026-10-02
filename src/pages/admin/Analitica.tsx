@@ -229,7 +229,6 @@ function Contenido() {
             className="ml-auto h-8 rounded-full border px-3 text-xs"
           >
             <option value="todas">Todas las sucursales</option>
-            <option value="general">Menú general</option>
             {(sucursales ?? []).map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nombre}
@@ -238,12 +237,6 @@ function Contenido() {
           </select>
         )}
       </div>
-
-      {(sucursales?.length ?? 0) > 1 && (
-        <p className="mt-2 text-xs text-vm-body">
-          Las cifras por sucursal no incluyen el menú general (<code>/tu-slug</code> sin sucursal).
-        </p>
-      )}
 
       {data?.truncado && (
         <div className="mt-4 rounded-lg bg-vm-warning-soft px-4 py-3 text-sm text-vm-warning">

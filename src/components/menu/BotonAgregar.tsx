@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
 import { createPortal } from "react-dom";
@@ -6,6 +6,7 @@ import HojaSeleccionModificadores from "@/components/menu/HojaSeleccionModificad
 import { useAnalitica } from "@/hooks/useAnalitica";
 import { useCarritoWhatsApp } from "@/hooks/useCarritoWhatsApp";
 import type { ProductoConModificadores } from "@/hooks/useMenuPublico";
+import { ContenedorTemaContext } from "@/lib/temaPortal";
 
 /**
  * Control "agregar al pedido". Se monta SIN condicional en los formatos: si el
@@ -33,20 +34,23 @@ export default function BotonAgregar({
 }) {
   const c = useCarritoWhatsApp();
   const analitica = useAnalitica();
+  const contenedorTema = useContext(ContenedorTemaContext);
   const [seleccionando, setSeleccionando] = useState(false);
   if (!c.habilitado) return null;
 
   const tieneModificadores = producto.grupos.length > 0;
   const n = c.cantidadDe(producto.id);
 
-  // Portal a <body>: sin esto, un ancestro con transform (framer-motion en el
-  // grid, p. ej. Pinterest) rompe el `position: fixed` del backdrop y lo dejaria
-  // encerrado en su contenedor en vez de cubrir la pantalla. `AnimatePresence`
-  // va DENTRO del portal (no al revés): envolviendo un `Portal` no detecta un
-  // elemento valido y lo descarta en silencio.
+  // Se portea al contenedor temado (ver ContenedorTemaContext), NO a
+  // document.body: ahí se pierden las variables --menu-* y la hoja sale
+  // transparente. El contenedor temado también evita que un ancestro con
+  // transform (framer-motion en el grid, p. ej. Pinterest) rompa el
+  // `position: fixed` del backdrop. `AnimatePresence` va DENTRO del portal
+  // (no al revés): envolviendo un `Portal` no detecta un elemento válido y lo
+  // descarta en silencio.
   const hoja =
     tieneModificadores &&
-    typeof document !== "undefined" &&
+    contenedorTema &&
     createPortal(
       <AnimatePresence>
         {seleccionando && (
@@ -61,7 +65,7 @@ export default function BotonAgregar({
           />
         )}
       </AnimatePresence>,
-      document.body,
+      contenedorTema,
     );
 
   if (variante === "badge") {
