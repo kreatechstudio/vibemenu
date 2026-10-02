@@ -46,12 +46,14 @@ export const ESTILO_PILL_ACCION = {
 };
 
 /**
- * Pills de contacto (llamar, WhatsApp, cómo llegar, reseñas). Sin envoltura ni
- * posicionamiento propio — vive dentro de la franja de `BarraInferior`, junto
- * a `ReservarMenu`, para que ambos queden en una sola fila.
+ * Pill de reseñas. Sin envoltura ni posicionamiento propio — vive dentro de la
+ * franja de `BarraInferior`, junto a `ReservarMenu` y la tarjeta de lealtad,
+ * para que las tres queden en una sola fila legible, sin scroll horizontal.
  *
- * El WhatsApp aquí es "abrir chat" a secas. El botón de pedido con carrito es
- * otra cosa (sub-proyecto #3).
+ * Llamar/WhatsApp/Cómo llegar YA NO van aquí: son iconos en la cabecera
+ * (`RedesSociales`, junto a las redes sociales) — se reconocen solos y no
+ * compiten por espacio en esta franja. Reseñas sí se queda con texto: es la
+ * acción que de verdad conviene leer, no solo reconocer el icono.
  */
 export default function ContactoMenu({
   tenant,
@@ -60,7 +62,7 @@ export default function ContactoMenu({
   tenant: Tenant;
   sucursal: Sucursal | null;
 }): ReactElement | null {
-  const filas = filasContacto(tenant, sucursal);
+  const filas = filasContacto(tenant, sucursal).filter((f) => f.etiqueta === "Reseñas");
   if (filas.length === 0) return null;
 
   return (

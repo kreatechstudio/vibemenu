@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin } from "lucide-react";
 import HorarioMenu from "@/components/menu/HorarioMenu";
-import RedesSociales, { tieneRedes } from "@/components/menu/RedesSociales";
+import RedesSociales, { tieneIconosContacto } from "@/components/menu/RedesSociales";
 import { useSucursalAbierta } from "@/hooks/useMenuPublico";
 import { enlaceMaps } from "@/lib/maps";
 import { ESTADOS } from "@/lib/copy";
@@ -130,9 +130,9 @@ export default function HeaderMenu({
       </div>
 
       {/* Van justo después del nombre y la dirección. */}
-      {tieneRedes(tenant) && (
+      {tieneIconosContacto(tenant, sucursal) && (
         <div className="mx-auto mt-3 flex max-w-2xl">
-          <RedesSociales tenant={tenant} sobreOscuro={sobreOscuro} />
+          <RedesSociales tenant={tenant} sucursal={sucursal} sobreOscuro={sobreOscuro} />
         </div>
       )}
 

@@ -23,6 +23,7 @@ import {
 import { useRegistrarVisita } from "@/hooks/useVisitas";
 import { contactoSucursal } from "@/lib/contacto";
 import { resolverTema, variablesDeTema, type TemaResuelto } from "@/lib/tema";
+import { ContenedorTemaContext } from "@/lib/temaPortal";
 import { ESTADOS } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import { telefonoParaWaMe } from "@/lib/whatsapp";
@@ -170,6 +171,11 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
   // router y cada rastreador que pase por la ruta.
   useRegistrarVisita(data?.tenant.id, data?.sucursalActiva?.id ?? null);
 
+  // Ver ContenedorTemaContext: nodo dentro del <main> temado para portear los
+  // modales del menú (p. ej. el selector de modificadores) sin perder las
+  // variables --menu-*.
+  const [nodoPortal, setNodoPortal] = useState<HTMLDivElement | null>(null);
+
   if (isLoading) {
     return <SplashCarga conocido={ultimoConocido} />;
   }
@@ -191,9 +197,11 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
   // Cuánto aire dejarle al final del contenido para que la franja fija de
   // BarraInferior (pedido + acciones, apilados) no le tape la última fila.
   const hayAcciones =
-    filasContacto(data.tenant, data.sucursalActiva).length > 0 ||
+    filasContacto(data.tenant, data.sucursalActiva).some((f) => f.etiqueta === "Reseñas") ||
+    Boolean(data.lealtad) ||
     reservarHabilitado(data.sucursalActiva, data.sucursales, data.permiteReservaciones);
-  const espacioInferior = pedidosOn && hayAcciones ? "pb-40" : pedidosOn || hayAcciones ? "pb-24" : "";
+  const espacioInferior =
+    pedidosOn && hayAcciones ? "pb-40" : pedidosOn || hayAcciones ? "pb-24" : "";
 
   const propsFormato: PropsFormato = {
     categorias: data.categorias,
@@ -239,44 +247,48 @@ export default function MenuPublico({ slug, sucursalSlug, inicial }: MenuPublico
       habilitado={data.permiteAnaliticaPlatillo}
     >
       <CarritoWhatsAppProvider key={data.sucursalActiva?.id ?? "principal"} habilitado={pedidosOn}>
-        <div className={cn(espacioInferior)}>
-          <HeaderMenu
-            tenant={data.tenant}
-            sucursales={data.sucursales}
-            sucursalActiva={data.sucursalActiva}
-            menuIndependiente={data.menuIndependiente}
-            compacta={data.formato === "instagram"}
-            sobreOscuro={tema.modo_imagen === "completo"}
-          />
+        <ContenedorTemaContext.Provider value={nodoPortal}>
+          <div className={cn(espacioInferior)}>
+            <HeaderMenu
+              tenant={data.tenant}
+              sucursales={data.sucursales}
+              sucursalActiva={data.sucursalActiva}
+              menuIndependiente={data.menuIndependiente}
+              compacta={data.formato === "instagram"}
+              sobreOscuro={tema.modo_imagen === "completo"}
+            />
 
-          {data.categorias.length === 0 ? (
-            <p
-              className="px-4 py-20 text-center text-sm"
-              style={{ color: "var(--menu-texto-suave)" }}
-            >
-              Este menú todavía no tiene productos.
-            </p>
-          ) : (
-            <Formato {...propsFormato} />
-          )}
+            {data.categorias.length === 0 ? (
+              <p
+                className="px-4 py-20 text-center text-sm"
+                style={{ color: "var(--menu-texto-suave)" }}
+              >
+                Este menú todavía no tiene productos.
+              </p>
+            ) : (
+              <Formato {...propsFormato} />
+            )}
 
-          <LealtadMenu tenantId={data.tenant.id} slug={data.tenant.slug} lealtad={data.lealtad} />
+            <LealtadMenu tenantId={data.tenant.id} slug={data.tenant.slug} lealtad={data.lealtad} />
 
-          <EmbudoResenas
+            <EmbudoResenas
+              tenant={data.tenant}
+              sucursal={data.sucursalActiva}
+              habilitado={data.permiteEmbudoResenas}
+            />
+
+            {data.marcaAgua && <MarcaAgua />}
+          </div>
+
+          <BarraInferior
             tenant={data.tenant}
             sucursal={data.sucursalActiva}
-            habilitado={data.permiteEmbudoResenas}
+            sucursales={data.sucursales}
+            permiteReservaciones={data.permiteReservaciones}
+            lealtad={data.lealtad}
           />
-
-          {data.marcaAgua && <MarcaAgua />}
-        </div>
-
-        <BarraInferior
-          tenant={data.tenant}
-          sucursal={data.sucursalActiva}
-          sucursales={data.sucursales}
-          permiteReservaciones={data.permiteReservaciones}
-        />
+          <div ref={setNodoPortal} aria-hidden />
+        </ContenedorTemaContext.Provider>
       </CarritoWhatsAppProvider>
     </AnaliticaProvider>
   );

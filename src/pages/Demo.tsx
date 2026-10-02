@@ -12,6 +12,7 @@ import Instagram from "@/components/formatos/Instagram";
 import TikTok from "@/components/formatos/TikTok";
 import { CATEGORIAS_DEMO, SUCURSAL_DEMO, TENANT_DEMO } from "@/lib/demo";
 import { resolverTema, variablesDeTema } from "@/lib/tema";
+import { ContenedorTemaContext } from "@/lib/temaPortal";
 import { FORMATOS, NOMBRE_FORMATO, type FormatoMenu } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ const COMPONENTES = {
  */
 export default function Demo() {
   const [formato, setFormato] = useState<FormatoMenu>("pinterest");
+  const [nodoPortal, setNodoPortal] = useState<HTMLDivElement | null>(null);
   const tema = resolverTema(TENANT_DEMO.tema, formato);
   const Formato = COMPONENTES[formato];
 
@@ -96,25 +98,29 @@ export default function Demo() {
                 className="min-h-[calc(100dvh-3rem)]"
                 style={{ ...variablesDeTema(tema), background: "var(--menu-fondo)" }}
               >
-                <HeaderMenu
-                  tenant={TENANT_DEMO}
-                  sucursales={[SUCURSAL_DEMO]}
-                  sucursalActiva={SUCURSAL_DEMO}
-                  menuIndependiente={false}
-                  compacta={formato === "instagram"}
-                  abiertaFija
-                />
-                <Formato
-                  categorias={CATEGORIAS_DEMO}
-                  logoUrl={TENANT_DEMO.logo_url}
-                  inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
-                />
-                <BarraInferior
-                  tenant={TENANT_DEMO}
-                  sucursal={SUCURSAL_DEMO}
-                  sucursales={[SUCURSAL_DEMO]}
-                  permiteReservaciones={false}
-                />
+                <ContenedorTemaContext.Provider value={nodoPortal}>
+                  <HeaderMenu
+                    tenant={TENANT_DEMO}
+                    sucursales={[SUCURSAL_DEMO]}
+                    sucursalActiva={SUCURSAL_DEMO}
+                    menuIndependiente={false}
+                    compacta={formato === "instagram"}
+                    abiertaFija
+                  />
+                  <Formato
+                    categorias={CATEGORIAS_DEMO}
+                    logoUrl={TENANT_DEMO.logo_url}
+                    inicial={TENANT_DEMO.nombre_negocio.slice(0, 1)}
+                  />
+                  <BarraInferior
+                    tenant={TENANT_DEMO}
+                    sucursal={SUCURSAL_DEMO}
+                    sucursales={[SUCURSAL_DEMO]}
+                    permiteReservaciones={false}
+                    lealtad={null}
+                  />
+                  <div ref={setNodoPortal} aria-hidden />
+                </ContenedorTemaContext.Provider>
               </div>
             )}
           </CarritoWhatsAppProvider>

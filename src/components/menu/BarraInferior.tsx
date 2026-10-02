@@ -2,30 +2,37 @@ import type { ReactElement } from "react";
 import BarraPedido from "@/components/menu/BarraPedido";
 import ContactoMenu, { filasContacto } from "@/components/menu/ContactoMenu";
 import ReservarMenu, { reservarHabilitado } from "@/components/menu/ReservarMenu";
+import TarjetaLealtadPill from "@/components/menu/TarjetaLealtadPill";
 import { useCarritoWhatsApp } from "@/hooks/useCarritoWhatsApp";
 import type { Sucursal, Tenant } from "@/types/database";
 
 /**
  * Todo lo que vive fijo al fondo del menú público, apilado en una sola franja:
  * arriba el resumen del pedido (si hay carrito), abajo la fila de acciones
- * (contacto + reservar) en una sola línea con scroll horizontal — nunca se
- * encogen a dos renglones ni se encima una franja fija con otra.
+ * (reseñas, tarjeta de lealtad, reservar) en una sola línea con scroll
+ * horizontal — nunca se encogen a dos renglones ni se encima una franja fija
+ * con otra. Llamar/WhatsApp/Cómo llegar viven como iconos en la cabecera
+ * (`RedesSociales`), no aquí: estas tres sí conviene leerlas con texto.
  */
 export default function BarraInferior({
   tenant,
   sucursal,
   sucursales,
   permiteReservaciones,
+  lealtad,
 }: {
   tenant: Tenant;
   sucursal: Sucursal | null;
   sucursales: Sucursal[];
   permiteReservaciones: boolean;
+  /** `null` si el plan no trae lealtad o el negocio no la activó. */
+  lealtad: { meta: number; premio: string } | null;
 }): ReactElement | null {
   const carrito = useCarritoWhatsApp();
   const hayItems = carrito.habilitado && carrito.cantidadTotal > 0;
   const hayAcciones =
-    filasContacto(tenant, sucursal).length > 0 ||
+    filasContacto(tenant, sucursal).some((f) => f.etiqueta === "Reseñas") ||
+    Boolean(lealtad) ||
     reservarHabilitado(sucursal, sucursales, permiteReservaciones);
 
   if (!hayItems && !hayAcciones) return null;
@@ -48,6 +55,7 @@ export default function BarraInferior({
             style={{ paddingBottom: "calc(0.625rem + env(safe-area-inset-bottom))" }}
           >
             <ContactoMenu tenant={tenant} sucursal={sucursal} />
+            {lealtad && <TarjetaLealtadPill tenantId={tenant.id} slug={tenant.slug} />}
             <ReservarMenu
               sucursalActiva={sucursal}
               sucursales={sucursales}

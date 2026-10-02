@@ -1,8 +1,13 @@
 import { Facebook, Instagram } from "lucide-react";
-import type { Tenant } from "@/types/database";
+import { filasContacto } from "@/components/menu/ContactoMenu";
+import type { Sucursal, Tenant } from "@/types/database";
 
 /**
- * Enlaces del negocio en la cabecera del menu: solo redes sociales.
+ * Iconos de la cabecera del menu: redes sociales + contacto rápido (llamar,
+ * WhatsApp, cómo llegar). Entran los cuatro en una fila sin romperse a varios
+ * renglones ni competir por espacio con "Reseñas"/"Reservar", que se quedan
+ * como pills con texto en `BarraInferior` — ésos sí conviene leerlos, no solo
+ * reconocer el icono.
  *
  * No llevan color propio: usan `--menu-primario` y `--menu-texto`, asi que combinan
  * solos con lo que el dueno elija en Diseno. Un icono azul de Facebook sobre un
@@ -22,38 +27,64 @@ function IconoTikTok({ className }: { className?: string }) {
   );
 }
 
-type Enlace = {
-  clave: keyof Pick<Tenant, "facebook_url" | "instagram_url" | "tiktok_url">;
+type IconoEnlace = {
+  clave: string;
   etiqueta: string;
+  href: string;
+  externo: boolean;
   /** Los iconos de lucide son forwardRef; el de TikTok es una función. `ComponentType` cubre ambos. */
   Icono: React.ComponentType<{ className?: string }>;
 };
 
-const ENLACES: Enlace[] = [
+const REDES: {
+  clave: keyof Pick<Tenant, "facebook_url" | "instagram_url" | "tiktok_url">;
+  etiqueta: string;
+  Icono: IconoEnlace["Icono"];
+}[] = [
   { clave: "instagram_url", etiqueta: "Instagram", Icono: Instagram },
   { clave: "facebook_url", etiqueta: "Facebook", Icono: Facebook },
   { clave: "tiktok_url", etiqueta: "TikTok", Icono: IconoTikTok },
 ];
 
-function hrefDe(tenant: Tenant, clave: Enlace["clave"]): string | null {
-  return tenant[clave] ?? null;
+function iconosDe(tenant: Tenant, sucursal: Sucursal | null): IconoEnlace[] {
+  const redes = REDES.filter((r) => Boolean(tenant[r.clave])).map((r) => ({
+    clave: r.clave,
+    etiqueta: r.etiqueta,
+    href: tenant[r.clave]!,
+    externo: true,
+    Icono: r.Icono,
+  }));
+
+  // Reseñas se queda fuera: ya es una pill con texto en BarraInferior.
+  const contacto = filasContacto(tenant, sucursal)
+    .filter((f) => f.etiqueta !== "Reseñas")
+    .map((f) => ({
+      clave: f.etiqueta,
+      etiqueta: f.etiqueta,
+      href: f.href,
+      externo: f.externo,
+      Icono: f.Icono,
+    }));
+
+  return [...contacto, ...redes];
 }
 
-/** Sin ningún enlace, la cabecera no debe reservar espacio para la fila. */
-export const tieneRedes = (tenant: Tenant): boolean =>
-  ENLACES.some(({ clave }) => Boolean(hrefDe(tenant, clave)));
+/** Sin ningún icono, la cabecera no debe reservar espacio para la fila. */
+export const tieneIconosContacto = (tenant: Tenant, sucursal: Sucursal | null): boolean =>
+  iconosDe(tenant, sucursal).length > 0;
 
 export default function RedesSociales({
   tenant,
+  sucursal,
   sobreOscuro = false,
 }: {
   tenant: Tenant;
+  sucursal: Sucursal | null;
   /** En fondo completo el texto ya es blanco: los iconos también. */
   sobreOscuro?: boolean;
 }) {
-  // Sin la migración 007 estas columnas llegan como `undefined`, no como null.
-  const visibles = ENLACES.filter(({ clave }) => Boolean(hrefDe(tenant, clave)));
-  if (visibles.length === 0) return null;
+  const iconos = iconosDe(tenant, sucursal);
+  if (iconos.length === 0) return null;
 
   const estilo = sobreOscuro
     ? { background: "rgba(255,255,255,0.14)", color: "#FFFFFF" }
@@ -63,13 +94,12 @@ export default function RedesSociales({
       };
 
   return (
-    <nav className="flex items-center gap-2" aria-label="Redes sociales">
-      {visibles.map(({ clave, etiqueta, Icono }) => (
+    <nav className="flex flex-wrap items-center gap-2" aria-label="Contacto y redes sociales">
+      {iconos.map(({ clave, etiqueta, href, externo, Icono }) => (
         <a
           key={clave}
-          href={hrefDe(tenant, clave)!}
-          target="_blank"
-          rel="noreferrer noopener"
+          href={href}
+          {...(externo ? { target: "_blank", rel: "noreferrer noopener" } : {})}
           aria-label={etiqueta}
           title={etiqueta}
           className="grid size-9 place-items-center rounded-full transition-opacity hover:opacity-75"
