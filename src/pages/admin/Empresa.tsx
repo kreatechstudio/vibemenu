@@ -5,6 +5,7 @@ import { AlertTriangle, Check, ImagePlus, Loader2, Lock, Trash2 } from "lucide-r
 import AdminLayout from "@/components/layout/AdminLayout";
 import PillTabs, { PESTANAS_NEGOCIO } from "@/components/layout/PillTabs";
 import PhoneInput from "@/components/ui/phone-input";
+import RecortarImagen from "@/components/ui/recortar-imagen";
 import { useTenantActual } from "@/hooks/useTenantActual";
 import { useActualizarTenant } from "@/hooks/useActualizarTenant";
 import { borrarImagen, subirImagen } from "@/hooks/useCarta";
@@ -104,6 +105,7 @@ function Contenido() {
 
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [archivoParaRecortar, setArchivoParaRecortar] = useState<File | null>(null);
 
   // Su propio slug siempre está "ocupado": lo ocupa él. No es un conflicto.
   const cambioSlug = tenant ? slug !== tenant.slug : false;
@@ -137,14 +139,19 @@ function Contenido() {
   const registrosDNS = instruccionesDNS(dominio.trim(), diagDominio);
   const problemaDNS = tenant.dominio_estado !== "listo" ? motivoProblemaDNS(diagDominio) : null;
 
-  async function alElegirLogo(e: React.ChangeEvent<HTMLInputElement>) {
+  function alElegirLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
-    if (!archivo) return;
+    if (archivo) setArchivoParaRecortar(archivo);
+    e.target.value = ""; // permite elegir el mismo archivo otra vez si cancela
+  }
+
+  async function alConfirmarRecorte(archivoRecortado: File) {
+    setArchivoParaRecortar(null);
     setError(null);
     setSubiendo(true);
     try {
       // Se comprime a WebP de 512px: un logo no necesita más.
-      setLogoUrl(await subirImagen(tenantId, archivo, "logos"));
+      setLogoUrl(await subirImagen(tenantId, archivoRecortado, "logos"));
     } catch {
       setError(ESTADOS.errorImagen);
     } finally {
@@ -200,6 +207,14 @@ function Contenido() {
 
   return (
     <form onSubmit={alGuardar}>
+      {archivoParaRecortar && (
+        <RecortarImagen
+          archivo={archivoParaRecortar}
+          alConfirmar={(f) => void alConfirmarRecorte(f)}
+          alCancelar={() => setArchivoParaRecortar(null)}
+        />
+      )}
+
       <PillTabs pestanas={PESTANAS_NEGOCIO} />
 
       <h1 className="text-2xl">Datos de tu negocio</h1>

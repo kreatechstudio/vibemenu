@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, ImagePlus, Loader2 } from "lucide-react";
+import RecortarImagen from "@/components/ui/recortar-imagen";
 import { useActualizarTenant } from "@/hooks/useActualizarTenant";
 import { subirImagen } from "@/hooks/useCarta";
 import { ESTADOS } from "@/lib/copy";
@@ -14,14 +15,20 @@ export default function PasoLogo({ tenantId, onContinuar }: PasoLogoProps) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [archivoParaRecortar, setArchivoParaRecortar] = useState<File | null>(null);
 
-  async function alSubir(e: React.ChangeEvent<HTMLInputElement>) {
+  function alElegir(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
-    if (!archivo) return;
+    if (archivo) setArchivoParaRecortar(archivo);
+    e.target.value = "";
+  }
+
+  async function alConfirmarRecorte(archivoRecortado: File) {
+    setArchivoParaRecortar(null);
     setError(null);
     setSubiendo(true);
     try {
-      const url = await subirImagen(tenantId, archivo, "logos");
+      const url = await subirImagen(tenantId, archivoRecortado, "logos");
       await actualizar.mutateAsync({ logo_url: url });
       setLogoUrl(url);
     } catch {
@@ -33,6 +40,14 @@ export default function PasoLogo({ tenantId, onContinuar }: PasoLogoProps) {
 
   return (
     <div>
+      {archivoParaRecortar && (
+        <RecortarImagen
+          archivo={archivoParaRecortar}
+          alConfirmar={(f) => void alConfirmarRecorte(f)}
+          alCancelar={() => setArchivoParaRecortar(null)}
+        />
+      )}
+
       <h1 className="text-2xl text-vm-ink">Dale cara a tu negocio</h1>
       <p className="mt-2 text-sm text-vm-body">
         Un logo ayuda a que tu menú se vea profesional. Puedes agregarlo después si no lo tienes a
@@ -58,7 +73,7 @@ export default function PasoLogo({ tenantId, onContinuar }: PasoLogoProps) {
           id="logo"
           type="file"
           accept="image/png,image/jpeg"
-          onChange={(e) => void alSubir(e)}
+          onChange={alElegir}
           disabled={subiendo}
           className="hidden"
         />
