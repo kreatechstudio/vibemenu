@@ -9,87 +9,42 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TerminosRouteImport } from './routes/terminos'
-import { Route as SuperadminRouteImport } from './routes/superadmin'
-import { Route as RestablecerRouteImport } from './routes/restablecer'
-import { Route as RegistroRouteImport } from './routes/registro'
-import { Route as RecuperarRouteImport } from './routes/recuperar'
-import { Route as PrivacidadRouteImport } from './routes/privacidad'
-import { Route as PreciosRouteImport } from './routes/precios'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as DemoRouteImport } from './routes/demo'
-import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PreciosRouteImport } from './routes/precios'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as RecuperarRouteImport } from './routes/recuperar'
+import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as RestablecerRouteImport } from './routes/restablecer'
+import { Route as SuperadminRouteImport } from './routes/superadmin'
+import { Route as TerminosRouteImport } from './routes/terminos'
 import { Route as SlugIndexRouteImport } from './routes/$slug.index'
-import { Route as SuperadminTenantIdRouteImport } from './routes/superadmin.$tenantId'
-import { Route as SucursalSucursalSlugRouteImport } from './routes/sucursal.$sucursalSlug'
-import { Route as InvitacionTokenRouteImport } from './routes/invitacion.$token'
-import { Route as AuthCompletarRouteImport } from './routes/auth.completar'
-import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
-import { Route as AdminSucursalesRouteImport } from './routes/admin.sucursales'
-import { Route as AdminReservacionesRouteImport } from './routes/admin.reservaciones'
-import { Route as AdminQrRouteImport } from './routes/admin.qr'
-import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
-import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
-import { Route as AdminMenuRouteImport } from './routes/admin.menu'
-import { Route as AdminLealtadRouteImport } from './routes/admin.lealtad'
-import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
-import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
-import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnaliticaRouteImport } from './routes/admin.analitica'
-import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
+import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
+import { Route as AdminEmpresaRouteImport } from './routes/admin.empresa'
+import { Route as AdminEquipoRouteImport } from './routes/admin.equipo'
+import { Route as AdminLealtadRouteImport } from './routes/admin.lealtad'
+import { Route as AdminMenuRouteImport } from './routes/admin.menu'
+import { Route as AdminModificadoresRouteImport } from './routes/admin.modificadores'
+import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
+import { Route as AdminQrRouteImport } from './routes/admin.qr'
+import { Route as AdminReservacionesRouteImport } from './routes/admin.reservaciones'
+import { Route as AdminSucursalesRouteImport } from './routes/admin.sucursales'
+import { Route as AdminSuscripcionRouteImport } from './routes/admin.suscripcion'
+import { Route as AuthCompletarRouteImport } from './routes/auth.completar'
+import { Route as InvitacionTokenRouteImport } from './routes/invitacion.$token'
+import { Route as SucursalSucursalSlugRouteImport } from './routes/sucursal.$sucursalSlug'
+import { Route as SuperadminTenantIdRouteImport } from './routes/superadmin.$tenantId'
 import { Route as SlugLealtadTarjetaIdRouteImport } from './routes/$slug.lealtad.$tarjetaId'
+import { Route as SlugSucursalSucursalSlugRouteImport } from './routes/$slug.sucursal.$sucursalSlug'
 
-const TerminosRoute = TerminosRouteImport.update({
-  id: '/terminos',
-  path: '/terminos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SuperadminRoute = SuperadminRouteImport.update({
-  id: '/superadmin',
-  path: '/superadmin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RestablecerRoute = RestablecerRouteImport.update({
-  id: '/restablecer',
-  path: '/restablecer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegistroRoute = RegistroRouteImport.update({
-  id: '/registro',
-  path: '/registro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecuperarRoute = RecuperarRouteImport.update({
-  id: '/recuperar',
-  path: '/recuperar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacidadRoute = PrivacidadRouteImport.update({
-  id: '/privacidad',
-  path: '/privacidad',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PreciosRoute = PreciosRouteImport.update({
-  id: '/precios',
-  path: '/precios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
@@ -97,14 +52,54 @@ const CookiesRoute = CookiesRouteImport.update({
   path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreciosRoute = PreciosRouteImport.update({
+  id: '/precios',
+  path: '/precios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarRoute = RecuperarRouteImport.update({
+  id: '/recuperar',
+  path: '/recuperar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegistroRoute = RegistroRouteImport.update({
+  id: '/registro',
+  path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestablecerRoute = RestablecerRouteImport.update({
+  id: '/restablecer',
+  path: '/restablecer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperadminRoute = SuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminosRoute = TerminosRouteImport.update({
+  id: '/terminos',
+  path: '/terminos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SlugIndexRoute = SlugIndexRouteImport.update({
@@ -112,74 +107,14 @@ const SlugIndexRoute = SlugIndexRouteImport.update({
   path: '/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SuperadminTenantIdRoute = SuperadminTenantIdRouteImport.update({
-  id: '/$tenantId',
-  path: '/$tenantId',
-  getParentRoute: () => SuperadminRoute,
-} as any)
-const SucursalSucursalSlugRoute = SucursalSucursalSlugRouteImport.update({
-  id: '/sucursal/$sucursalSlug',
-  path: '/sucursal/$sucursalSlug',
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InvitacionTokenRoute = InvitacionTokenRouteImport.update({
-  id: '/invitacion/$token',
-  path: '/invitacion/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCompletarRoute = AuthCompletarRouteImport.update({
-  id: '/auth/completar',
-  path: '/auth/completar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSuscripcionRoute = AdminSuscripcionRouteImport.update({
-  id: '/admin/suscripcion',
-  path: '/admin/suscripcion',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSucursalesRoute = AdminSucursalesRouteImport.update({
-  id: '/admin/sucursales',
-  path: '/admin/sucursales',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminReservacionesRoute = AdminReservacionesRouteImport.update({
-  id: '/admin/reservaciones',
-  path: '/admin/reservaciones',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminQrRoute = AdminQrRouteImport.update({
-  id: '/admin/qr',
-  path: '/admin/qr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminOpinionesRoute = AdminOpinionesRouteImport.update({
-  id: '/admin/opiniones',
-  path: '/admin/opiniones',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminModificadoresRoute = AdminModificadoresRouteImport.update({
-  id: '/admin/modificadores',
-  path: '/admin/modificadores',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminMenuRoute = AdminMenuRouteImport.update({
-  id: '/admin/menu',
-  path: '/admin/menu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminLealtadRoute = AdminLealtadRouteImport.update({
-  id: '/admin/lealtad',
-  path: '/admin/lealtad',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminEquipoRoute = AdminEquipoRouteImport.update({
-  id: '/admin/equipo',
-  path: '/admin/equipo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminEmpresaRoute = AdminEmpresaRouteImport.update({
-  id: '/admin/empresa',
-  path: '/admin/empresa',
+const AdminAnaliticaRoute = AdminAnaliticaRouteImport.update({
+  id: '/admin/analitica',
+  path: '/admin/analitica',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminDisenoRoute = AdminDisenoRouteImport.update({
@@ -187,9 +122,79 @@ const AdminDisenoRoute = AdminDisenoRouteImport.update({
   path: '/admin/diseno',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminAnaliticaRoute = AdminAnaliticaRouteImport.update({
-  id: '/admin/analitica',
-  path: '/admin/analitica',
+const AdminEmpresaRoute = AdminEmpresaRouteImport.update({
+  id: '/admin/empresa',
+  path: '/admin/empresa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEquipoRoute = AdminEquipoRouteImport.update({
+  id: '/admin/equipo',
+  path: '/admin/equipo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLealtadRoute = AdminLealtadRouteImport.update({
+  id: '/admin/lealtad',
+  path: '/admin/lealtad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMenuRoute = AdminMenuRouteImport.update({
+  id: '/admin/menu',
+  path: '/admin/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminModificadoresRoute = AdminModificadoresRouteImport.update({
+  id: '/admin/modificadores',
+  path: '/admin/modificadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminOpinionesRoute = AdminOpinionesRouteImport.update({
+  id: '/admin/opiniones',
+  path: '/admin/opiniones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminQrRoute = AdminQrRouteImport.update({
+  id: '/admin/qr',
+  path: '/admin/qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReservacionesRoute = AdminReservacionesRouteImport.update({
+  id: '/admin/reservaciones',
+  path: '/admin/reservaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSucursalesRoute = AdminSucursalesRouteImport.update({
+  id: '/admin/sucursales',
+  path: '/admin/sucursales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSuscripcionRoute = AdminSuscripcionRouteImport.update({
+  id: '/admin/suscripcion',
+  path: '/admin/suscripcion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCompletarRoute = AuthCompletarRouteImport.update({
+  id: '/auth/completar',
+  path: '/auth/completar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitacionTokenRoute = InvitacionTokenRouteImport.update({
+  id: '/invitacion/$token',
+  path: '/invitacion/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SucursalSucursalSlugRoute = SucursalSucursalSlugRouteImport.update({
+  id: '/sucursal/$sucursalSlug',
+  path: '/sucursal/$sucursalSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuperadminTenantIdRoute = SuperadminTenantIdRouteImport.update({
+  id: '/$tenantId',
+  path: '/$tenantId',
+  getParentRoute: () => SuperadminRoute,
+} as any)
+const SlugLealtadTarjetaIdRoute = SlugLealtadTarjetaIdRouteImport.update({
+  id: '/$slug/lealtad/$tarjetaId',
+  path: '/$slug/lealtad/$tarjetaId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SlugSucursalSucursalSlugRoute =
@@ -198,11 +203,6 @@ const SlugSucursalSucursalSlugRoute =
     path: '/$slug/sucursal/$sucursalSlug',
     getParentRoute: () => rootRouteImport,
   } as any)
-const SlugLealtadTarjetaIdRoute = SlugLealtadTarjetaIdRouteImport.update({
-  id: '/$slug/lealtad/$tarjetaId',
-  path: '/$slug/lealtad/$tarjetaId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -448,74 +448,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terminos': {
-      id: '/terminos'
-      path: '/terminos'
-      fullPath: '/terminos'
-      preLoaderRoute: typeof TerminosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/superadmin': {
-      id: '/superadmin'
-      path: '/superadmin'
-      fullPath: '/superadmin'
-      preLoaderRoute: typeof SuperadminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/restablecer': {
-      id: '/restablecer'
-      path: '/restablecer'
-      fullPath: '/restablecer'
-      preLoaderRoute: typeof RestablecerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/registro': {
-      id: '/registro'
-      path: '/registro'
-      fullPath: '/registro'
-      preLoaderRoute: typeof RegistroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recuperar': {
-      id: '/recuperar'
-      path: '/recuperar'
-      fullPath: '/recuperar'
-      preLoaderRoute: typeof RecuperarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacidad': {
-      id: '/privacidad'
-      path: '/privacidad'
-      fullPath: '/privacidad'
-      preLoaderRoute: typeof PrivacidadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/precios': {
-      id: '/precios'
-      path: '/precios'
-      fullPath: '/precios'
-      preLoaderRoute: typeof PreciosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cookies': {
@@ -525,18 +462,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/precios': {
+      id: '/precios'
+      path: '/precios'
+      fullPath: '/precios'
+      preLoaderRoute: typeof PreciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar': {
+      id: '/recuperar'
+      path: '/recuperar'
+      fullPath: '/recuperar'
+      preLoaderRoute: typeof RecuperarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/registro': {
+      id: '/registro'
+      path: '/registro'
+      fullPath: '/registro'
+      preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restablecer': {
+      id: '/restablecer'
+      path: '/restablecer'
+      fullPath: '/restablecer'
+      preLoaderRoute: typeof RestablecerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/superadmin': {
+      id: '/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof SuperadminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminos': {
+      id: '/terminos'
+      path: '/terminos'
+      fullPath: '/terminos'
+      preLoaderRoute: typeof TerminosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$slug/': {
@@ -546,109 +539,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/superadmin/$tenantId': {
-      id: '/superadmin/$tenantId'
-      path: '/$tenantId'
-      fullPath: '/superadmin/$tenantId'
-      preLoaderRoute: typeof SuperadminTenantIdRouteImport
-      parentRoute: typeof SuperadminRoute
-    }
-    '/sucursal/$sucursalSlug': {
-      id: '/sucursal/$sucursalSlug'
-      path: '/sucursal/$sucursalSlug'
-      fullPath: '/sucursal/$sucursalSlug'
-      preLoaderRoute: typeof SucursalSucursalSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/invitacion/$token': {
-      id: '/invitacion/$token'
-      path: '/invitacion/$token'
-      fullPath: '/invitacion/$token'
-      preLoaderRoute: typeof InvitacionTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/completar': {
-      id: '/auth/completar'
-      path: '/auth/completar'
-      fullPath: '/auth/completar'
-      preLoaderRoute: typeof AuthCompletarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/suscripcion': {
-      id: '/admin/suscripcion'
-      path: '/admin/suscripcion'
-      fullPath: '/admin/suscripcion'
-      preLoaderRoute: typeof AdminSuscripcionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/sucursales': {
-      id: '/admin/sucursales'
-      path: '/admin/sucursales'
-      fullPath: '/admin/sucursales'
-      preLoaderRoute: typeof AdminSucursalesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/reservaciones': {
-      id: '/admin/reservaciones'
-      path: '/admin/reservaciones'
-      fullPath: '/admin/reservaciones'
-      preLoaderRoute: typeof AdminReservacionesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/qr': {
-      id: '/admin/qr'
-      path: '/admin/qr'
-      fullPath: '/admin/qr'
-      preLoaderRoute: typeof AdminQrRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/opiniones': {
-      id: '/admin/opiniones'
-      path: '/admin/opiniones'
-      fullPath: '/admin/opiniones'
-      preLoaderRoute: typeof AdminOpinionesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/modificadores': {
-      id: '/admin/modificadores'
-      path: '/admin/modificadores'
-      fullPath: '/admin/modificadores'
-      preLoaderRoute: typeof AdminModificadoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/menu': {
-      id: '/admin/menu'
-      path: '/admin/menu'
-      fullPath: '/admin/menu'
-      preLoaderRoute: typeof AdminMenuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/lealtad': {
-      id: '/admin/lealtad'
-      path: '/admin/lealtad'
-      fullPath: '/admin/lealtad'
-      preLoaderRoute: typeof AdminLealtadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/equipo': {
-      id: '/admin/equipo'
-      path: '/admin/equipo'
-      fullPath: '/admin/equipo'
-      preLoaderRoute: typeof AdminEquipoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/empresa': {
-      id: '/admin/empresa'
-      path: '/admin/empresa'
-      fullPath: '/admin/empresa'
-      preLoaderRoute: typeof AdminEmpresaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/diseno': {
-      id: '/admin/diseno'
-      path: '/admin/diseno'
-      fullPath: '/admin/diseno'
-      preLoaderRoute: typeof AdminDisenoRouteImport
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/analitica': {
@@ -658,18 +553,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnaliticaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$slug/sucursal/$sucursalSlug': {
-      id: '/$slug/sucursal/$sucursalSlug'
-      path: '/$slug/sucursal/$sucursalSlug'
-      fullPath: '/$slug/sucursal/$sucursalSlug'
-      preLoaderRoute: typeof SlugSucursalSucursalSlugRouteImport
+    '/admin/diseno': {
+      id: '/admin/diseno'
+      path: '/admin/diseno'
+      fullPath: '/admin/diseno'
+      preLoaderRoute: typeof AdminDisenoRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/empresa': {
+      id: '/admin/empresa'
+      path: '/admin/empresa'
+      fullPath: '/admin/empresa'
+      preLoaderRoute: typeof AdminEmpresaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/equipo': {
+      id: '/admin/equipo'
+      path: '/admin/equipo'
+      fullPath: '/admin/equipo'
+      preLoaderRoute: typeof AdminEquipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/lealtad': {
+      id: '/admin/lealtad'
+      path: '/admin/lealtad'
+      fullPath: '/admin/lealtad'
+      preLoaderRoute: typeof AdminLealtadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/menu': {
+      id: '/admin/menu'
+      path: '/admin/menu'
+      fullPath: '/admin/menu'
+      preLoaderRoute: typeof AdminMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/modificadores': {
+      id: '/admin/modificadores'
+      path: '/admin/modificadores'
+      fullPath: '/admin/modificadores'
+      preLoaderRoute: typeof AdminModificadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/opiniones': {
+      id: '/admin/opiniones'
+      path: '/admin/opiniones'
+      fullPath: '/admin/opiniones'
+      preLoaderRoute: typeof AdminOpinionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/qr': {
+      id: '/admin/qr'
+      path: '/admin/qr'
+      fullPath: '/admin/qr'
+      preLoaderRoute: typeof AdminQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reservaciones': {
+      id: '/admin/reservaciones'
+      path: '/admin/reservaciones'
+      fullPath: '/admin/reservaciones'
+      preLoaderRoute: typeof AdminReservacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/sucursales': {
+      id: '/admin/sucursales'
+      path: '/admin/sucursales'
+      fullPath: '/admin/sucursales'
+      preLoaderRoute: typeof AdminSucursalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/suscripcion': {
+      id: '/admin/suscripcion'
+      path: '/admin/suscripcion'
+      fullPath: '/admin/suscripcion'
+      preLoaderRoute: typeof AdminSuscripcionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/completar': {
+      id: '/auth/completar'
+      path: '/auth/completar'
+      fullPath: '/auth/completar'
+      preLoaderRoute: typeof AuthCompletarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitacion/$token': {
+      id: '/invitacion/$token'
+      path: '/invitacion/$token'
+      fullPath: '/invitacion/$token'
+      preLoaderRoute: typeof InvitacionTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sucursal/$sucursalSlug': {
+      id: '/sucursal/$sucursalSlug'
+      path: '/sucursal/$sucursalSlug'
+      fullPath: '/sucursal/$sucursalSlug'
+      preLoaderRoute: typeof SucursalSucursalSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/superadmin/$tenantId': {
+      id: '/superadmin/$tenantId'
+      path: '/$tenantId'
+      fullPath: '/superadmin/$tenantId'
+      preLoaderRoute: typeof SuperadminTenantIdRouteImport
+      parentRoute: typeof SuperadminRoute
     }
     '/$slug/lealtad/$tarjetaId': {
       id: '/$slug/lealtad/$tarjetaId'
       path: '/$slug/lealtad/$tarjetaId'
       fullPath: '/$slug/lealtad/$tarjetaId'
       preLoaderRoute: typeof SlugLealtadTarjetaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug/sucursal/$sucursalSlug': {
+      id: '/$slug/sucursal/$sucursalSlug'
+      path: '/$slug/sucursal/$sucursalSlug'
+      fullPath: '/$slug/sucursal/$sucursalSlug'
+      preLoaderRoute: typeof SlugSucursalSucursalSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
