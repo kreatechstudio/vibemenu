@@ -59,6 +59,23 @@ export function puedeSellarHoy(ultimoSelloDia: string | null, hoyISO: string): b
   return ultimoSelloDia !== hoyISO;
 }
 
+/**
+ * Espejo de la vigencia que calcula `sellar_tarjeta`/`crear_tarjeta_lealtad`
+ * en el servidor: activa + dentro del rango de fechas opcional. Comparación
+ * lexicográfica porque las fechas vienen en formato "YYYY-MM-DD".
+ */
+export function lealtadVigente(
+  activa: boolean,
+  hoyISO: string,
+  desde: string | null,
+  hasta: string | null,
+): boolean {
+  if (!activa) return false;
+  if (desde && hoyISO < desde) return false;
+  if (hasta && hoyISO > hasta) return false;
+  return true;
+}
+
 export const claveLocal = (slug: string) => `vm:lealtad:${slug}`;
 
 const RE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

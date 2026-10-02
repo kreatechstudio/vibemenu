@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Stamp } from "lucide-react";
 import { useCrearTarjeta, useTarjeta, useTarjetaLocal } from "@/hooks/useLealtad";
 import { progresoLealtad } from "@/lib/lealtad";
+import RecuperarTarjetaLealtad from "@/components/menu/RecuperarTarjetaLealtad";
 
 /**
  * Banner "Junta sellos" en el menú público. Solo aparece si el plan trae
@@ -88,6 +89,8 @@ export default function LealtadMenu({
             {(crear.error as Error).message}
           </p>
         )}
+
+        {!tarjetaViva && <RecuperarTarjetaLealtad slug={slug} />}
       </div>
     </section>
   );

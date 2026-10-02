@@ -17,7 +17,7 @@ import {
   useSellar,
   type VistaTarjeta,
 } from "@/hooks/useAdminLealtad";
-import { codigoValido, normalizarCodigo } from "@/lib/lealtad";
+import { codigoValido, lealtadVigente, normalizarCodigo } from "@/lib/lealtad";
 
 const routeApi = getRouteApi("/admin/lealtad");
 
@@ -126,9 +126,13 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
   const [premio, setPremio] = useState(ctx.tenant.lealtad_premio ?? "");
   const [fase1Activa, setFase1Activa] = useState(ctx.tenant.lealtad_meta_fase1 != null);
   const [metaFase1, setMetaFase1] = useState<number>(
-    ctx.tenant.lealtad_meta_fase1 ?? Math.max(1, Math.floor((ctx.tenant.lealtad_sellos_meta ?? 6) / 2)),
+    ctx.tenant.lealtad_meta_fase1 ??
+      Math.max(1, Math.floor((ctx.tenant.lealtad_sellos_meta ?? 6) / 2)),
   );
   const [premioFase1, setPremioFase1] = useState(ctx.tenant.lealtad_premio_fase1 ?? "");
+  const [limiteDiario, setLimiteDiario] = useState(ctx.tenant.lealtad_limite_diario);
+  const [vigenteDesde, setVigenteDesde] = useState(ctx.tenant.lealtad_vigente_desde ?? "");
+  const [vigenteHasta, setVigenteHasta] = useState(ctx.tenant.lealtad_vigente_hasta ?? "");
 
   const [codigo, setCodigo] = useState("");
   const [sucursalSel, setSucursalSel] = useState<string | null>(null);
@@ -171,9 +175,14 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
 
   const multi = (sucursales?.length ?? 0) > 1;
   const sucursalEfectiva = multi ? (sucursalSel ?? sucursales?.[0]?.id ?? null) : null;
-  const fase1Valida = !fase1Activa || (metaFase1 >= 1 && metaFase1 < meta && premioFase1.trim().length > 0);
-  const premioListo = Boolean(meta && premio.trim()) && fase1Valida;
+  const fase1Valida =
+    !fase1Activa || (metaFase1 >= 1 && metaFase1 < meta && premioFase1.trim().length > 0);
+  const fechasValidas = !vigenteDesde || !vigenteHasta || vigenteHasta >= vigenteDesde;
+  const premioListo = Boolean(meta && premio.trim()) && fase1Valida && fechasValidas;
   const errorAccion = buscar.error ?? sellar.error ?? canjear.error;
+
+  const hoyISO = new Date().toISOString().slice(0, 10);
+  const vigente = lealtadVigente(activa, hoyISO, vigenteDesde || null, vigenteHasta || null);
 
   return (
     <>
@@ -183,132 +192,191 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
         Sellos que tus clientes juntan desde el menú y canjean contigo.
       </p>
 
-      {/* 1. Configuración */}
-      <section className={SECCION}>
-        <h2 className="text-lg">Configuración</h2>
-        <form
-          className="mt-4 space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            guardarConfig.mutate(
-              {
-                lealtad_activa: activa,
-                lealtad_sellos_meta: meta,
-                lealtad_premio: premio.trim(),
-                lealtad_meta_fase1: fase1Activa ? metaFase1 : null,
-                lealtad_premio_fase1: fase1Activa ? premioFase1.trim() : null,
-              },
-              { onSuccess: () => setGuardadoOk(true) },
-            );
-          }}
-        >
-          <label className="block text-sm">
-            <span className="text-vm-body">Sellos para el premio</span>
-            <input
-              type="number"
-              min={2}
-              max={50}
-              value={meta}
-              onChange={(e) => setMeta(Number(e.target.value))}
-              className={`mt-1 block w-24 ${INPUT}`}
-            />
-          </label>
+      {/* 1. Configuración — un barista solo opera (sellar/canjear), no decide
+          la meta ni el premio del programa. */}
+      {ctx.rol !== "barista" && (
+        <section className={SECCION}>
+          <h2 className="text-lg">Configuración</h2>
+          <form
+            className="mt-4 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              guardarConfig.mutate(
+                {
+                  lealtad_activa: activa,
+                  lealtad_sellos_meta: meta,
+                  lealtad_premio: premio.trim(),
+                  lealtad_meta_fase1: fase1Activa ? metaFase1 : null,
+                  lealtad_premio_fase1: fase1Activa ? premioFase1.trim() : null,
+                  lealtad_limite_diario: limiteDiario,
+                  lealtad_vigente_desde: vigenteDesde || null,
+                  lealtad_vigente_hasta: vigenteHasta || null,
+                },
+                { onSuccess: () => setGuardadoOk(true) },
+              );
+            }}
+          >
+            <label className="block text-sm">
+              <span className="text-vm-body">Sellos para el premio</span>
+              <input
+                type="number"
+                min={2}
+                max={50}
+                value={meta}
+                onChange={(e) => setMeta(Number(e.target.value))}
+                className={`mt-1 block w-24 ${INPUT}`}
+              />
+            </label>
 
-          <label className="block text-sm">
-            <span className="text-vm-body">Premio</span>
-            <input
-              type="text"
-              maxLength={80}
-              value={premio}
-              onChange={(e) => setPremio(e.target.value)}
-              placeholder="Un café gratis"
-              className={`mt-1 block w-full max-w-sm ${INPUT}`}
-            />
-          </label>
+            <label className="block text-sm">
+              <span className="text-vm-body">Premio</span>
+              <input
+                type="text"
+                maxLength={80}
+                value={premio}
+                onChange={(e) => setPremio(e.target.value)}
+                placeholder="Un café gratis"
+                className={`mt-1 block w-full max-w-sm ${INPUT}`}
+              />
+            </label>
 
-          <div className="rounded-lg border p-3">
+            <div className="rounded-lg border p-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={fase1Activa}
+                  onChange={(e) => setFase1Activa(e.target.checked)}
+                  className="size-4"
+                />
+                <span>Agregar un premio a la mitad (fase 1)</span>
+              </label>
+              <p className="mt-1 text-xs text-vm-body">
+                Un checkpoint que se canjea sin gastar los sellos — el cliente sigue acumulando
+                hacia el premio final.
+              </p>
+
+              {fase1Activa && (
+                <div className="mt-3 space-y-3">
+                  <label className="block text-sm">
+                    <span className="text-vm-body">Sellos para el premio de fase 1</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={Math.max(1, meta - 1)}
+                      value={metaFase1}
+                      onChange={(e) => setMetaFase1(Number(e.target.value))}
+                      className={`mt-1 block w-24 ${INPUT}`}
+                    />
+                  </label>
+
+                  <label className="block text-sm">
+                    <span className="text-vm-body">Premio de fase 1</span>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={premioFase1}
+                      onChange={(e) => setPremioFase1(e.target.value)}
+                      placeholder="Una galleta gratis"
+                      className={`mt-1 block w-full max-w-sm ${INPUT}`}
+                    />
+                  </label>
+
+                  {metaFase1 >= meta && (
+                    <p className="text-xs text-vm-danger">
+                      Debe ser menor a los sellos del premio final ({meta}).
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={fase1Activa}
-                onChange={(e) => setFase1Activa(e.target.checked)}
+                checked={limiteDiario}
+                onChange={(e) => setLimiteDiario(e.target.checked)}
                 className="size-4"
               />
-              <span>Agregar un premio a la mitad (fase 1)</span>
+              <span>Máximo 1 sello por cliente al día</span>
             </label>
-            <p className="mt-1 text-xs text-vm-body">
-              Un checkpoint que se canjea sin gastar los sellos — el cliente sigue acumulando hacia
-              el premio final.
-            </p>
 
-            {fase1Activa && (
-              <div className="mt-3 space-y-3">
+            <div className="rounded-lg border p-3">
+              <p className="text-sm font-medium text-vm-ink">Vigencia de la promoción</p>
+              <p className="mt-1 text-xs text-vm-body">
+                Opcional. Fuera de este rango nadie puede crear tarjetas ni sellar — útil para una
+                promoción de temporada. Déjalo vacío para que no tenga fecha de fin.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
                 <label className="block text-sm">
-                  <span className="text-vm-body">Sellos para el premio de fase 1</span>
+                  <span className="text-vm-body">Desde</span>
                   <input
-                    type="number"
-                    min={1}
-                    max={Math.max(1, meta - 1)}
-                    value={metaFase1}
-                    onChange={(e) => setMetaFase1(Number(e.target.value))}
-                    className={`mt-1 block w-24 ${INPUT}`}
+                    type="date"
+                    value={vigenteDesde}
+                    onChange={(e) => setVigenteDesde(e.target.value)}
+                    className={`mt-1 block ${INPUT}`}
                   />
                 </label>
-
                 <label className="block text-sm">
-                  <span className="text-vm-body">Premio de fase 1</span>
+                  <span className="text-vm-body">Hasta</span>
                   <input
-                    type="text"
-                    maxLength={80}
-                    value={premioFase1}
-                    onChange={(e) => setPremioFase1(e.target.value)}
-                    placeholder="Una galleta gratis"
-                    className={`mt-1 block w-full max-w-sm ${INPUT}`}
+                    type="date"
+                    value={vigenteHasta}
+                    onChange={(e) => setVigenteHasta(e.target.value)}
+                    className={`mt-1 block ${INPUT}`}
                   />
                 </label>
-
-                {metaFase1 >= meta && (
-                  <p className="text-xs text-vm-danger">
-                    Debe ser menor a los sellos del premio final ({meta}).
-                  </p>
-                )}
               </div>
+              {!fechasValidas && (
+                <p className="mt-2 text-xs text-vm-danger">
+                  La fecha "hasta" debe ser igual o posterior a "desde".
+                </p>
+              )}
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={activa}
+                disabled={!premioListo}
+                onChange={(e) => setActiva(e.target.checked)}
+                className="size-4"
+              />
+              <span>Programa de lealtad activo</span>
+            </label>
+
+            {activa && !vigente && (
+              <p className="rounded-lg bg-vm-warning-soft px-3 py-2 text-xs text-vm-warning">
+                {vigenteHasta && hoyISO > vigenteHasta
+                  ? `La promoción terminó el ${vigenteHasta}. Nadie puede sellar hasta que ajustes las fechas o las quites.`
+                  : vigenteDesde && hoyISO < vigenteDesde
+                    ? `La promoción empieza el ${vigenteDesde}.`
+                    : null}
+              </p>
             )}
-          </div>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={activa}
-              disabled={!premioListo}
-              onChange={(e) => setActiva(e.target.checked)}
-              className="size-4"
-            />
-            <span>Programa de lealtad activo</span>
-          </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={guardarConfig.isPending || !premioListo}
+                className={BOTON_PRIMARIO}
+              >
+                {guardarConfig.isPending ? "Guardando…" : "Guardar"}
+              </button>
+              {guardadoOk && <span className="text-xs text-vm-success">Cambios guardados.</span>}
+            </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="submit"
-              disabled={guardarConfig.isPending || !premioListo}
-              className={BOTON_PRIMARIO}
-            >
-              {guardarConfig.isPending ? "Guardando…" : "Guardar"}
-            </button>
-            {guardadoOk && <span className="text-xs text-vm-success">Cambios guardados.</span>}
-          </div>
+            {guardarConfig.isError && (
+              <p className="rounded-lg bg-vm-danger-soft px-3 py-2 text-xs text-vm-danger">
+                No pudimos guardar los cambios. Intenta de nuevo.
+              </p>
+            )}
 
-          {guardarConfig.isError && (
-            <p className="rounded-lg bg-vm-danger-soft px-3 py-2 text-xs text-vm-danger">
-              No pudimos guardar los cambios. Intenta de nuevo.
+            <p className="text-xs text-vm-body">
+              Actívalo cuando el premio esté listo. Si lo apagas, las tarjetas se conservan.
             </p>
-          )}
-
-          <p className="text-xs text-vm-body">
-            Actívalo cuando el premio esté listo. Si lo apagas, las tarjetas se conservan.
-          </p>
-        </form>
-      </section>
+          </form>
+        </section>
+      )}
 
       {/* 2. Sellar / canjear */}
       <section className={SECCION}>
@@ -389,7 +457,9 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                disabled={tarjetaActiva.selloRepetidoHoy || sellar.isPending}
+                disabled={
+                  tarjetaActiva.selloRepetidoHoy || tarjetaActiva.listoParaCanje || sellar.isPending
+                }
                 onClick={() =>
                   sellar.mutate(
                     { codigo: tarjetaActiva.codigo, sucursalId: sucursalEfectiva },
@@ -399,7 +469,11 @@ function Panel({ ctx }: { ctx: ContextoTenant }) {
                 className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-vm-primary px-4 text-sm font-medium text-white hover:bg-vm-primary-hover disabled:opacity-50"
               >
                 <Stamp className="size-4" aria-hidden />
-                {tarjetaActiva.selloRepetidoHoy ? "Ya recibió su sello de hoy" : "Sellar"}
+                {tarjetaActiva.listoParaCanje
+                  ? "Canjea el premio para seguir sellando"
+                  : tarjetaActiva.selloRepetidoHoy
+                    ? "Ya recibió su sello de hoy"
+                    : "Sellar"}
               </button>
               {tarjetaActiva.premioFase1 && (
                 <button

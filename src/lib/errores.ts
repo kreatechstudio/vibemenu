@@ -45,7 +45,9 @@ export type SlugErrorDb =
   | "consentimiento_requerido"
   | "sin_tenant"
   | "lealtad_error_interno"
-  | "datos_invalidos";
+  | "datos_invalidos"
+  | "tarjeta_completa"
+  | "contacto_ya_registrado";
 
 /** Errores que el usuario resuelve actualizando su plan. */
 export const SLUGS_DE_LIMITE: readonly SlugErrorDb[] = [
@@ -99,6 +101,8 @@ const MENSAJES: Record<SlugErrorDb, string> = {
   sin_tenant: "Tu sesión no está ligada a un negocio. Vuelve a entrar.",
   lealtad_error_interno: "No pudimos crear tu tarjeta. Intenta de nuevo.",
   datos_invalidos: "Revisa los datos e intenta de nuevo.",
+  tarjeta_completa: "Esta tarjeta ya juntó todos sus sellos. Canjea el premio antes de seguir sellando.",
+  contacto_ya_registrado: "Ese teléfono o correo ya está guardado en otra tarjeta.",
 };
 
 const esSlugConocido = (m: string): m is SlugErrorDb => m in MENSAJES;

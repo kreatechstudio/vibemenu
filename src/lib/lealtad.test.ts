@@ -2,6 +2,7 @@ import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import {
   codigoValido,
   guardarTarjetaLocal,
+  lealtadVigente,
   leerTarjetaLocal,
   normalizarCodigo,
   olvidarTarjetaLocal,
@@ -96,6 +97,26 @@ describe("puedeSellarHoy", () => {
     expect(puedeSellarHoy("2026-09-02", "2026-09-02")).toBe(false);
     expect(puedeSellarHoy("2026-09-01", "2026-09-02")).toBe(true);
     expect(puedeSellarHoy(null, "2026-09-02")).toBe(true);
+  });
+});
+
+describe("lealtadVigente", () => {
+  test("inactiva siempre falsa", () => {
+    expect(lealtadVigente(false, "2026-09-02", null, null)).toBe(false);
+  });
+  test("activa sin fechas siempre vigente", () => {
+    expect(lealtadVigente(true, "2026-09-02", null, null)).toBe(true);
+  });
+  test("antes de 'desde' no vigente", () => {
+    expect(lealtadVigente(true, "2026-09-01", "2026-09-02", null)).toBe(false);
+    expect(lealtadVigente(true, "2026-09-02", "2026-09-02", null)).toBe(true);
+  });
+  test("después de 'hasta' no vigente", () => {
+    expect(lealtadVigente(true, "2026-09-03", null, "2026-09-02")).toBe(false);
+    expect(lealtadVigente(true, "2026-09-02", null, "2026-09-02")).toBe(true);
+  });
+  test("dentro del rango completo", () => {
+    expect(lealtadVigente(true, "2026-06-15", "2026-06-01", "2026-06-30")).toBe(true);
   });
 });
 

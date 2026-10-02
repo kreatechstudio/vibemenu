@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "react-qr-code";
-import { Loader2 } from "lucide-react";
+import { Download, Loader2, Stamp as IconoSello } from "lucide-react";
 import { useGuardarContacto, useTarjeta, useTarjetaLocal } from "@/hooks/useLealtad";
 import { progresoLealtad, rejillaSellos, validarCorreo, validarTelefono } from "@/lib/lealtad";
 import { resolverTema, variablesDeTema } from "@/lib/tema";
 import { supabase } from "@/lib/supabase";
 import PhoneInput from "@/components/ui/phone-input";
+import RecuperarTarjetaLealtad from "@/components/menu/RecuperarTarjetaLealtad";
+import { descargarCanvasComoPng, dibujarTarjetaLealtad } from "@/lib/tarjetaLealtadImagen";
 import type { FormatoMenu } from "@/types/database";
 
 /**
@@ -41,15 +43,37 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
     queryFn: async () => {
       const { data } = await supabase
         .from("tenants")
-        .select("tema, formato_activo")
+        .select("tema, formato_activo, lealtad_limite_diario")
         .eq("slug", slug)
         .maybeSingle();
       return data;
     },
   });
-  const estilo = tema.data
-    ? variablesDeTema(resolverTema(tema.data.tema, tema.data.formato_activo as FormatoMenu))
-    : {};
+  const temaResuelto = tema.data
+    ? resolverTema(tema.data.tema, tema.data.formato_activo as FormatoMenu)
+    : null;
+  const estilo = temaResuelto ? variablesDeTema(temaResuelto) : {};
+  const limiteDiario = tema.data?.lealtad_limite_diario ?? true;
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [descargando, setDescargando] = useState(false);
+
+  function descargarTarjeta() {
+    if (!data || !canvasRef.current) return;
+    setDescargando(true);
+    dibujarTarjetaLealtad(canvasRef.current, {
+      negocio: data.tenantNombre,
+      premio: data.premio,
+      sellos: data.sellos,
+      meta: data.sellosMeta,
+      codigo: data.codigo,
+      colorPrimario: temaResuelto?.color_primario ?? "#111827",
+      colorFondo: temaResuelto?.color_fondo ?? "#ffffff",
+      colorTexto: temaResuelto?.color_texto ?? "#0b0b0f",
+    });
+    descargarCanvasComoPng(canvasRef.current, `tarjeta-lealtad-${data.codigo}.png`);
+    setDescargando(false);
+  }
 
   // Respaldo de contacto: colapsado por defecto.
   const [respaldoAbierto, setRespaldoAbierto] = useState(false);
@@ -106,6 +130,9 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
           >
             Ir al menú
           </Link>
+          <div className="mt-4">
+            <RecuperarTarjetaLealtad slug={slug} />
+          </div>
         </div>
       </main>
     );
@@ -157,38 +184,59 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
           </Link>
         </header>
 
+        {/* "Tarjeta física": franja de color de marca arriba, sellos abajo. */}
         <div
-          className="mt-6 flex flex-wrap gap-2 rounded-2xl border p-5"
+          className="mt-6 overflow-hidden rounded-2xl border shadow-sm"
           style={{ borderColor: BORDE }}
-          aria-label={`${prog.hechos} de ${data.sellosMeta} sellos`}
         >
-          {rejilla.map((lleno, i) => (
-            <span
-              key={i}
-              className="size-8 rounded-full border"
-              style={
-                lleno ? { background: PRIMARIO, borderColor: PRIMARIO } : { borderColor: HUECO }
-              }
-              aria-hidden
-            />
-          ))}
+          <div
+            className="flex items-center justify-between px-5 py-4"
+            style={{ background: PRIMARIO }}
+          >
+            <span className="text-xs font-semibold tracking-wide text-white/90 uppercase">
+              Tarjeta de lealtad
+            </span>
+            <IconoSello className="size-5 text-white/90" aria-hidden />
+          </div>
+
+          <div className="p-5" style={{ background: FONDO }}>
+            <div
+              className="flex flex-wrap gap-2.5"
+              aria-label={`${prog.hechos} de ${data.sellosMeta} sellos`}
+            >
+              {rejilla.map((lleno, i) => (
+                <span
+                  key={i}
+                  className="grid size-9 shrink-0 place-items-center rounded-full border transition-colors"
+                  style={
+                    lleno
+                      ? { background: PRIMARIO, borderColor: PRIMARIO }
+                      : { borderColor: HUECO }
+                  }
+                  aria-hidden
+                >
+                  {lleno && <IconoSello className="size-4" style={{ color: FONDO }} />}
+                </span>
+              ))}
+            </div>
+
+            <p className="mt-4 text-sm font-medium" style={{ color: TEXTO }}>
+              {prog.completa
+                ? `¡Listo! Enseña esta tarjeta para tu ${data.premio}.`
+                : `Te faltan ${prog.faltan} para tu ${data.premio}.`}
+            </p>
+
+            {data.premioFase1 && data.sellosMetaFase1 != null && (
+              <p className="mt-1 text-sm" style={{ color: SUAVE }}>
+                {data.fase1CanjeadaCiclo
+                  ? `Ya enseñaste tu tarjeta para ${data.premioFase1}.`
+                  : data.sellos >= data.sellosMetaFase1
+                    ? `También puedes enseñarla ya para tu ${data.premioFase1}.`
+                    : `A los ${data.sellosMetaFase1} sellos: ${data.premioFase1}.`}
+              </p>
+            )}
+          </div>
         </div>
-
-        <p className="mt-4 text-sm" style={{ color: TEXTO }}>
-          {prog.completa
-            ? `¡Listo! Enseña esta tarjeta para tu ${data.premio}.`
-            : `Te faltan ${prog.faltan} para tu ${data.premio}.`}
-        </p>
-
-        {data.premioFase1 && data.sellosMetaFase1 != null && (
-          <p className="mt-1 text-sm" style={{ color: SUAVE }}>
-            {data.fase1CanjeadaCiclo
-              ? `Ya enseñaste tu tarjeta para ${data.premioFase1}.`
-              : data.sellos >= data.sellosMetaFase1
-                ? `También puedes enseñarla ya para tu ${data.premioFase1}.`
-                : `A los ${data.sellosMetaFase1} sellos: ${data.premioFase1}.`}
-          </p>
-        )}
 
         <div className="mt-10 text-center">
           <p className="text-xs" style={{ color: SUAVE }}>
@@ -200,6 +248,18 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
           <p className="mt-4 font-mono text-3xl font-bold tracking-widest" style={{ color: TEXTO }}>
             {data.codigo}
           </p>
+
+          <button
+            type="button"
+            onClick={descargarTarjeta}
+            disabled={descargando}
+            className="mx-auto mt-5 inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-xs font-semibold disabled:opacity-50"
+            style={{ borderColor: BORDE, color: TEXTO }}
+          >
+            <Download className="size-4" aria-hidden />
+            Descargar tarjeta
+          </button>
+          <canvas ref={canvasRef} className="hidden" aria-hidden />
         </div>
 
         {/* Guardar en este teléfono */}
@@ -373,7 +433,9 @@ export default function TarjetaLealtad({ slug, tarjetaId }: { slug: string; tarj
 
         {/* Cómo funciona */}
         <div className="mt-8 space-y-1 text-xs" style={{ color: SUAVE }}>
-          <p>Junta 1 sello por visita (máximo 1 al día).</p>
+          <p>
+            Junta 1 sello por visita{limiteDiario ? " (máximo 1 al día)" : ""}.
+          </p>
           {data.premioFase1 && data.sellosMetaFase1 != null && (
             <p>
               Al llegar a {data.sellosMetaFase1} sellos, enseña tu tarjeta para tu{" "}

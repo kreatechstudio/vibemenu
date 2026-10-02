@@ -88,6 +88,24 @@ export function useCrearTarjeta(tenantId: string | undefined, slug: string) {
   });
 }
 
+/** Recuperación de tarjeta por el propio cliente: "¿con qué la guardaste?" */
+export function useRecuperarTarjetaPublica(slug: string) {
+  const { guardar } = useTarjetaLocal(slug);
+  return useMutation({
+    mutationFn: async (contacto: string): Promise<string | null> => {
+      const { data, error } = await supabase.rpc("recuperar_tarjeta_publica", {
+        p_tenant_slug: slug,
+        p_contacto: contacto,
+      });
+      if (error) throw new Error(traducirError(error).mensaje);
+      return (data as string | null) ?? null;
+    },
+    onSuccess: (uuid) => {
+      if (uuid) guardar(uuid);
+    },
+  });
+}
+
 export function useGuardarContacto(uuid: string | null) {
   const qc = useQueryClient();
   return useMutation({

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { lealtadVigente } from "@/lib/lealtad";
 import type {
   Categoria,
   FormatoMenu,
@@ -229,7 +230,12 @@ async function armarMenuPublico(
     permiteAnaliticaPlatillo: plan?.permite_analitica_platillo ?? false,
     lealtad:
       (plan?.permite_lealtad ?? false) &&
-      tenant.lealtad_activa &&
+      lealtadVigente(
+        tenant.lealtad_activa,
+        new Date().toISOString().slice(0, 10),
+        tenant.lealtad_vigente_desde,
+        tenant.lealtad_vigente_hasta,
+      ) &&
       tenant.lealtad_sellos_meta != null &&
       tenant.lealtad_premio != null
         ? { meta: tenant.lealtad_sellos_meta, premio: tenant.lealtad_premio }
