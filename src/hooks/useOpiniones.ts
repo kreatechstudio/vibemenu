@@ -33,6 +33,25 @@ export function useOpiniones(tenantId: string | undefined) {
   });
 }
 
+/** Conteo de `!resuelto` para el badge de la campana. Silencioso si no aplica. */
+export function useOpinionesSinResolver(tenantId: string | undefined) {
+  return useQuery({
+    queryKey: ["opiniones-sin-resolver", tenantId],
+    enabled: Boolean(tenantId),
+    retry: false,
+    staleTime: 60_000,
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("feedback_privado")
+        .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId!)
+        .eq("resuelto", false);
+      if (error) return 0;
+      return count ?? 0;
+    },
+  });
+}
+
 export function useMarcarOpinionResuelta(tenantId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
@@ -45,6 +64,9 @@ export function useMarcarOpinionResuelta(tenantId: string | undefined) {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["opiniones", tenantId] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["opiniones", tenantId] });
+      void qc.invalidateQueries({ queryKey: ["opiniones-sin-resolver", tenantId] });
+    },
   });
 }
