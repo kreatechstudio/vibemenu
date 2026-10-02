@@ -143,11 +143,20 @@ export function useBorrarProducto(tenantId: string | undefined) {
   });
 }
 
+/**
+ * Vía la RPC `activar_producto`, no un update directo: es el único cambio que
+ * puede hacer un barista (la policy de escritura de `productos` ya no lo deja
+ * pasar por el camino general). La RPC es segura para cualquier rol — solo
+ * exige pertenecer al tenant — así que owner/encargado la usan igual.
+ */
 export function useAlternarActivo(tenantId: string | undefined) {
   const invalidar = useInvalidarCarta(tenantId);
   return useMutation({
     mutationFn: async ({ id, activo }: { id: string; activo: boolean }) => {
-      const { error } = await supabase.from("productos").update({ activo }).eq("id", id);
+      const { error } = await supabase.rpc("activar_producto", {
+        p_producto_id: id,
+        p_activo: activo,
+      });
       if (error) throw error;
     },
     onSuccess: invalidar,

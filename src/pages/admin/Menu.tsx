@@ -21,7 +21,7 @@ import { precioMenu } from "@/lib/tema";
 import { BOTONES, ESTADOS } from "@/lib/copy";
 import { avisarExito } from "@/lib/avisos";
 import { alcanzoLimite, permiteMenuPorSucursal } from "@/lib/plan";
-import type { Producto, Sucursal } from "@/types/database";
+import type { Categoria, Producto, Sucursal } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { useIniciarTour, type PasoTour } from "@/lib/tour";
 
@@ -150,6 +150,93 @@ function SelectorAmbito({
   );
 }
 
+/**
+ * Vista de un barista: ni crear, ni editar, ni borrar — solo prender/apagar un
+ * platillo cuando se acaba por el día. `useAlternarActivo` ya pasa por la RPC
+ * `activar_producto`, el único camino de escritura que su rol tiene sobre
+ * `productos` (ver migración `rol_barista`).
+ */
+function MenuSoloActivo({
+  categorias,
+  productos,
+  alternarActivo,
+}: {
+  categorias: Categoria[];
+  productos: Producto[];
+  alternarActivo: ReturnType<typeof useAlternarActivo>;
+}) {
+  const grupos = categorias
+    .map((c) => ({ categoria: c, lista: productos.filter((p) => p.categoria_id === c.id) }))
+    .filter((g) => g.lista.length > 0);
+
+  return (
+    <>
+      <h1 className="text-2xl">Mi carta</h1>
+      <p className="mt-1 max-w-prose text-sm text-vm-body">
+        Activa o desactiva un platillo si se acaba por el día — no se borra, solo deja de mostrarse
+        en el menú hasta que lo vuelvas a activar.
+      </p>
+
+      <div className="mt-6 space-y-6">
+        {grupos.map(({ categoria, lista }) => (
+          <div key={categoria.id}>
+            <h2 className="text-sm font-semibold text-vm-ink">{categoria.nombre}</h2>
+            <ul className="mt-2 divide-y rounded-xl border">
+              {lista.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 px-4 py-3">
+                  {p.imagen_url ? (
+                    <img
+                      src={p.imagen_url}
+                      alt=""
+                      className="size-10 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-vm-bg-soft">
+                      <ImageOff className="size-4 text-vm-body" aria-hidden />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        "truncate text-sm font-medium text-vm-ink",
+                        !p.activo && "text-vm-body line-through",
+                      )}
+                    >
+                      {p.nombre}
+                    </p>
+                    <p className="vm-data text-xs text-vm-body">{precioMenu(p.precio)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => alternarActivo.mutate({ id: p.id, activo: !p.activo })}
+                    aria-pressed={p.activo}
+                    aria-label={p.activo ? `Desactivar ${p.nombre}` : `Activar ${p.nombre}`}
+                    className={cn(
+                      "relative h-6 w-11 shrink-0 rounded-full transition-colors",
+                      p.activo ? "bg-vm-success" : "bg-vm-bg-soft",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform",
+                        p.activo ? "translate-x-5" : "translate-x-0.5",
+                      )}
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        {grupos.length === 0 && (
+          <p className="text-sm text-vm-body">Todavía no hay productos en la carta.</p>
+        )}
+      </div>
+    </>
+  );
+}
+
 function Contenido() {
   const { data: ctx } = useTenantActual();
   const tenantId = ctx?.tenant.id;
@@ -200,6 +287,17 @@ function Contenido() {
   );
 
   if (!ctx) return null;
+
+  // Un barista solo activa/desactiva — nada de crear, editar o borrar carta.
+  if (ctx.rol === "barista") {
+    return (
+      <MenuSoloActivo
+        productos={productos ?? []}
+        categorias={categorias ?? []}
+        alternarActivo={alternarActivo}
+      />
+    );
+  }
 
   const total = productos?.length ?? 0;
   const topado = alcanzoLimite(ctx.plan.limite_productos, total);

@@ -66,9 +66,9 @@ export function useInvitarEncargado(tenantId: string | undefined) {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async ({ email, rol }: { email: string; rol: "encargado" | "barista" }) => {
       const { error } = await supabase.functions.invoke("invitar-encargado", {
-        body: { tenant_id: tenantId, email },
+        body: { tenant_id: tenantId, email, rol },
       });
       if (error) throw error;
     },

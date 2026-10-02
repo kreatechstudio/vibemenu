@@ -2,16 +2,19 @@ import type { ReactNode } from "react";
 import { Link, Navigate, useLocation } from "@tanstack/react-router";
 import {
   Building2,
+  CalendarClock,
   ExternalLink,
   LayoutDashboard,
   Link2,
   LogOut,
   Palette,
   QrCode,
+  Stamp,
   UtensilsCrossed,
 } from "lucide-react";
 import BotonEscanerLealtad from "@/components/admin/BotonEscanerLealtad";
 import BannerFacturacion from "@/components/layout/BannerFacturacion";
+import CampanaNotificaciones from "@/components/layout/CampanaNotificaciones";
 import PanelBloqueado from "@/components/layout/PanelBloqueado";
 import TutorialAyuda from "@/components/layout/TutorialAyuda";
 import Logo from "@/components/marca/Logo";
@@ -28,6 +31,7 @@ import { useSesion, cerrarSesion } from "@/hooks/useSesion";
 import { useTenantActual, type ContextoTenant } from "@/hooks/useTenantActual";
 import { NOMBRE_FORMATO, NOMBRE_PLAN, type FormatoMenu, type NombrePlan } from "@/types/database";
 import { nombreDeUsuario, avatarDeUsuario } from "@/lib/perfil";
+import { puedeVerRuta } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 type ItemNav = {
@@ -69,6 +73,17 @@ const NAV: ItemNav[] = [
   { a: "/admin/qr", etiqueta: "QR", icono: QrCode },
 ];
 
+/**
+ * Un barista opera, no administra: carta (solo activar/desactivar, ver
+ * `MenuSoloActivo` en Menu.tsx), reservaciones y lealtad. Nada de Diseño, QR,
+ * Mi negocio (sucursales/equipo/facturación/analítica/opiniones).
+ */
+const NAV_BARISTA: ItemNav[] = [
+  { a: "/admin/menu", etiqueta: "Mi carta", icono: UtensilsCrossed },
+  { a: "/admin/reservaciones", etiqueta: "Reservaciones", icono: CalendarClock },
+  { a: "/admin/lealtad", etiqueta: "Lealtad", icono: Stamp },
+];
+
 const esActivo = (item: ItemNav, pathname: string) =>
   pathname === item.a || (item.cubre?.includes(pathname) ?? false);
 
@@ -82,6 +97,7 @@ const COLOR_ESTADO: Record<string, string> = {
 function Sidebar({ ctx }: { ctx: ContextoTenant }) {
   const { pathname } = useLocation();
   const { user } = useSesion();
+  const nav = ctx.rol === "barista" ? NAV_BARISTA : NAV;
 
   return (
     <div className="flex h-full flex-col bg-vm-bg-soft">
@@ -90,7 +106,7 @@ function Sidebar({ ctx }: { ctx: ContextoTenant }) {
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const activo = esActivo(item, pathname);
           const Icono = item.icono;
 
@@ -193,15 +209,16 @@ function MenuCuenta({ ctx }: { ctx: ContextoTenant }) {
 }
 
 /** Barra de navegación estilo app, fija abajo. Solo en móvil: en escritorio manda la barra lateral. */
-function BarraInferior() {
+function BarraInferior({ ctx }: { ctx: ContextoTenant }) {
   const { pathname } = useLocation();
+  const nav = ctx.rol === "barista" ? NAV_BARISTA : NAV;
 
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 flex border-t bg-white/95 backdrop-blur-sm lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {NAV.map((item) => {
+      {nav.map((item) => {
         const activo = esActivo(item, pathname);
         const Icono = item.icono;
 
@@ -237,9 +254,18 @@ function Cargando() {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user, cargando } = useSesion();
   const { data: ctx, isLoading } = useTenantActual();
+  const { pathname } = useLocation();
 
   if (cargando || isLoading) return <Cargando />;
   if (!user) return <Navigate to="/login" />;
+
+  // Un barista que teclea /admin/diseno (o cualquier otra ruta fuera de lo
+  // suyo) de todas formas no puede escribir nada ahí — la RLS ya lo bloquea
+  // (ver migración `rol_barista`) — pero mandarlo de vuelta evita que se
+  // quede viendo una pantalla que no puede usar.
+  if (ctx && !puedeVerRuta(ctx.rol, pathname)) {
+    return <Navigate to="/admin/reservaciones" />;
+  }
 
   if (!ctx) {
     return (
@@ -280,6 +306,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           <div className="flex-1" />
 
+          <CampanaNotificaciones tenantId={ctx.tenant.id} />
+
           <TutorialAyuda />
 
           <button
@@ -309,7 +337,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {ctx.tenant.lealtad_activa && <BotonEscanerLealtad />}
 
-      <BarraInferior />
+      <BarraInferior ctx={ctx} />
     </div>
   );
 }

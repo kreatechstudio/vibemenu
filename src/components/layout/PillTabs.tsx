@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useReservacionesNuevas } from "@/hooks/useReservaciones";
 import { useTenantActual } from "@/hooks/useTenantActual";
+import { puedeVerRuta } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 export type Pestana = {
@@ -31,9 +32,12 @@ export default function PillTabs({ pestanas }: { pestanas: Pestana[] }) {
   const { data: ctx } = useTenantActual();
   const { data: nuevas = 0 } = useReservacionesNuevas(ctx?.tenant.id);
 
+  // Un barista no ve pestañas que lo mandarían de vuelta igual (ver AdminLayout).
+  const visibles = ctx ? pestanas.filter((p) => puedeVerRuta(ctx.rol, p.a)) : pestanas;
+
   return (
     <div className="tira-scroll -mx-1 mb-6 flex gap-1.5 overflow-x-auto px-1 pb-1">
-      {pestanas.map((p) => {
+      {visibles.map((p) => {
         const activa = pathname === p.a;
         // Solo si el plan incluye reservaciones: si no, el badge apuntaría a
         // trabajo que el negocio no puede accionar detrás del muro de pago.

@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
 
   const { data: invitacion, error: errorInvitacion } = await comoAdmin
     .from("invitaciones")
-    .select("id, tenant_id, email, estado, expira_at")
+    .select("id, tenant_id, email, estado, expira_at, rol")
     .eq("token", token)
     .maybeSingle();
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
   async function vincular(userId: string) {
     const { error: errorVinculo } = await comoAdmin
       .from("tenant_usuarios")
-      .insert({ tenant_id: invitacion!.tenant_id, user_id: userId, rol: "encargado" });
+      .insert({ tenant_id: invitacion!.tenant_id, user_id: userId, rol: invitacion!.rol });
     // trg_limite_usuarios puede rechazarlo si el plan ya topo; el mensaje real
     // viaja en errorVinculo.message/.details, igual que en invitar-encargado.
     if (errorVinculo) return errorVinculo;

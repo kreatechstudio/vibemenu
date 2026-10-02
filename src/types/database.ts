@@ -1,4 +1,10 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -359,6 +365,7 @@ export type Database = {
           expira_at: string;
           id: string;
           invitado_por: string;
+          rol: string;
           tenant_id: string;
           token: string;
         };
@@ -370,6 +377,7 @@ export type Database = {
           expira_at?: string;
           id?: string;
           invitado_por: string;
+          rol?: string;
           tenant_id: string;
           token?: string;
         };
@@ -381,6 +389,7 @@ export type Database = {
           expira_at?: string;
           id?: string;
           invitado_por?: string;
+          rol?: string;
           tenant_id?: string;
           token?: string;
         };
@@ -1152,10 +1161,13 @@ export type Database = {
           id: string;
           instagram_url: string | null;
           lealtad_activa: boolean;
+          lealtad_limite_diario: boolean;
           lealtad_meta_fase1: number | null;
           lealtad_premio: string | null;
           lealtad_premio_fase1: string | null;
           lealtad_sellos_meta: number | null;
+          lealtad_vigente_desde: string | null;
+          lealtad_vigente_hasta: string | null;
           logo_url: string | null;
           nombre_negocio: string;
           pago_fallido_desde: string | null;
@@ -1189,10 +1201,13 @@ export type Database = {
           id?: string;
           instagram_url?: string | null;
           lealtad_activa?: boolean;
+          lealtad_limite_diario?: boolean;
           lealtad_meta_fase1?: number | null;
           lealtad_premio?: string | null;
           lealtad_premio_fase1?: string | null;
           lealtad_sellos_meta?: number | null;
+          lealtad_vigente_desde?: string | null;
+          lealtad_vigente_hasta?: string | null;
           logo_url?: string | null;
           nombre_negocio: string;
           pago_fallido_desde?: string | null;
@@ -1226,10 +1241,13 @@ export type Database = {
           id?: string;
           instagram_url?: string | null;
           lealtad_activa?: boolean;
+          lealtad_limite_diario?: boolean;
           lealtad_meta_fase1?: number | null;
           lealtad_premio?: string | null;
           lealtad_premio_fase1?: string | null;
           lealtad_sellos_meta?: number | null;
+          lealtad_vigente_desde?: string | null;
+          lealtad_vigente_hasta?: string | null;
           logo_url?: string | null;
           nombre_negocio?: string;
           pago_fallido_desde?: string | null;
@@ -1343,6 +1361,10 @@ export type Database = {
           sellos_meta: number;
           sellos_meta_fase1: number;
         }[];
+      };
+      activar_producto: {
+        Args: { p_activo: boolean; p_producto_id: string };
+        Returns: undefined;
       };
       buscar_tarjeta: {
         Args: { p_codigo: string; p_sucursal_id?: string };
@@ -1479,12 +1501,20 @@ export type Database = {
         Args: { check_tenant_id: string };
         Returns: boolean;
       };
+      puede_administrar_tenant: {
+        Args: { check_tenant_id: string };
+        Returns: boolean;
+      };
       purgar_interacciones_producto: { Args: never; Returns: number };
       purgar_reservaciones_viejas: { Args: never; Returns: number };
       purgar_tarjetas_lealtad: { Args: never; Returns: number };
       recalcular_bloqueos_plan: {
         Args: { p_tenant_id: string };
         Returns: undefined;
+      };
+      recuperar_tarjeta_publica: {
+        Args: { p_contacto: string; p_tenant_slug: string };
+        Returns: string;
       };
       registrar_feedback: {
         Args: {
@@ -1555,18 +1585,21 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -1576,8 +1609,10 @@ export type Tables<
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R;
       }
       ? R
@@ -1586,12 +1621,13 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -1610,12 +1646,13 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -1634,12 +1671,13 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -1650,12 +1688,13 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -1690,17 +1729,31 @@ export type NotaInterna = Tables<"notas_internas">;
 /* Uniones cerradas: el schema las guarda como text con CHECK. */
 export type FormatoMenu = "clasico" | "pinterest" | "instagram" | "tiktok";
 export type EstadoTenant = "trial" | "activo" | "suspendido" | "cancelado";
-export type RolUsuario = "owner" | "encargado";
+export type RolUsuario = "owner" | "encargado" | "barista";
 export type EstadoInvitacion = "pendiente" | "aceptada" | "cancelada";
 export type NombrePlan = "free" | "basic" | "pro" | "enterprise";
 export type MonedaCobro = "usd" | "mxn";
 export type IntervaloCobro = "mensual" | "anual";
-export type EstadoSuscripcion = "activa" | "cancelada" | "vencida" | "reemplazada";
+export type EstadoSuscripcion =
+  | "activa"
+  | "cancelada"
+  | "vencida"
+  | "reemplazada";
 export type MotivoCambio =
-  "alta" | "upgrade" | "downgrade" | "reactivacion" | "cancelacion" | "vencimiento";
+  | "alta"
+  | "upgrade"
+  | "downgrade"
+  | "reactivacion"
+  | "cancelacion"
+  | "vencimiento";
 export type TipoSeleccion = "unica" | "multiple";
 
-export const FORMATOS: readonly FormatoMenu[] = ["clasico", "pinterest", "instagram", "tiktok"];
+export const FORMATOS: readonly FormatoMenu[] = [
+  "clasico",
+  "pinterest",
+  "instagram",
+  "tiktok",
+];
 
 export const NOMBRE_FORMATO: Record<FormatoMenu, string> = {
   clasico: "Clásico",

@@ -42,7 +42,22 @@ const EJEMPLO: MiembroEquipo[] = [
     created_at: "2026-03-02",
     bloqueado_por_plan: false,
   },
+  {
+    user_id: "3",
+    email: "barista@cafeaurora.mx",
+    nombre: null,
+    avatar_url: null,
+    rol: "barista",
+    created_at: "2026-03-10",
+    bloqueado_por_plan: false,
+  },
 ];
+
+const ETIQUETA_ROL: Record<string, string> = {
+  owner: "Dueño",
+  encargado: "Encargado",
+  barista: "Barista",
+};
 
 function Tabla({
   miembros,
@@ -101,7 +116,7 @@ function Tabla({
                         : "rounded-full bg-vm-bg-soft px-2.5 py-1 text-xs font-medium text-vm-body"
                     }
                   >
-                    {esOwner ? "Dueño" : "Encargado"}
+                    {ETIQUETA_ROL[m.rol] ?? m.rol}
                   </span>
                 </td>
                 <td className="px-5 py-3.5 text-vm-body">{FECHA.format(new Date(m.created_at))}</td>
@@ -161,6 +176,7 @@ function Contenido() {
   const invitar = useInvitarEncargado(ctx?.tenant.id);
 
   const [email, setEmail] = useState("");
+  const [rolInvitado, setRolInvitado] = useState<"encargado" | "barista">("encargado");
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
@@ -187,7 +203,7 @@ function Contenido() {
     setError(null);
     setAviso(null);
     try {
-      await invitar.mutateAsync(email.trim());
+      await invitar.mutateAsync({ email: email.trim(), rol: rolInvitado });
       setAviso(`Le enviamos una invitación a ${email.trim()}.`);
       setEmail("");
     } catch (err) {
@@ -206,7 +222,8 @@ function Contenido() {
             {plan.limite_usuarios === null
               ? `${total} usuarios`
               : `${total} de ${plan.limite_usuarios} usuarios`}
-            . Los encargados administran la carta, pero no la facturación.
+            . Los encargados administran la carta, pero no la facturación; los baristas solo operan:
+            reservaciones, lealtad y activar/desactivar platillos.
           </p>
         </div>
       </div>
@@ -234,9 +251,38 @@ function Contenido() {
           {esOwner && (
             <form onSubmit={alInvitar} className="mt-8 max-w-lg rounded-xl border p-5">
               <label htmlFor="invitado" className="text-sm font-medium text-vm-ink">
-                Invitar encargado
+                Invitar a tu equipo
               </label>
-              <div className="mt-2 flex gap-2">
+
+              <fieldset className="mt-2 flex gap-4 text-sm">
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    name="rol-invitado"
+                    checked={rolInvitado === "encargado"}
+                    onChange={() => setRolInvitado("encargado")}
+                    className="size-4"
+                  />
+                  Encargado
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    name="rol-invitado"
+                    checked={rolInvitado === "barista"}
+                    onChange={() => setRolInvitado("barista")}
+                    className="size-4"
+                  />
+                  Barista
+                </label>
+              </fieldset>
+              <p className="mt-1.5 text-xs text-vm-body">
+                {rolInvitado === "barista"
+                  ? "Solo reservaciones, lealtad y activar/desactivar platillos — nada de carta completa, diseño ni facturación."
+                  : "Administra la carta completa, diseño y sucursales — sin tocar la facturación."}
+              </p>
+
+              <div className="mt-3 flex gap-2">
                 <input
                   id="invitado"
                   type="email"

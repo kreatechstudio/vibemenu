@@ -40,9 +40,10 @@ const SITIO = "https://vibemenu.com.mx";
 function plantillaInvitacion(opts: {
   negocioNombre: string;
   invitanteNombre: string;
+  rolEtiqueta: string;
   url: string;
 }) {
-  const { negocioNombre, invitanteNombre, url } = opts;
+  const { negocioNombre, invitanteNombre, rolEtiqueta, url } = opts;
   return `<!doctype html>
 <html lang="es">
   <head>
@@ -80,12 +81,16 @@ function plantillaInvitacion(opts: {
             <tr>
               <td style="padding:28px 40px 0 40px;">
                 <h1 style="margin:0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:30px; line-height:1.2; letter-spacing:-0.03em; font-weight:700; color:#0B0B0F;">
-                  Te invitaron a administrar un menú.
+                  Te invitaron a ${rolEtiqueta === "barista" ? "ayudar con" : "administrar"} un menú.
                 </h1>
                 <p style="margin:18px 0 0 0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.6; color:#4B4E5A;">
-                  <strong style="color:#0B0B0F;">${invitanteNombre}</strong> te dio acceso como encargado de
-                  <strong style="color:#0B0B0F;">${negocioNombre}</strong> en Vibemenu. Vas a poder
-                  actualizar la carta, sin tocar la facturación del negocio.
+                  <strong style="color:#0B0B0F;">${invitanteNombre}</strong> te dio acceso como ${rolEtiqueta} de
+                  <strong style="color:#0B0B0F;">${negocioNombre}</strong> en Vibemenu.
+                  ${
+                    rolEtiqueta === "barista"
+                      ? "Vas a poder confirmar reservaciones, sellar tarjetas de lealtad y activar o desactivar platillos."
+                      : "Vas a poder actualizar la carta, sin tocar la facturación del negocio."
+                  }
                 </p>
               </td>
             </tr>
@@ -144,6 +149,7 @@ async function enviarCorreoInvitacion(opts: {
   email: string;
   negocioNombre: string;
   invitanteNombre: string;
+  rolEtiqueta: string;
   token: string;
 }) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
@@ -161,6 +167,7 @@ async function enviarCorreoInvitacion(opts: {
       html: plantillaInvitacion({
         negocioNombre: opts.negocioNombre,
         invitanteNombre: opts.invitanteNombre,
+        rolEtiqueta: opts.rolEtiqueta,
         url,
       }),
     }),
@@ -181,8 +188,9 @@ Deno.serve(async (req) => {
   const autorizacion = req.headers.get("Authorization");
   if (!autorizacion) return json({ error: "sin_sesion" }, 401);
 
-  const { tenant_id, email } = await req.json().catch(() => ({}));
+  const { tenant_id, email, rol } = await req.json().catch(() => ({}));
   if (!tenant_id || !email) return json({ error: "faltan_datos" }, 400);
+  const rolInvitado = rol === "barista" ? "barista" : "encargado";
 
   const correo = String(email).trim().toLowerCase();
 
@@ -243,6 +251,7 @@ Deno.serve(async (req) => {
       {
         tenant_id,
         email: correo,
+        rol: rolInvitado,
         invitado_por: quienInvita!.id,
         estado: "pendiente",
         expira_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -264,6 +273,7 @@ Deno.serve(async (req) => {
       email: correo,
       negocioNombre: tenant.nombre_negocio,
       invitanteNombre,
+      rolEtiqueta: rolInvitado,
       token: invitacion.token,
     });
   } catch (err) {
