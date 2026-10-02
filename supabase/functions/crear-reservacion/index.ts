@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
   });
   if (errIns) {
     const slug =
-      /reservacion_en_pasado|reservacion_muy_lejana|sucursal_no_acepta_reservaciones|reservaciones_no_permitidas|sucursal_ajena/.exec(
+      /reservacion_en_pasado|reservacion_muy_lejana|reservacion_fuera_de_horario|sucursal_no_acepta_reservaciones|reservaciones_no_permitidas|sucursal_ajena/.exec(
         errIns.message,
       )?.[0];
     return json({ error: slug ?? "datos_invalidos" }, 400);

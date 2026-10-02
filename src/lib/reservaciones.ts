@@ -1,4 +1,5 @@
 import { telefonoParaWaMe } from "@/lib/whatsapp";
+import type { Horario } from "@/types/database";
 
 /**
  * Lógica pura del formulario de reservación. Sin React, sin red.
@@ -48,10 +49,48 @@ function instantePedido(fecha: string, hora: string, tz: string): Date | null {
   return new Date(naive.getTime() - desfase);
 }
 
+/**
+ * Mismo criterio que la función Postgres `sucursal_esta_abierta`: el turno de
+ * HOY (si cruza medianoche, sin tope superior), o el de AYER si cruzó
+ * medianoche y todavía no cerró a esta hora. `horarios` vacío (aún sin
+ * cargar) no bloquea aquí — el trigger `validar_reservacion` es quien de
+ * verdad lo exige.
+ */
+export function dentroDelHorario(horarios: Horario[], diaSemana: number, hora: string): boolean {
+  if (horarios.length === 0) return true;
+
+  const turnoDe = (dia: number) => horarios.find((h) => h.dia_semana === dia);
+
+  const hoy = turnoDe(diaSemana);
+  if (hoy && !hoy.cerrado && hoy.hora_apertura && hoy.hora_cierre) {
+    if (hoy.hora_cierre > hoy.hora_apertura) {
+      if (hora >= hoy.hora_apertura && hora < hoy.hora_cierre) return true;
+    } else if (hora >= hoy.hora_apertura) {
+      return true;
+    }
+  }
+
+  const ayer = turnoDe((diaSemana + 6) % 7);
+  if (
+    ayer &&
+    !ayer.cerrado &&
+    ayer.hora_apertura &&
+    ayer.hora_cierre &&
+    ayer.hora_cierre < ayer.hora_apertura &&
+    hora < ayer.hora_cierre
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export function validarReservacion(
   b: BorradorReservacion,
   ahora: Date,
   tz: string,
+  /** `[]` = aún sin cargar: no bloquea, ver `dentroDelHorario`. */
+  horarios: Horario[] = [],
 ): ErrorReservacion | null {
   if (b.nombre.trim().length < 2 || b.nombre.trim().length > 120) {
     return { campo: "nombre", motivo: "Escribe tu nombre completo." };
@@ -69,6 +108,12 @@ export function validarReservacion(
   limite.setDate(limite.getDate() + MAX_DIAS_RESERVA);
   if (cuando.getTime() > limite.getTime()) {
     return { campo: "fecha", motivo: `Como máximo ${MAX_DIAS_RESERVA} días adelante.` };
+  }
+
+  // Día de la semana de una fecha pura (YYYY-MM-DD): no depende de zona horaria.
+  const diaSemana = new Date(`${b.fecha}T00:00:00Z`).getUTCDay();
+  if (!dentroDelHorario(horarios, diaSemana, b.hora)) {
+    return { campo: "hora", motivo: "A esa hora el negocio está cerrado." };
   }
 
   if (telefonoParaWaMe(b.telefono) === null) {

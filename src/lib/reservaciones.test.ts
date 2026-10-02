@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  dentroDelHorario,
   formatearFechaHora,
   MAX_DIAS_RESERVA,
   payloadReservacion,
   validarReservacion,
   type BorradorReservacion,
 } from "@/lib/reservaciones";
+import type { Horario } from "@/types/database";
 
 const TZ = "America/Mexico_City";
 // Un "ahora" fijo para que las pruebas no dependan del reloj.
@@ -63,6 +65,84 @@ describe("validarReservacion", () => {
     expect(validarReservacion({ ...base(), consentimiento: false }, AHORA, TZ)?.campo).toBe(
       "consentimiento",
     );
+  });
+
+  // 2026-09-03 es jueves (dia_semana 4).
+  const horarioJueves = (h: Partial<Horario>): Horario[] => [
+    {
+      id: "h1",
+      sucursal_id: "s1",
+      dia_semana: 4,
+      cerrado: false,
+      hora_apertura: "13:00",
+      hora_cierre: "22:00",
+      ...h,
+    },
+  ];
+
+  test("sin horarios cargados ([]) => no bloquea", () => {
+    expect(validarReservacion(base(), AHORA, TZ, [])).toBeNull();
+  });
+
+  test("hora dentro del horario del día => pasa", () => {
+    expect(validarReservacion(base(), AHORA, TZ, horarioJueves({}))).toBeNull();
+  });
+
+  test("hora fuera del horario del día => error en hora", () => {
+    const r = validarReservacion({ ...base(), hora: "10:00" }, AHORA, TZ, horarioJueves({}));
+    expect(r?.campo).toBe("hora");
+  });
+
+  test("día marcado cerrado => error en hora aunque la hora luzca razonable", () => {
+    const r = validarReservacion(base(), AHORA, TZ, horarioJueves({ cerrado: true }));
+    expect(r?.campo).toBe("hora");
+  });
+
+  test("turno que cruza medianoche: la madrugada del día siguiente también pasa", () => {
+    // Jueves 20:00 -> viernes 02:00. Se pide viernes (dia 5) a la 1am.
+    const horarios = horarioJueves({ hora_apertura: "20:00", hora_cierre: "02:00" });
+    const r = validarReservacion(
+      { ...base(), fecha: "2026-09-04", hora: "01:00" },
+      AHORA,
+      TZ,
+      horarios,
+    );
+    expect(r).toBeNull();
+  });
+
+  test("turno que cruza medianoche: pasada la hora de cierre ya no pasa", () => {
+    const horarios = horarioJueves({ hora_apertura: "20:00", hora_cierre: "02:00" });
+    const r = validarReservacion(
+      { ...base(), fecha: "2026-09-04", hora: "03:00" },
+      AHORA,
+      TZ,
+      horarios,
+    );
+    expect(r?.campo).toBe("hora");
+  });
+});
+
+describe("dentroDelHorario", () => {
+  const horario: Horario = {
+    id: "h1",
+    sucursal_id: "s1",
+    dia_semana: 4,
+    cerrado: false,
+    hora_apertura: "13:00",
+    hora_cierre: "22:00",
+  };
+
+  test("sin filas => no bloquea (aún sin cargar)", () => {
+    expect(dentroDelHorario([], 4, "10:00")).toBe(true);
+  });
+
+  test("dentro del rango normal => true; fuera => false", () => {
+    expect(dentroDelHorario([horario], 4, "14:00")).toBe(true);
+    expect(dentroDelHorario([horario], 4, "23:00")).toBe(false);
+  });
+
+  test("sin fila para ese día => false", () => {
+    expect(dentroDelHorario([horario], 2, "14:00")).toBe(false);
   });
 });
 

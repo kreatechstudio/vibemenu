@@ -5,6 +5,7 @@ import Captcha, { captchaHabilitado, type TurnstileInstance } from "@/components
 import PhoneInput from "@/components/ui/phone-input";
 import { CLASE_PILL_ACCION, ESTILO_PILL_ACCION } from "@/components/menu/ContactoMenu";
 import { useCrearReservacion } from "@/hooks/useReservaciones";
+import { useHorarios } from "@/hooks/useSucursales";
 import {
   formatearFechaHora,
   MAX_PERSONAS,
@@ -109,6 +110,7 @@ function FormularioReserva({
   const [listo, setListo] = useState(false);
   const captchaRef = useRef<TurnstileInstance>(null);
   const crear = useCrearReservacion(sucursalId);
+  const horarios = useHorarios(sucursalId);
 
   // Límites del <input type="date">, en la timezone de la sucursal para que
   // cuadren con las reglas del servidor (`validarReservacion` / el trigger).
@@ -121,7 +123,7 @@ function FormularioReserva({
   async function enviar(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const problema = validarReservacion(b, new Date(), tz);
+    const problema = validarReservacion(b, new Date(), tz, horarios.data);
     if (problema) {
       setError(problema.motivo);
       return;

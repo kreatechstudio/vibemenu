@@ -30,6 +30,8 @@ const MENSAJES: Record<string, string> = {
     "Llegaron muchas solicitudes seguidas. Espera unos minutos e intenta de nuevo.",
   reservacion_en_pasado: "Esa fecha y hora ya pasaron. Elige otra.",
   reservacion_muy_lejana: "Solo puedes reservar hasta con 60 días de anticipación.",
+  reservacion_fuera_de_horario:
+    "A esa hora el negocio está cerrado. Elige un horario dentro de su horario de atención.",
   sucursal_no_acepta_reservaciones: "Esta sucursal no está recibiendo reservaciones.",
   reservaciones_no_permitidas: "Este restaurante no está recibiendo reservaciones ahora mismo.",
   sucursal_ajena: "Algo salió mal con la sucursal. Recarga la página e intenta de nuevo.",
